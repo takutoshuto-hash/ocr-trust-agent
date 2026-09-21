@@ -1,0 +1,40 @@
+# ガバナンスポリシー（人が宣言し、エージェントはこの範囲でしか自律しない）
+
+# 自律レベルの昇格条件（項目種別 × キー階層ごとに評価）
+promotion:
+  L1:                      # ジャッジ全合格＋二重読み取り一致なら自動確定
+    min_samples: 30
+    max_correction_rate: 0.03
+    min_streak: 20         # 連続無修正承認
+  L2:                      # 抽出値をそのまま自動確定（ジャッジ不合格でも）
+    min_samples: 200
+    max_correction_rate: 0.005
+    min_streak: 100
+
+# 降格: 修正が1回あれば即 L0 に戻し、streak をリセット
+demote_on_correction: true
+
+# 絶対に L2 にしない項目（番地以降を含む住所・氏名）
+never_l2:
+  - "*.address"
+  - "*.name"
+
+# 新規送り主（履歴 < min_samples_for_sender）では必ず人が確認する項目
+new_sender_review:
+  - "*.address"
+  - "*.name"
+min_samples_for_sender: 5
+
+# 学習ルーター（修正予測分類器）
+router:
+  min_training_samples: 200      # これ未満なら台帳のみで判定
+  target_error_rate: 0.005       # 自動確定した項目の許容誤り率（予測確率がこれ未満なら自動）
+  retrain_every_records: 500
+
+# 予算・上限（1日あたり）
+budget:
+  max_gemini_calls: 5000
+  max_auto_accepts: 3000
+
+# 監査サンプリング: 自動確定のうちこの割合を人が抜き取り再確認
+audit_sampling_rate: 0.02

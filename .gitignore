@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+*.egg-info/
+.pytest_cache/
+data/synthetic/out/
+data/fonts/*.ttf
+data/fonts/*.otf
+models/*.joblib
+eval/out/
+.DS_Store
