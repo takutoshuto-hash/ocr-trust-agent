@@ -68,8 +68,8 @@ router:
 #   呼び出しが上限の degrade_at 以上 → reduced（二重読み取り・再読み取りを省略）
 #   呼び出しが上限以上 or 自動確定数が上限以上 → exhausted（自動確定を停止し全件を人へ。読み取りは単読で継続）
 budget:
-  max_gemini_calls: 5000
-  max_auto_accepts: 3000
+  max_gemini_calls: 5000       # 1,000枚/日 × 約3回（二重読み取り＋再読み取り）を想定
+  max_auto_accepts: 20000      # 項目数ベース（1,000枚/日 × 約20項目）。低すぎると自動確定が止まる
   degrade_at: 0.8
 
 # 監査サンプリング: 自動確定のうちこの割合を人が抜き取り再確認。

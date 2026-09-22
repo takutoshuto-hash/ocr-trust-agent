@@ -70,7 +70,8 @@ def main():
         from app.extract.mock import MockExtractor
         extractor = MockExtractor()
         use_images = a.images
-    pipe = Pipeline(store=MemoryStore(), extractor=extractor, policy=policy, router=router, seed=a.seed, explain=False)
+    pipe = Pipeline(store=MemoryStore(), extractor=extractor, policy=policy, router=router, seed=a.seed, explain=False,
+                    budget_enabled=False)   # 日付が進まないシミュレーションでは日次予算を無効化
     print(f"extractor={extractor.name} images={use_images} days={a.days} per_day={a.per_day} senders={a.senders}", flush=True)
 
     out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True)

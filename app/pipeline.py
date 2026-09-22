@@ -25,7 +25,7 @@ from app.trust import Policy, TrustLedger
 class Pipeline:
     def __init__(self, store: Optional[Store] = None, extractor: Optional[Extractor] = None,
                  policy: Optional[Policy] = None, router: Optional[CorrectionRouter] = None,
-                 seed: Optional[int] = None, explain: Optional[bool] = None):
+                 seed: Optional[int] = None, explain: Optional[bool] = None, budget_enabled: bool = True):
         self.store = store or get_store()
         self.policy = policy or Policy.load(settings.policy_path)
         self.profile = str(self.policy.raw.get("profile", "lean"))
@@ -54,7 +54,8 @@ class Pipeline:
         # 受付時の説明文生成（ADK）: Gemini 抽出器の本番運用でのみ既定 ON。モック・シミュレーション・テストでは OFF
         self.explain = (self.extractor.name == "gemini") if explain is None else bool(explain)
         # 予算縮退: 1日の Gemini 呼び出し数・自動確定数を数え、上限に応じて段階的に縮退する
-        self.budget = BudgetGuard(self.policy.budget, count_calls=(self.extractor.name == "gemini"))
+        # シミュレーション（日付が進まない）では無効化する。実運用では JST 日次で数える
+        self.budget = BudgetGuard(self.policy.budget if budget_enabled else {}, count_calls=(self.extractor.name == "gemini"))
         if self.budget.count_calls:
             self.extractor = _CountingExtractor(self.extractor, self.budget)
             self.resolver.extractor = self.extractor

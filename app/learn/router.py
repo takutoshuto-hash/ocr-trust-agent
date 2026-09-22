@@ -89,10 +89,11 @@ class CorrectionRouter:
             w = np.ones(len(p))
         order = np.argsort(p)
         ps, ys, ws = p[order], y[order], w[order]
-        cum_err = np.cumsum(ws * ys)
-        n = np.cumsum(ws)
+        cum_w = np.cumsum(ws)
+        cum_w2 = np.cumsum(ws * ws)
+        phat = np.cumsum(ws * ys) / cum_w                 # 重み付き誤り率（母集団の推定）
+        n = cum_w * cum_w / cum_w2                        # Kish の有効標本数 (Σw)²/Σw²: 重い標本が少数だと n は小さいまま
         z = 1.96
-        phat = cum_err / n
         upper = (phat + z * z / (2 * n) + z * np.sqrt(phat * (1 - phat) / n + z * z / (4 * n * n))) / (1 + z * z / n)
         ok = np.where(upper <= self.target_error_rate)[0]
         if len(ok) == 0:
