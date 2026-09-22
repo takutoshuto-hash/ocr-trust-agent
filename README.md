@@ -32,7 +32,10 @@ pytest
 ## 動かす
 
 ```bash
-# 合成帳票（正解付き）を生成
+# 手書き風フォント（Google Fonts, OFL: Yomogi / Zen Kurenaido / Klee One / Hachi Maru Pop）を取得
+bash scripts/fetch_fonts.sh
+
+# 合成帳票（正解付き）を生成。1枚1筆跡、文字ごとに大きさ・傾き・濃さ・位置がゆらぐ FAX 風
 python data/synthetic/generate_forms.py --n 200
 
 # 評価: 項目別の正解率・要確認率・自動確定の誤り率

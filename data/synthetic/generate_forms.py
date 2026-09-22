@@ -39,6 +39,8 @@ def load_master():
 
 
 def fonts() -> list[ImageFont.FreeTypeFont]:
+    """data/fonts/ の手書き風フォント（Yomogi / Zen Kurenaido / Klee One / Hachi Maru Pop 等、OFL）。
+    無ければ Windows の標準フォントに退避（印字風になる）。"""
     cands = list((ROOT / "data/fonts").glob("*.tt[fc]")) + list((ROOT / "data/fonts").glob("*.otf"))
     if not cands:
         for name in ["msgothic.ttc", "YuGothM.ttc", "meiryo.ttc", "msmincho.ttc"]:
@@ -94,12 +96,32 @@ def make_truth(rng, zips, products, sender_pool, blank_rate: float = BLANK_RATE)
     return truth, sender["id"]
 
 
-def hand(draw, xy, text, font, rng, fill=(20, 20, 40)):
+def hand(draw, xy, text, font, rng, fill=(20, 20, 40), img=None):
+    """手書きらしい描画: 文字ごとに大きさ・傾き・位置・濃さ・線の太さをゆらす。
+
+    img（RGB の Image）を渡すと文字を個別に回転して貼る。draw だけならゆらぎ付きの通常描画。
+    """
     x, y = xy
+    ink = tuple(min(255, c + rng.randint(0, 60)) for c in fill)          # ペンの濃さ
+    size0 = font.size
     for ch in text:
-        dx, dy = rng.uniform(-1.5, 1.5), rng.uniform(-2, 2)
-        draw.text((x + dx, y + dy), ch, font=font, fill=fill)
-        x += font.getlength(ch) + rng.uniform(-1, 3)
+        if ch == " ":
+            x += size0 * 0.5 + rng.uniform(0, 4)
+            continue
+        size = max(14, int(size0 * rng.uniform(0.85, 1.15)))
+        f = font.font_variant(size=size) if hasattr(font, "font_variant") else font
+        dx, dy = rng.uniform(-2, 2), rng.uniform(-3, 3)
+        w = int(f.getlength(ch)) + 8
+        if img is not None:
+            glyph = Image.new("RGBA", (w + 8, size + 16), (0, 0, 0, 0))
+            gd = ImageDraw.Draw(glyph)
+            stroke = 1 if rng.random() < 0.35 else 0                        # 太めのペンのとき
+            gd.text((4, 4), ch, font=f, fill=ink + (255,), stroke_width=stroke, stroke_fill=ink + (255,))
+            glyph = glyph.rotate(rng.uniform(-7, 7), resample=Image.BICUBIC, expand=False)
+            img.paste(glyph, (int(x + dx), int(y + dy - 4)), glyph)
+        else:
+            draw.text((x + dx, y + dy), ch, font=f, fill=ink)
+        x += f.getlength(ch) + rng.uniform(-2, 4)
 
 
 def render(truth: dict, fnts, rng) -> Image.Image:
@@ -109,7 +131,9 @@ def render(truth: dict, fnts, rng) -> Image.Image:
     label = ImageFont.truetype(str(Path("C:/Windows/Fonts/msgothic.ttc")), 22) if Path("C:/Windows/Fonts/msgothic.ttc").exists() else ImageFont.load_default()
     d.text((80, 60), "ギフト注文書（FAX）", font=label, fill=(0, 0, 0))
     d.text((80, 100), "ご依頼主", font=label, fill=(0, 0, 0))
+    # 1枚の帳票は同じ人が書く → フォント（筆跡）は1枚で1種類。大きさは人によって違う
     f = rng.choice(fnts)
+    f = f.font_variant(size=rng.randint(26, 34)) if hasattr(f, "font_variant") else f
     ap = truth["applicant"]
     rows = [("〒", ap["zip"]), ("住所", ap["address"]), ("フリガナ", ap["name_kana"]), ("氏名", ap["name"]),
             ("TEL", ap["phone"]), ("会社名", ap["organization"])]
@@ -117,7 +141,7 @@ def render(truth: dict, fnts, rng) -> Image.Image:
     for lab, val in rows:
         d.rectangle((80, y, 1160, y + 44), outline=(0, 0, 0))
         d.text((90, y + 10), lab, font=label, fill=(0, 0, 0))
-        hand(d, (260, y + 6), val, f, rng)
+        hand(d, (260 + rng.randint(0, 25), y + 4), val, f, rng, img=img)
         y += 46
     for i, dl in enumerate(truth["deliveries"]):
         y += 30
@@ -128,7 +152,7 @@ def render(truth: dict, fnts, rng) -> Image.Image:
         for lab, val in rows:
             d.rectangle((80, y, 1160, y + 44), outline=(0, 0, 0))
             d.text((90, y + 10), lab, font=label, fill=(0, 0, 0))
-            hand(d, (260, y + 6), val, rng.choice(fnts), rng)
+            hand(d, (260 + rng.randint(0, 25), y + 4), val, f, rng, img=img)
             y += 46
     # FAX らしさ: 傾き・ノイズ・縦筋・にじみ
     img = img.rotate(rng.uniform(-1.2, 1.2), expand=False, fillcolor=(255, 255, 255))

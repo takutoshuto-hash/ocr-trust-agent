@@ -16,7 +16,7 @@ from .zones import ink_ratio, load_zones, open_image
 
 
 class Judge:
-    def __init__(self, blank_ink_ratio: float = 0.008, evidence_max_distance: float = 0.5):
+    def __init__(self, blank_ink_ratio: float = 0.013, evidence_max_distance: float = 0.5):
         self.blank_ink_ratio = blank_ink_ratio
         self.evidence_max_distance = evidence_max_distance
 

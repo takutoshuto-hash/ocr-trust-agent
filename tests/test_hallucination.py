@@ -30,15 +30,15 @@ def test_ink_ratio_distinguishes_blank_and_filled():
     img, zones = open_image(png), load_zones("fax_v1")
     filled = ink_ratio(img, zones["applicant.name"])
     blank = ink_ratio(img, zones["applicant.name_kana"])   # blank_rate=1.0 → フリガナは必ず空欄
-    assert filled > 0.008 > blank, (filled, blank)
+    assert filled > 0.013 > blank, (filled, blank)
 
 
 def test_blank_zone_flags_invented_value():
-    r = T.check_blank_zone(0.0005, "御中元", 0.004)
+    r = T.check_blank_zone(0.005, "御中元", 0.013)
     assert r.status == CheckStatus.FAIL and "ハルシネーション" in r.detail
-    assert T.check_blank_zone(0.0005, "", 0.004).status == CheckStatus.PASS
-    assert T.check_blank_zone(0.02, "", 0.004).status == CheckStatus.UNKNOWN
-    assert T.check_blank_zone(None, "x", 0.004).status == CheckStatus.UNKNOWN
+    assert T.check_blank_zone(0.005, "", 0.013).status == CheckStatus.PASS
+    assert T.check_blank_zone(0.03, "", 0.013).status == CheckStatus.UNKNOWN
+    assert T.check_blank_zone(None, "x", 0.013).status == CheckStatus.UNKNOWN
 
 
 def test_evidence_mismatch():
@@ -48,14 +48,21 @@ def test_evidence_mismatch():
 
 def test_judge_catches_mock_hallucination_on_real_image():
     """空欄だらけの帳票をモックで読むと創作値が出る → 空欄検知で必ず FAIL になる。"""
-    truth, png = _synthetic(seed=11)
-    ex = MockExtractor(error_scale=1.0).extract(png, hint=truth, variant=0)
-    verdicts = Judge().judge(ex, image=png, format_id="fax_v1")
-    tflat = truth.flatten()
-    invented = [p for p, v in ex.form.flatten().items() if isinstance(v, str) and v and not tflat[p]]
-    assert invented, "モックが創作値を出す前提のテスト（乱数シード依存）"
-    for p in invented:
-        assert any(c.name == "blank_zone" and c.status == CheckStatus.FAIL for c in verdicts[p].checks), p
+    checked = 0
+    for seed in range(11, 60):
+        truth, png = _synthetic(seed=seed)
+        ex = MockExtractor(error_scale=1.0).extract(png, hint=truth, variant=0)
+        tflat = truth.flatten()
+        invented = [p for p, v in ex.form.flatten().items() if isinstance(v, str) and v and not tflat[p]]
+        if not invented:
+            continue
+        verdicts = Judge().judge(ex, image=png, format_id="fax_v1")
+        for p in invented:
+            assert any(c.name == "blank_zone" and c.status == CheckStatus.FAIL for c in verdicts[p].checks), (seed, p)
+        checked += len(invented)
+        if checked >= 5:
+            break
+    assert checked >= 5, "モックが創作値を出す帳票が見つからない"
 
 
 def test_mask_zones_whitens_area():
