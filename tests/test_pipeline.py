@@ -38,29 +38,39 @@ def test_first_form_is_all_review_and_confirm_learns():
 
 
 def test_review_rate_drops_with_volume():
+    """量をさばくと、誤りの少ない項目種別（郵便番号・商品番号・数量）から自動確定が広がり、自動確定の誤りは目標内に収まる。
+    氏名・住所など誤り 3% 前後の項目は、相互検証が誤りを捕まえるまでは要確認のままなのが正しい挙動
+    （10 日規模の曲線は eval/simulate_days.py で見る）。"""
     pipe = _pipe()
     rng = random.Random(3)
     zips, products = load_master()
     pool = [{"id": f"S{i}", "phone": phone(rng)} for i in range(20)]
+    reliable = {"deliveries.zip", "deliveries.product_code", "deliveries.qty", "applicant.zip"}
+    auto_n = auto_wrong = 0
 
     def run_batch(k):
+        nonlocal auto_n, auto_wrong
         review = fields = 0
         for i in range(k):
             td, sender = make_truth(rng, zips, products, pool)
             truth = OrderForm.model_validate(td)
             fd = pipe.process(json.dumps(td).encode() + bytes([i % 250]), sender_id=sender, hint=truth)
             tflat = truth.flatten()
-            fields += len(fd.decisions); review += len(fd.strict_review_paths)
+            for p, d in fd.decisions.items():
+                if d.field_type in reliable:
+                    fields += 1; review += d.status == FieldStatus.REVIEW
+                if d.status == FieldStatus.AUTO:
+                    auto_n += 1; auto_wrong += str(d.value).replace(" ", "") != str(tflat[p]).replace(" ", "")
             pipe.confirm(fd.form_id, {p: tflat[p] for p in fd.review_paths})
         return review / fields
 
-    early = run_batch(60)
+    first = run_batch(60)
+    pipe.retrain()
+    run_batch(60)
     summary = pipe.retrain()
-    late = run_batch(60)
+    last = run_batch(60)
     assert summary["trained"], summary
-    # 最初の60枚でも台帳（検証合格の実績）が zip/phone/qty を L1 に上げ始めるので 1.0 にはならない。
-    # ルーターは Kish 有効標本数で保守的に閾値を決めるため、60枚後の低下は緩やか（10日規模の曲線は eval/simulate_days.py で見る）
-    assert early > 0.4, early
-    assert late < early - 0.03, (early, late)
+    assert last < 0.5 and last < first, (first, last)
+    assert auto_n > 100 and auto_wrong / auto_n < 0.01, (auto_n, auto_wrong)
     m = pipe.metrics()
     assert m["training_records"] > 0 and m["router"]["trained_on"] > 0

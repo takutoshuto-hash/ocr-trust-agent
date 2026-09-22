@@ -24,6 +24,7 @@ class Extractor(Protocol):
         variant: int = 0,                                         # 二重読み取り用: 0=通常, 1=別プロンプト
         hint: Optional[OrderForm] = None,                         # モック専用: 正解（合成データの sidecar）
         rules: Optional[list[str]] = None,                        # 振り返りで承認された読み取りルール
+        format_id: Optional[str] = None,                          # 様式 ID（2 回目を欄ごとの切り出しで読むときに使う）
     ) -> Extraction: ...
 
 

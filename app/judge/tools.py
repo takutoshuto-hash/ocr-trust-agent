@@ -77,6 +77,79 @@ def check_phone_format(phone: str) -> CheckResult:
                        detail="" if ok else f"形式不正: {phone!r}")
 
 
+@lru_cache(maxsize=1)
+def _area_table() -> dict[str, set[str]]:
+    """市外局番 -> 都道府県の集合。data/master/area_codes.csv（総務省の市外局番一覧を要約したもの）"""
+    path: Path = settings.master_dir / "area_codes.csv"
+    table: dict[str, set[str]] = {}
+    if path.exists():
+        with path.open(encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                table[row["code"]] = set(row["pref"].split("|"))
+    return table
+
+
+MOBILE_PREFIXES = ("070", "080", "090", "050", "0120", "0800", "0570")
+
+
+def check_phone_area(phone: str, zip_code: str) -> CheckResult:
+    """電話の市外局番が、郵便番号の都道府県と整合するか（項目間の相互検証）。
+
+    携帯・IP 電話・フリーダイヤルは所在地を持たないので判定不能。固定電話の市外局番の誤読、
+    または郵便番号の誤読（別の都道府県）をどちらか一方の根拠だけで見抜ける。"""
+    digits = re.sub(r"\D", "", phone or "")
+    if not digits:
+        return CheckResult(name="phone_area", status=CheckStatus.UNKNOWN, detail="空欄")
+    if digits.startswith(MOBILE_PREFIXES):
+        return CheckResult(name="phone_area", status=CheckStatus.UNKNOWN, detail="携帯・IP 電話（所在地なし）")
+    zt = _zip_table()
+    z = (zip_code or "").replace("-", "")
+    if z not in zt:
+        return CheckResult(name="phone_area", status=CheckStatus.UNKNOWN, detail="郵便番号がマスタに無い")
+    at = _area_table()
+    code = next((digits[:n] for n in (5, 4, 3, 2) if digits[:n] in at), None)
+    if code is None:
+        return CheckResult(name="phone_area", status=CheckStatus.UNKNOWN, detail="市外局番がマスタに無い")
+    pref = zt[z][0]
+    if pref in at[code]:
+        return CheckResult(name="phone_area", status=CheckStatus.PASS, detail=f"市外局番 {code} = {pref}")
+    return CheckResult(name="phone_area", status=CheckStatus.FAIL,
+                       detail=f"市外局番 {code}（{'/'.join(sorted(at[code]))}）が郵便番号の都道府県「{pref}」と合わない")
+
+
+@lru_cache(maxsize=1)
+def _surname_table() -> dict[str, set[str]]:
+    path: Path = settings.master_dir / "surname_readings.csv"
+    table: dict[str, set[str]] = {}
+    if path.exists():
+        with path.open(encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                table[row["surname"]] = set(row["readings"].split("|"))
+    return table
+
+
+def check_name_reading(name: str, kana: str) -> CheckResult:
+    """氏名の姓とフリガナの姓が、姓の読み辞書で整合するか（項目間の相互検証）。
+
+    姓が辞書に無ければ判定不能。読みが辞書と食い違えば、氏名かフリガナのどちらかが誤読。"""
+    n = (name or "").strip()
+    k = (kana or "").strip()
+    if not n or not k:
+        return CheckResult(name="name_reading", status=CheckStatus.UNKNOWN, detail="氏名またはフリガナが空欄")
+    table = _surname_table()
+    surname = re.split(r"[ \u3000]", n, 1)[0]
+    if surname not in table:
+        surname = next((s for s in sorted(table, key=len, reverse=True) if n.startswith(s)), "")
+    if not surname:
+        return CheckResult(name="name_reading", status=CheckStatus.UNKNOWN, detail="姓が読み辞書に無い")
+    kana_surname = re.split(r"[ \u3000]", k, 1)[0]
+    readings = table[surname]
+    if kana_surname in readings or any(k.startswith(r) for r in readings):
+        return CheckResult(name="name_reading", status=CheckStatus.PASS, detail=f"{surname} = {'/'.join(sorted(readings))}")
+    return CheckResult(name="name_reading", status=CheckStatus.FAIL,
+                       detail=f"姓「{surname}」の読みは {'/'.join(sorted(readings))} だがフリガナは「{kana_surname}」")
+
+
 def check_kana(kana: str) -> CheckResult:
     """フリガナがカタカナのみか。"""
     if not kana:

@@ -50,6 +50,8 @@ def main():
     ap.add_argument("--export-state", default=None, help="運用状態（台帳・教師データ・ルーターモデル）をこのディレクトリに書き出す")
     ap.add_argument("--workers", type=int, default=1, help="1日分の帳票を並列に処理するスレッド数（Gemini は I/O 待ちが主なので 8 程度）")
     ap.add_argument("--field-log", default=None, help="項目ごとの判定・真偽・ルーター p・閾値を日別に書き出す CSV（誤りの内訳分析用）")
+    ap.add_argument("--reflect", action="store_true",
+                    help="夜間に振り返りエージェントを走らせ、ガバナンス範囲内の提案を模擬承認者が承認して翌日に反映する（提案は <out>.proposals.jsonl に記録）")
     a = ap.parse_args()
 
     rng = random.Random(a.seed)
@@ -86,7 +88,9 @@ def main():
         field_writer.writeheader()
     for day in range(1, a.days + 1):
         t0 = time.perf_counter()
-        n_fields = n_review = n_auto = n_auto_wrong = n_human_corr = n_ocr_wrong = 0
+        n_fields = n_review = n_auto = n_auto_wrong = n_human_corr = n_ocr_wrong = n_seen = 0
+        from datetime import datetime, timezone
+        day_started = datetime.now(timezone.utc)
         # 1日分の帳票を先に生成し、処理（抽出＋ジャッジ＋判定）は並列、確定（学習）は逐次
         batch = []
         for i in range(a.per_day):
@@ -132,6 +136,7 @@ def main():
                                            "router_p": ("" if d.p_correction is None else round(d.p_correction, 5)),
                                            "router_threshold": ("" if pipe.router.threshold is None else round(pipe.router.threshold, 5)),
                                            "resolved": int(d.resolved_from is not None), "correct": int(ok)})
+                n_seen += int(d.human_sees)               # 要確認＋監査サンプル（人が実際に見る項目）
                 if d.status == FieldStatus.REVIEW:
                     n_review += 1
                 else:
@@ -145,11 +150,30 @@ def main():
             print(f"day {day:2d}: 処理できた帳票がありません（API エラー等）。この日は記録せず続行", flush=True)
             continue
         summary = pipe.retrain()                            # 夜間再学習
+        n_prop = n_appr = 0
+        if a.reflect:                                       # 夜間の振り返り → 模擬承認者（範囲内の提案はすべて承認）
+            try:
+                res = pipe.reflect(since=day_started)
+            except Exception as e:
+                print("  reflect failed:", str(e)[:160], flush=True); res = {"proposals": []}
+            with open(str(out) + ".proposals.jsonl", "a", encoding="utf-8") as pf:
+                for pr in res["proposals"]:
+                    n_prop += 1
+                    decided = pr
+                    if pr.get("status") == "pending":
+                        decided = pipe.decide_proposal(pr["proposal_id"], True, actor="human:sim").model_dump(mode="json")
+                        n_appr += 1
+                    pf.write(json.dumps({"day": day, **{k: decided.get(k) for k in ("kind", "title", "rule_text", "rule_scope", "policy_key",
+                                                                                     "policy_from", "policy_to", "status", "proposer", "rationale")}},
+                                        ensure_ascii=False, default=str) + "\n")
+            print(f"  reflect: proposals {n_prop}, approved {n_appr}, rules now {len(pipe.store.list_rules(scope='format:fax_v1'))}", flush=True)
         promoted = sum(1 for s in pipe.store.list_ledger() if s.level > 0)
         m = pipe.metrics()
         row = {"day": day, "forms": a.per_day, "fields": n_fields,
                "ocr_error_rate": round(n_ocr_wrong / n_fields, 4),                       # 抽出そのものの誤り率
                "review_rate": round(n_review / n_fields, 4),
+               "human_sees_rate": round(n_seen / n_fields, 4),                          # 監査サンプルを含めて人が見た割合
+               "proposals": n_prop, "approved": n_appr,
                "auto_error_rate": round(n_auto_wrong / n_auto, 5) if n_auto else 0.0,   # 真値比較（神の視点）
                "auto_error_rate_audited": m["auto_error_rate_audited"],                   # 監査サンプルからの推定
                "human_corrections": n_human_corr, "ledger_promoted_keys": promoted,

@@ -59,6 +59,13 @@ class Pipeline:
         if self.budget.count_calls:
             self.extractor = _CountingExtractor(self.extractor, self.budget)
             self.resolver.extractor = self.extractor
+        # 二重読み取りの 2 回目の入力（ポリシー double_read.mode: zones | page）
+        dr = self.policy.raw.get("double_read", {}) or {}
+        inner = getattr(self.extractor, "_inner", self.extractor)
+        if hasattr(inner, "second_read"):
+            inner.second_read = dr.get("mode", "zones")
+            if dr.get("model"):
+                inner.second_model = dr["model"]
 
     # ---------------- 受付 → 判定 ----------------
     def process(self, image: bytes, *, sender_id: str, format_id: str = "fax_v1",
@@ -85,9 +92,10 @@ class Pipeline:
             })
 
         rules = [r.text for r in self.store.list_rules(scope=f"format:{format_id}")]   # 承認済みルール（global + 様式）
-        ex1 = self.extractor.extract(to_send, examples=examples, variant=0, hint=hint, rules=rules)
-        ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint, rules=rules) if double_read else None
-        self._audit(form_id, "extracted", {"model": ex1.model, "double_read": double_read, "few_shot": len(examples), "rules": len(rules)})
+        ex1 = self.extractor.extract(to_send, examples=examples, variant=0, hint=hint, rules=rules, format_id=format_id)
+        ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint, rules=rules, format_id=format_id) if double_read else None
+        self._audit(form_id, "extracted", {"model": ex1.model, "double_read": double_read, "second_read": ex2.model if ex2 else None,
+                                           "few_shot": len(examples), "rules": len(rules)})
 
         history = self.store.sender_history(sender_id, limit=10)   # 同じ送り主の過去の確定帳票（履歴照合）
         verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=history)
@@ -268,11 +276,12 @@ class Pipeline:
         return summary
 
     # ---------------- 振り返り（夜間） ----------------
-    def reflect(self, days: int = 1) -> dict:
-        """修正ログを集計し、振り返りエージェントが提案を作る。提案は承認されるまで何も変えない。"""
+    def reflect(self, days: int = 1, since=None) -> dict:
+        """修正ログを集計し、振り返りエージェントが提案を作る。提案は承認されるまで何も変えない。
+        since: 集計の開始時刻（省略時は days 日前）。シミュレーションでは「その日の開始時刻」を渡す。"""
         from app.reflect import analyze
         from app.reflect.analysis import default_since
-        analysis = analyze(self.store.list_training(), self.store.list_audit(limit=20_000), since=default_since(days))
+        analysis = analyze(self.store.list_training(), self.store.list_audit(limit=20_000), since=since or default_since(days))
         proposals = self.reflection.propose(analysis)
         self._audit("-", "reflected", {"window_days": days, "records": analysis.get("window_records"),
                                        "proposals": [p.model_dump(mode="json", include={"proposal_id", "kind", "title", "status"}) for p in proposals]},

@@ -43,6 +43,13 @@ class Settings:
         return bool(self.gemini_api_key) or self.use_vertex
 
 
+def make_adk_model():
+    """ADK の LlmAgent に渡すモデル。抽出器と同じ genai クライアント（Vertex / AI Studio、ローカルの gcloud トークン更新）を共有する。
+    ADK 既定のクライアントは ADC しか見ないため、ローカルの長時間実行では ADC が無いと ADK だけ黙って失敗していた。"""
+    from google.adk.models import Gemini
+    return Gemini(model=settings.gemini_model, client=make_genai_client())
+
+
 def make_genai_client():
     """google-genai クライアント。Vertex AI（ADC or アクセストークン）か AI Studio キー。"""
     from google import genai

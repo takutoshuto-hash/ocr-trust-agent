@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-from app.config import settings
+from app.config import make_adk_model, settings
 from app.schemas import FieldStatus, FormDecision
 from . import tools as T
 
@@ -29,7 +29,7 @@ def _build_agent():
     from google.adk.agents import Agent
     return Agent(
         name="ocr_judge",
-        model=settings.gemini_model,
+        model=make_adk_model(),
         description="OCR結果の要確認項目を説明する検証エージェント",
         instruction=_INSTRUCTION,
         tools=[T.check_zip_address, T.check_product_code, T.check_phone_format, T.check_kana, T.check_evidence],

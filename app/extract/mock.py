@@ -75,7 +75,7 @@ class MockExtractor:
         nv = v if rng.random() >= p else _perturb(v, rng)
         return nv, nv
 
-    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: Optional[OrderForm] = None, rules=None) -> Extraction:
+    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: Optional[OrderForm] = None, rules=None, format_id=None) -> Extraction:
         if hint is None:
             raise ValueError("MockExtractor には hint（正解 OrderForm）が必要です")
         # 画像とvariantから決定的な乱数系列を作る（再現性のため）

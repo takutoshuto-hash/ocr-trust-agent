@@ -64,7 +64,10 @@ class ReflectionAgent:
         base = dict(proposal_id=uuid.uuid4().hex[:10], title=str(d.get("title", ""))[:120],
                     rationale=str(d.get("rationale", ""))[:800], evidence=d.get("evidence", {}) or {}, proposer=proposer)
         if kind == "rule" and d.get("rule_text"):
-            return Proposal(kind=ProposalKind.RULE, rule_text=str(d["rule_text"])[:300], rule_scope=str(d.get("scope", "global")), **base)
+            scope = str(d.get("scope") or "global")
+            if not (scope == "global" or (scope.startswith("format:") and "." not in scope)):
+                scope = "global"        # LLM が項目名などをスコープに入れてきたら global に正規化（注入されないルールを作らない）
+            return Proposal(kind=ProposalKind.RULE, rule_text=str(d["rule_text"])[:300], rule_scope=scope, **base)
         if kind == "policy":
             key, to = d.get("policy_key"), d.get("policy_to")
             def rejected(reason: str, to_val):
@@ -151,7 +154,8 @@ async def _propose_with_adk(analysis: dict, policy: dict) -> list[dict]:
         got["p"] = proposals[:5]
         return {"ok": True, "count": len(got["p"])}
 
-    agent = Agent(name="ocr_reflection", model=settings.gemini_model, instruction=_ADK_INSTRUCTION, tools=[propose])
+    from app.config import make_adk_model
+    agent = Agent(name="ocr_reflection", model=make_adk_model(), instruction=_ADK_INSTRUCTION, tools=[propose])
     runner = InMemoryRunner(agent=agent, app_name="ocr_trust")
     session = await runner.session_service.create_session(app_name="ocr_trust", user_id="reflection")
     cur = {k: _get_path(policy, k) for k in ALLOWED_POLICY_KEYS}

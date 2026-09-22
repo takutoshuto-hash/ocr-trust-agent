@@ -179,7 +179,8 @@ async def _plan_with_adk(ctx: FieldContext, allow_premium: bool) -> list[str]:
         chosen["plan"] = allowed
         return {"ok": True, "plan": allowed}
 
-    agent = Agent(name="ocr_resolver", model=settings.gemini_model, instruction=_ADK_INSTRUCTION, tools=[choose_actions])
+    from app.config import make_adk_model
+    agent = Agent(name="ocr_resolver", model=make_adk_model(), instruction=_ADK_INSTRUCTION, tools=[choose_actions])
     runner = InMemoryRunner(agent=agent, app_name="ocr_trust")
     session = await runner.session_service.create_session(app_name="ocr_trust", user_id="resolver")
     text = (f"項目: {ctx.path}（種別 {ctx.field_type}）\n値: {ctx.value!r}\n根拠: {ctx.evidence!r}\n"

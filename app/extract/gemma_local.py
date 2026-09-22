@@ -23,7 +23,7 @@ class GemmaLocalExtractor:
         self.host = (host or os.getenv("OLLAMA_HOST", "http://localhost:11434")).rstrip("/")
         self.model = model or os.getenv("GEMMA_MODEL", "gemma3:12b")
 
-    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: OrderForm | None = None, rules=None) -> Extraction:
+    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: OrderForm | None = None, rules=None, format_id=None) -> Extraction:
         prompt = PROMPTS[variant % len(PROMPTS)]
         if rules:
             prompt += "\n読み取りルール:\n" + "\n".join(f"- {r}" for r in rules[:10])

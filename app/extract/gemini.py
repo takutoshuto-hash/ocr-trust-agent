@@ -89,15 +89,80 @@ FIELD_PROMPT = {
 }
 FIELD_SCHEMA = {"type": "OBJECT", "properties": {"value": {"type": "STRING"}, "evidence": {"type": "STRING"}}, "required": ["value", "evidence"]}
 
+ZONE_PROMPT = (
+    "これは日本の食品ギフトの手書き注文書（FAX）を、様式の欄ごとに切り出した画像の一覧です。"
+    "各画像の直前に【ブロック / 項目】のラベルがあります。ラベルの項目に対応する手書き文字だけを読み、"
+    "指定のJSONスキーマで返してください。\n"
+    "- 各項目は value（正規化した値）、confidence（0〜1）、evidence（読んだ文字列そのもの）を返す\n"
+    "- 画像が空欄・判読不能なら value を空文字にし、推測で創作しない。他の欄の内容から補わない\n"
+    "- zip は NNN-NNNN、phone はハイフン区切り、qty は整数（無ければ 1）、name_kana はカタカナ、product_code は英数字をそのまま\n"
+    "- 氏名・会社名・住所・のし名入れの漢字は書かれたとおりに保ち、異体字（髙・﨑・邊・齋 など）を常用漢字に置き換えない\n"
+    "- お届け先ブロックは、氏名・郵便番号・住所がすべて空欄なら配列に含めない\n"
+    "- raw_text は空文字でよい"
+)
+ZONE_LABELS = {"zip": "郵便番号", "address": "住所", "name_kana": "フリガナ", "name": "氏名", "phone": "電話番号",
+               "organization": "会社名", "product_code": "商品番号", "qty": "数量", "noshi_name": "のし名入れ"}
+
+
+def zone_parts(image: bytes, format_id: str, *, min_height: int = 128) -> list:
+    """様式ゾーンごとの切り出し画像を、ラベル付きの Part 列にする（二重読み取りの 2 回目 = 独立した入力）。
+
+    1 回目の全面読みと同じモデルでも、入力（切り出し・拡大・文脈なし）が違えば誤りの相関が切れ、
+    「二重読み取り一致」が初めて独立した根拠になる。小さい欄は高さ min_height まで拡大する。"""
+    import io
+    from PIL import Image
+    from app.judge.zones import load_zones
+    zones = load_zones(format_id)
+    if not zones or not image:
+        return []
+    try:
+        img = Image.open(io.BytesIO(image)).convert("RGB")
+    except Exception:
+        return []
+    W, H = img.size
+    parts: list = []
+    for path, (x1, y1, x2, y2) in zones.items():
+        block, key = path.rsplit(".", 1)
+        blabel = "ご依頼主" if block == "applicant" else f"お届け先{int(block[block.index('[') + 1:-1]) + 1}"
+        box = (max(0, int((x1 - 0.004) * W)), max(0, int((y1 - 0.004) * H)), min(W, int((x2 + 0.004) * W)), min(H, int((y2 + 0.004) * H)))
+        crop = _trim_right(img.crop(box))
+        if crop.height < min_height:
+            k = min_height / crop.height
+            crop = crop.resize((int(crop.width * k), min_height), Image.LANCZOS)
+        buf = io.BytesIO(); crop.save(buf, format="PNG")
+        parts.append(f"【{blabel} / {ZONE_LABELS.get(key, key)}（{path}）】")
+        parts.append(types.Part.from_bytes(data=buf.getvalue(), mime_type="image/png"))
+    return parts
+
+
+def _trim_right(crop, *, dark: int = 170, min_frac: float = 0.25, margin: int = 60, min_col_ink: int = 3):
+    """欄の右側の空白を詰める。横長のまま送るとモデル側で縮小されて細い数字が欠けるため、
+    インクのある右端（＋余白）までに切る。枠線（長い横の走り）を消し、上下 8px を除いた内側で数え、
+    FAX の点ノイズは列あたり min_col_ink 画素未満なら無視する。"""
+    import numpy as np
+    from app.judge.zones import _remove_lines
+    a = np.asarray(crop.convert("L"), dtype=np.uint8) < dark
+    a = _remove_lines(a, max_run=60, axis=1)                          # 横の枠線
+    a = _remove_lines(a, max_run=max(12, int(a.shape[0] * 0.6)), axis=0)   # 縦の枠線・FAX の縦筋
+    inner = a[8:-8, :-12] if a.shape[0] > 24 else a[:, :-12]     # 右端 12px は枠線（傾いた帳票では走りが短く残る）
+    cols = np.where(inner.sum(axis=0) >= min_col_ink)[0]
+    right = int(cols.max()) + margin if len(cols) else 0
+    right = max(right, int(crop.width * min_frac))
+    return crop.crop((0, 0, min(crop.width, right), crop.height))
+
 
 class GeminiExtractor:
     name = "gemini"
 
-    def __init__(self, api_key: str = "", model: str = "gemini-2.5-flash", premium_model: str = "gemini-2.5-pro"):
+    def __init__(self, api_key: str = "", model: str = "gemini-2.5-flash", premium_model: str = "gemini-2.5-pro",
+                 second_read: str = "zones", second_model: str = ""):
         from app.config import make_genai_client
         self.client = make_genai_client()   # Vertex AI（GOOGLE_GENAI_USE_VERTEXAI）または AI Studio キー
         self.model = model
         self.premium_model = premium_model
+        # 二重読み取りの 2 回目: "zones"=欄ごとの切り出し画像（独立した入力）/ "page"=全面画像を別プロンプトで
+        self.second_read = second_read
+        self.second_model = second_model or model
 
     def extract_field(self, crop: bytes, field_type: str, *, premium: bool = False, hint=None):
         """欄の切り出し画像を1項目だけ読む（行動するエージェントの再読み取り）。戻り値 (value, evidence) or None。"""
@@ -127,15 +192,20 @@ class GeminiExtractor:
             return ""
         return "\n【運用で確認された読み取りルール（振り返りで人が承認したもの）】\n" + "\n".join(f"- {r}" for r in rules[:10])
 
-    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint=None, rules=None) -> Extraction:
-        prompt = PROMPTS[variant % len(PROMPTS)] + self._rules(rules) + self._few_shot(examples)
+    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint=None, rules=None,
+                format_id: Optional[str] = None) -> Extraction:
+        model = self.model
+        parts = zone_parts(image, format_id) if (variant == 1 and self.second_read == "zones" and format_id) else []
+        if parts:
+            model = self.second_model
+            contents = [ZONE_PROMPT + self._rules(rules) + self._few_shot(examples), *parts]
+        else:
+            contents = [types.Part.from_bytes(data=image, mime_type=mime_type),
+                        PROMPTS[variant % len(PROMPTS)] + self._rules(rules) + self._few_shot(examples)]
         t0 = time.perf_counter()
         resp = self.client.models.generate_content(
-            model=self.model,
-            contents=[
-                types.Part.from_bytes(data=image, mime_type=mime_type),
-                prompt,
-            ],
+            model=model,
+            contents=contents,
             config=types.GenerateContentConfig(
                 temperature=0,
                 response_mime_type="application/json",
@@ -144,7 +214,7 @@ class GeminiExtractor:
         )
         latency = int((time.perf_counter() - t0) * 1000)
         data = json.loads(resp.text or "{}")
-        return _to_extraction(data, model=self.model, latency_ms=latency)
+        return _to_extraction(data, model=model + (":zones" if parts else ""), latency_ms=latency)
 
 
 def _to_extraction(data: dict, *, model: str, latency_ms: int) -> Extraction:
@@ -160,6 +230,8 @@ def _to_extraction(data: dict, *, model: str, latency_ms: int) -> Extraction:
                 v = 1
         else:
             v = str(v or "").strip()
+            if path.endswith(".product_code"):
+                v = v.upper().replace("_", "-").replace("－", "-").replace("ー", "-")   # 商品番号はハイフン表記に正規化
         flat[path] = v
         fields[path] = FieldValue(
             path=path, value=v,
@@ -170,7 +242,10 @@ def _to_extraction(data: dict, *, model: str, latency_ms: int) -> Extraction:
     ap = data.get("applicant", {}) or {}
     for k in ["name", "name_kana", "zip", "address", "phone", "organization"]:
         take(f"applicant.{k}", ap.get(k))
-    for i, d in enumerate(data.get("deliveries", []) or []):
+    # 欄ごとの読みでは空のお届け先ブロックが配列に残ることがあるので落とす（氏名・郵便番号・住所・商品番号がすべて空）
+    deliveries = [d for d in (data.get("deliveries", []) or [])
+                  if any(str(((d or {}).get(k) or {}).get("value", "") or "").strip() for k in ("name", "zip", "address", "product_code"))]
+    for i, d in enumerate(deliveries):
         for k in ["name", "name_kana", "zip", "address", "phone", "product_code", "noshi_name"]:
             take(f"deliveries[{i}].{k}", d.get(k))
         take(f"deliveries[{i}].qty", d.get("qty"), as_int=True)

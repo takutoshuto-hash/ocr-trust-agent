@@ -2,7 +2,9 @@
 
 LLM を使わない決定的な部分。ADK エージェント（agent.py）はこの結果を人向けの説明に変換する役。
 検証の種類:
-  - 形式・外部照合（郵便番号↔住所、商品マスタ、電話桁、カナ、数量、必須）
+  - 形式・外部照合（郵便番号↔住所（町域まで）、商品マスタ、電話桁、カナ、数量、必須）
+  - 項目間の相互検証（電話の市外局番↔郵便番号の都道府県、氏名の姓↔フリガナの読み）
+  - 送り主の履歴照合（過去に確定した依頼主・常連のお届け先）
   - ハルシネーション対策: 空欄検知（欄のインク量 vs 値）、根拠整合（value vs evidence）
   - 二重読み取りの一致
 """
@@ -80,15 +82,15 @@ class Judge:
         if ft.endswith(".address"):
             return [T.check_nonempty(value), T.check_zip_address(flat.get(f"{prefix}.zip", ""), value)]
         if ft.endswith(".phone"):
-            return [T.check_phone_format(value)]
+            return [T.check_phone_format(value), T.check_phone_area(value, flat.get(f"{prefix}.zip", ""))]
         if ft.endswith(".name_kana"):
-            return [T.check_kana(value)]
+            return [T.check_kana(value), T.check_name_reading(flat.get(f"{prefix}.name", ""), value)]
         if ft.endswith(".product_code"):
             return [T.check_product_code(value)]
         if ft.endswith(".qty"):
             return [T.check_qty(value)]
         if ft.endswith(".name"):
-            return [T.check_nonempty(value)]
+            return [T.check_nonempty(value), T.check_name_reading(value, flat.get(f"{prefix}.name_kana", ""))]
         return []   # organization / noshi_name: 任意項目
 
     def _explain(self, v: FieldVerdict) -> str:
@@ -132,4 +134,4 @@ def _past_values(past: dict, path: str, ft: str, flat: dict) -> list:
 
 
 def _norm(x) -> str:
-    return str(x if x is not None else "").replace(" ", "").replace("　", "").replace("-", "").upper()
+    return str(x if x is not None else "").replace(" ", "").replace("　", "").replace("-", "").replace("_", "").upper()

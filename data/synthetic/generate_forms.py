@@ -67,10 +67,33 @@ def address(rng, zips):
     return f'{z["zip"][:3]}-{z["zip"][3:]}', f'{z["pref"]}{z["city"]}{town}{rng.randint(1,5)}-{rng.randint(1,30)}-{rng.randint(1,20)}'
 
 
-def phone(rng):
-    return rng.choice([f"0{rng.randint(90,90)}-{rng.randint(1000,9999)}-{rng.randint(1000,9999)}",
-                       f"097-{rng.randint(500,599)}-{rng.randint(1000,9999)}",
-                       f"03-{rng.randint(3000,6999)}-{rng.randint(1000,9999)}"])
+def _area_codes():
+    by_pref: dict[str, list[str]] = {}
+    for r in csv.DictReader((ROOT / "data/master/area_codes.csv").open(encoding="utf-8")):
+        for pref in r["pref"].split("|"):
+            by_pref.setdefault(pref, []).append(r["code"])
+    return by_pref
+
+
+AREA_CODES = _area_codes()
+MOBILE_RATE = 0.4   # 携帯番号の割合（残りは住所の都道府県に合う市外局番の固定電話）
+
+
+def phone(rng, pref: str | None = None):
+    """電話番号。pref を渡すとその都道府県の市外局番の固定電話（6割）か携帯（4割）。現実の FAX 注文書に合わせる。"""
+    if pref in AREA_CODES and rng.random() >= MOBILE_RATE:
+        code = rng.choice(AREA_CODES[pref])
+        rest = 10 - len(code)                     # 固定電話は市外局番込みで 10 桁
+        local = rest - 4
+        return f"{code}-{rng.randint(10 ** (local - 1), 10 ** local - 1)}-{rng.randint(1000, 9999)}"
+    return f"0{rng.choice([70, 80, 90])}-{rng.randint(1000, 9999)}-{rng.randint(1000, 9999)}"
+
+
+def _pref_of(addr: str) -> str:
+    for p in AREA_CODES:
+        if addr.startswith(p):
+            return p
+    return ""
 
 
 BLANK_RATE = 0.12   # 任意項目（フリガナ・電話・会社名・のし）が空欄で出される割合
@@ -90,6 +113,7 @@ def make_truth(rng, zips, products, sender_pool, blank_rate: float = BLANK_RATE)
         name, kana = person(rng)
         z, a = address(rng, zips)
         sender["identity"] = {"name": name, "name_kana": kana, "zip": z, "address": a, "organization": rng.choice(ORGS)}
+        sender["phone"] = phone(rng, _pref_of(a))
         sender["recipients"] = []
 
     def maybe_blank(v):
@@ -105,7 +129,7 @@ def make_truth(rng, zips, products, sender_pool, blank_rate: float = BLANK_RATE)
         else:
             n, k = person(rng)
             dz, da = address(rng, zips)
-            d = {"name": n, "name_kana": k, "zip": dz, "address": da, "phone": phone(rng)}
+            d = {"name": n, "name_kana": k, "zip": dz, "address": da, "phone": phone(rng, _pref_of(da))}
             sender["recipients"].append(dict(d))
         truth["deliveries"].append({"name": d["name"], "name_kana": maybe_blank(d["name_kana"]), "zip": d["zip"], "address": d["address"],
                                     "phone": maybe_blank(d["phone"]),
