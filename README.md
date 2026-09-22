@@ -11,6 +11,8 @@
 - **学習**: 「この項目を人が直すか」を予測する分類器を毎晩再学習。目標誤り率（例 0.5%）から自動確定の閾値を逆算
 - **新規記入者にも効く**: 履歴ゼロで動く決定的検証（郵便番号↔住所、商品マスタ、電話桁…）と二重読み取りの一致が主エンジン。送り主ごとの few-shot はリピーターへの加点
 - **ガバナンス**: `policy.yaml` で「住所は絶対に L2 にしない」「新規送り主は氏名・住所を必ず人が見る」「1日の予算」を宣言。全判断を監査ログに残し、後から再現できる
+- **ハルシネーションを止める**: 欄のインク量と値の整合（空欄なのに値が返った＝創作）、根拠文字列との整合、二重読み取りの一致。自己申告の自信度には頼らない
+- **機密とコストは運用プロファイルで切替**: `lean`（現場向け: Flash・機密欄マスク・保持期限）／`secure`（高機密向け: VPC 内 / オンプレの Gemma、画像を外に出さない）。抽出器だけが差し替わる
 
 ## 構成（Google Cloud）
 
@@ -46,9 +48,15 @@ uvicorn app.main:app --reload    # http://127.0.0.1:8000/review
 ## デプロイ
 
 ```bash
-gcloud secrets create GEMINI_API_KEY --data-file=- <<< "$GEMINI_API_KEY"
+gcloud secrets create GEMINI_API_KEY   --data-file=- <<< "$GEMINI_API_KEY"
+gcloud secrets create REVIEW_USER      --data-file=- <<< "judge"
+gcloud secrets create REVIEW_PASSWORD  --data-file=- <<< "$(python -c 'import secrets;print(secrets.token_urlsafe(18))')"
+gcloud firestore fields ttls update expires_at --collection-group=ocr_trust_forms  --enable-ttl
+gcloud firestore fields ttls update expires_at --collection-group=ocr_trust_images --enable-ttl
 STORE_BACKEND=firestore bash scripts/deploy.sh
 ```
+
+デプロイ先は Basic 認証（`/health` のみ公開）。審査用の資格情報は提出時に添付する。
 
 ## ディレクトリ
 

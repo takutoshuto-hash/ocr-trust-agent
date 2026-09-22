@@ -31,7 +31,7 @@ def _build_agent():
         model=settings.gemini_model,
         description="OCR結果の要確認項目を説明する検証エージェント",
         instruction=_INSTRUCTION,
-        tools=[T.check_zip_address, T.check_product_code, T.check_phone_format, T.check_kana],
+        tools=[T.check_zip_address, T.check_product_code, T.check_phone_format, T.check_kana, T.check_evidence],
     )
 
 

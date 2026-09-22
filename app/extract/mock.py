@@ -19,6 +19,15 @@ CONFUSIONS = {
     "ロ": "口", "口": "ロ", "力": "カ", "カ": "力", "エ": "工", "工": "エ",
 }
 
+# 空欄に対して値を創作する確率（ハルシネーション）と、その内容
+HALLUCINATION_RATE = 0.15
+HALLUCINATIONS = {
+    "applicant.organization": ["株式会社", "有限会社", "商店"],
+    "deliveries.noshi_name": ["御中元", "御歳暮", "内祝"],
+    "applicant.name_kana": ["ヤマダ タロウ"], "deliveries.name_kana": ["サトウ ハナコ"],
+    "deliveries.phone": ["090-0000-0000"], "applicant.phone": ["090-0000-0000"],
+}
+
 # 項目種別ごとの誤り率（手書きの難しさを反映）
 BASE_ERROR_RATE = {
     "applicant.name": 0.12, "applicant.name_kana": 0.10, "applicant.zip": 0.04,
@@ -68,6 +77,12 @@ class MockExtractor:
         for path, v in flat.items():
             ft = field_type_of(path)
             p = BASE_ERROR_RATE.get(ft, 0.1) * scale
+            if isinstance(v, str) and not v:
+                # 空欄: 確率 HALLUCINATION_RATE で「もっともらしい値」を創作する（VLM のハルシネーションを模倣）
+                nv = rng.choice(HALLUCINATIONS.get(ft, ["不明"])) if rng.random() < HALLUCINATION_RATE * scale else ""
+                out[path] = nv
+                fields[path] = FieldValue(path=path, value=nv, confidence=round(rng.uniform(0.6, 0.95), 3), evidence=nv)
+                continue
             if isinstance(v, int):
                 nv = v if rng.random() >= p else max(1, v + rng.choice([-1, 1, 9]))
                 conf = 0.95 if nv == v else rng.uniform(0.5, 0.9)

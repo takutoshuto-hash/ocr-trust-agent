@@ -6,6 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PORT=8080
 COPY pyproject.toml ./
 COPY app ./app
 COPY data/master ./data/master
+COPY data/master/formats ./data/master/formats
 COPY models ./models
 
 RUN pip install --no-cache-dir . && mkdir -p /srv/models

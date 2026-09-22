@@ -107,6 +107,44 @@ def check_nonempty(value: str) -> CheckResult:
                        detail="" if ok else "空欄")
 
 
+def check_blank_zone(ink: float | None, value: str, blank_ratio: float) -> CheckResult:
+    """欄のインク量と値の整合（ハルシネーション検知）。
+
+    - 欄がほぼ白紙なのに値がある → FAIL（読めない所をもっともらしく埋めた疑い）
+    - 欄にインクがあるのに値が空 → UNKNOWN（読み落とし疑い。人が見る）
+    - ゾーン情報が無い / 画像が無い → UNKNOWN
+    """
+    if ink is None:
+        return CheckResult(name="blank_zone", status=CheckStatus.UNKNOWN, detail="ゾーン未定義")
+    has_value = bool((value or "").strip())
+    if ink < blank_ratio and has_value:
+        return CheckResult(name="blank_zone", status=CheckStatus.FAIL,
+                           detail=f"欄は空欄（インク率 {ink:.4f}）なのに値 {value!r} が返った → ハルシネーション疑い")
+    if ink >= blank_ratio and not has_value:
+        return CheckResult(name="blank_zone", status=CheckStatus.UNKNOWN,
+                           detail=f"欄に記入あり（インク率 {ink:.4f}）だが値が空 → 読み落とし疑い")
+    return CheckResult(name="blank_zone", status=CheckStatus.PASS)
+
+
+def check_evidence(value: str, evidence: str, max_distance: float) -> CheckResult:
+    """モデルが「読んだ文字列そのもの（evidence）」と正規化後の value の整合。"""
+    v, e = _squash(value), _squash(evidence)
+    if not v or not e:
+        return CheckResult(name="evidence", status=CheckStatus.UNKNOWN, detail="根拠なし")
+    dist = _lev(v, e) / max(len(v), len(e))
+    if dist > max_distance:
+        return CheckResult(name="evidence", status=CheckStatus.FAIL,
+                           detail=f"value {value!r} と根拠 {evidence!r} が乖離（距離 {dist:.2f}）")
+    return CheckResult(name="evidence", status=CheckStatus.PASS)
+
+
+def _squash(s) -> str:
+    """比較用の正規化: NFKC（全角英数→半角、半角カナ→全角）、空白・ハイフン類・記号を除去、大文字化。"""
+    import unicodedata
+    t = unicodedata.normalize("NFKC", str(s or ""))
+    return re.sub(r"[\s\-‐‑–—−ー－〒()（）]", "", t).upper()
+
+
 def _lev(a: str, b: str) -> int:
     prev = list(range(len(b) + 1))
     for i, ca in enumerate(a, 1):

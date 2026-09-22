@@ -4,6 +4,11 @@ from __future__ import annotations
 import json
 from typing import Optional
 
+import base64
+import logging
+import os
+import secrets
+
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -11,14 +16,39 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 from app.pipeline import Pipeline
 from app.schemas import FieldStatus, OrderForm
 
-app = FastAPI(title="OCR Trust Agent", version="0.1.0")
+app = FastAPI(title="OCR Trust Agent", version="0.2.0")
 pipeline = Pipeline()
 env = Environment(loader=PackageLoader("app", "templates"), autoescape=select_autoescape(["html"]))
+log = logging.getLogger("uvicorn.error")
+
+MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
+_AUTH_USER = os.getenv("REVIEW_USER", "")
+_AUTH_PASS = os.getenv("REVIEW_PASSWORD", "")
+if not (_AUTH_USER and _AUTH_PASS):
+    log.warning("REVIEW_USER / REVIEW_PASSWORD 未設定: 認証なしで公開されます（ローカル開発のみ想定）")
+
+
+@app.middleware("http")
+async def basic_auth(request: Request, call_next):
+    """全ルート（/health 以外）に HTTP Basic 認証。資格情報は環境変数（Cloud Run では Secret）。"""
+    if _AUTH_USER and _AUTH_PASS and request.url.path != "/health":
+        hdr = request.headers.get("authorization", "")
+        ok = False
+        if hdr.startswith("Basic "):
+            try:
+                user, _, pw = base64.b64decode(hdr[6:]).decode().partition(":")
+                ok = secrets.compare_digest(user, _AUTH_USER) and secrets.compare_digest(pw, _AUTH_PASS)
+            except Exception:
+                ok = False
+        if not ok:
+            return Response("認証が必要です", status_code=401, headers={"WWW-Authenticate": 'Basic realm="ocr-trust-agent"'})
+    return await call_next(request)
 
 
 @app.get("/health")          # /healthz は Cloud Run のフロントエンドに予約されていて 404 になるため /health を使う
 def health():
-    return {"ok": True, "extractor": pipeline.extractor.name, "store": type(pipeline.store).__name__}
+    return {"ok": True, "extractor": pipeline.extractor.name, "store": type(pipeline.store).__name__,
+            "profile": pipeline.profile, "auth": bool(_AUTH_USER and _AUTH_PASS)}
 
 
 # ---- 受付 ----
@@ -26,6 +56,10 @@ def health():
 async def submit_form(image: UploadFile = File(...), sender_id: str = Form(...), format_id: str = Form("fax_v1"),
                       hint_json: Optional[str] = Form(None)):
     data = await image.read()
+    if len(data) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, f"画像が大きすぎます（上限 {MAX_UPLOAD_BYTES // 1024 // 1024} MB）")
+    if not data[:8].startswith((b"\x89PNG", b"\xff\xd8\xff")):
+        raise HTTPException(415, "PNG または JPEG のみ受け付けます")
     hint = OrderForm.model_validate(json.loads(hint_json)) if hint_json else None
     if pipeline.extractor.name == "mock" and hint is None:
         raise HTTPException(400, "モック抽出器では hint_json（正解）が必要です。GEMINI_API_KEY を設定すると実画像を読みます。")

@@ -10,3 +10,4 @@ data/fonts/*.otf
 models/*.joblib
 eval/out/
 .DS_Store
+.env.review

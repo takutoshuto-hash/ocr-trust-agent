@@ -7,12 +7,15 @@ import random
 import uuid
 from typing import Optional
 
+from datetime import timedelta
+
 from app.config import settings
-from app.extract import Extractor, get_extractor
+from app.extract import Extractor, get_extractor, sends_to_cloud
 from app.judge import Judge
+from app.judge.zones import load_zones, mask_zones
 from app.learn import CorrectionRouter, build_features
 from app.schemas import (AuditEvent, AutonomyLevel, Extraction, FieldDecision, FieldStatus, FormDecision,
-                         OrderForm, TrainingRecord, field_type_of)
+                         OrderForm, TrainingRecord, field_type_of, now_utc)
 from app.store import Store, get_store
 from app.trust import Policy, TrustLedger
 
@@ -22,10 +25,13 @@ class Pipeline:
                  policy: Optional[Policy] = None, router: Optional[CorrectionRouter] = None,
                  seed: Optional[int] = None):
         self.store = store or get_store()
-        self.extractor = extractor or get_extractor()
         self.policy = policy or Policy.load(settings.policy_path)
+        self.profile = str(self.policy.raw.get("profile", "lean"))
+        self.extractor = extractor or get_extractor(self.profile)
         self.ledger = TrustLedger(self.store, self.policy)
-        self.judge = Judge()
+        hc = self.policy.raw.get("hallucination", {}) or {}
+        self.judge = Judge(blank_ink_ratio=float(hc.get("blank_ink_ratio", 0.004)),
+                           evidence_max_distance=float(hc.get("evidence_max_distance", 0.5)))
         rc = self.policy.router
         self.router = router or CorrectionRouter(
             settings.model_dir,
@@ -40,11 +46,22 @@ class Pipeline:
                 hint: Optional[OrderForm] = None, double_read: bool = True) -> FormDecision:
         form_id = uuid.uuid4().hex[:12]
         examples = self.store.recent_confirmed(sender_id, format_id)
-        ex1 = self.extractor.extract(image, examples=examples, variant=0, hint=hint)
-        ex2 = self.extractor.extract(image, examples=examples, variant=1, hint=hint) if double_read else None
+
+        # データ最小化: クラウドへ送る場合は機密欄をマスクし、送信内容を監査ログに残す
+        to_send = image
+        masked: list[str] = []
+        if sends_to_cloud(self.extractor):
+            to_send, masked = self._minimize(image, format_id)
+            self._audit(form_id, "external_transmission", {
+                "destination": "gemini_api", "model": getattr(self.extractor, "model", ""), "bytes": len(to_send),
+                "masked_fields": masked, "profile": self.profile, "purpose": "extraction",
+            })
+
+        ex1 = self.extractor.extract(to_send, examples=examples, variant=0, hint=hint)
+        ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint) if double_read else None
         self._audit(form_id, "extracted", {"model": ex1.model, "double_read": double_read, "few_shot": len(examples)})
 
-        verdicts = self.judge.judge(ex1, ex2)
+        verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id)
         self._audit(form_id, "judged", {"fail": [p for p, v in verdicts.items() if v.any_fail],
                                         "disagree": [p for p, v in verdicts.items() if v.agreement is False]})
 
@@ -52,11 +69,25 @@ class Pipeline:
         for path, fv in ex1.fields.items():
             decisions[path] = self._decide(fv, verdicts[path], sender_id, format_id)
 
+        retention = int(self.policy.raw.get("retention_days", 30))
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,
-                          extraction=ex1, verdicts=verdicts, decisions=decisions)
+                          extraction=ex1, verdicts=verdicts, decisions=decisions,
+                          expires_at=now_utc() + timedelta(days=retention))
         self.store.put_form(fd, image)
         self._audit(form_id, "decided", {"review": fd.review_paths, "auto": len(decisions) - len(fd.review_paths)})
         return fd
+
+    def _minimize(self, image: bytes, format_id: str) -> tuple[bytes, list[str]]:
+        """ポリシー mask_before_cloud に該当する欄を白塗りしてから送る。ゾーン未定義の項目はマスクできない（監査に残る）。"""
+        import fnmatch
+        patterns = self.policy.raw.get("mask_before_cloud", []) or []
+        if not patterns:
+            return image, []
+        zones = load_zones(format_id)
+        targets = [p for p in zones if any(fnmatch.fnmatch(field_type_of(p), pat) or fnmatch.fnmatch(p, pat) for pat in patterns)]
+        if not targets:
+            return image, []
+        return mask_zones(image, [zones[p] for p in targets]), targets
 
     def _decide(self, fv, verdict, sender_id: str, format_id: str) -> FieldDecision:
         """優先順位:
@@ -174,6 +205,9 @@ class Pipeline:
             "audit_rate": round(n_audit / n_fields, 4) if n_fields else None,
             "auto_error_rate_audited": round(sum(r.corrected for r in audited) / len(audited), 4) if audited else None,
             "training_records": len(recs),
+            "hallucination_flags": sum(1 for f in forms for v in f.verdicts.values()
+                                       for c in v.checks if c.name == "blank_zone" and c.status.value == "fail"),
+            "profile": self.profile,
             "router": {"trained_on": self.router.trained_on, "threshold": self.router.threshold},
             "ledger_levels": {s.key: s.level for s in self.store.list_ledger() if s.level > 0},
         }

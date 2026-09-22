@@ -1,12 +1,24 @@
 # ガバナンスポリシー（人が宣言し、エージェントはこの範囲でしか自律しない）
 
+# 運用プロファイル
+#   lean   : 現場向け（予算が限られる）。Gemini Flash 系。切り出し・マスクしてクラウドへ送る
+#   secure : 高機密向け。VPC 内 / オンプレの Gemma（Ollama 互換 API）で読む。画像を外に出さない
+profile: lean
+
+# クラウドへ送る前にマスクする項目（secure では無関係。lean で機密欄がある様式に使う）
+# 例: ["applicant.my_number", "deliveries.bank_account"]
+mask_before_cloud: []
+
+# 抽出値の保持日数（Firestore TTL で自動削除）。監査ログは保持対象外
+retention_days: 30
+
 # 自律レベルの昇格条件（項目種別 × キー階層ごとに評価）
 promotion:
   L1:                      # ジャッジ全合格＋二重読み取り一致なら自動確定
     min_samples: 30
     max_correction_rate: 0.03
     min_streak: 20         # 連続無修正承認
-  L2:                      # 抽出値をそのまま自動確定（ジャッジ不合格でも）
+  L2:                      # 検証合格なら二重読み取り無しで自動確定（コスト削減）
     min_samples: 200
     max_correction_rate: 0.005
     min_streak: 100
@@ -24,6 +36,11 @@ new_sender_review:
   - "*.address"
   - "*.name"
 min_samples_for_sender: 5
+
+# ハルシネーション対策
+hallucination:
+  blank_ink_ratio: 0.0055       # 欄の「文字らしい」暗画素率がこれ未満なら「空欄」とみなす（合成データ実測: 空欄 max 0.0054 / 記入 min 0.0065）
+  evidence_max_distance: 0.5    # value と evidence の正規化レーベンシュタイン距離がこれ超なら不整合
 
 # 学習ルーター（修正予測分類器）
 router:

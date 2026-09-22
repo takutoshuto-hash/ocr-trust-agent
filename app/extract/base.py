@@ -1,4 +1,9 @@
-"""抽出器の共通インターフェース。GEMINI_API_KEY があれば Gemini、なければモック。"""
+"""抽出器の共通インターフェースと、プロファイルに応じた選択。
+
+  profile=secure       → Gemma（Ollama 互換 API、画像を外に出さない）
+  GEMINI_API_KEY あり   → Gemini
+  それ以外              → モック（合成データの正解に誤りを混入。オフライン評価用）
+"""
 from __future__ import annotations
 
 from typing import Optional, Protocol
@@ -21,9 +26,16 @@ class Extractor(Protocol):
     ) -> Extraction: ...
 
 
-def get_extractor() -> Extractor:
+def get_extractor(profile: str = "lean") -> Extractor:
+    if profile == "secure":
+        from .gemma_local import GemmaLocalExtractor
+        return GemmaLocalExtractor()
     if settings.use_gemini:
         from .gemini import GeminiExtractor
         return GeminiExtractor(api_key=settings.gemini_api_key, model=settings.gemini_model)
     from .mock import MockExtractor
     return MockExtractor()
+
+
+def sends_to_cloud(extractor: Extractor) -> bool:
+    return extractor.name == "gemini"

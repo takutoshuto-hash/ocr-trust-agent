@@ -162,6 +162,7 @@ class FormDecision(BaseModel):
     decisions: dict[str, FieldDecision]
     status: str = "pending"   # pending | confirmed
     final: Optional[OrderForm] = None
+    expires_at: Optional[datetime] = None   # 保持期限（Firestore TTL で自動削除）
 
     @property
     def needs_review(self) -> bool:

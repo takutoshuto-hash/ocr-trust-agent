@@ -71,16 +71,24 @@ def phone(rng):
                        f"03-{rng.randint(3000,6999)}-{rng.randint(1000,9999)}"])
 
 
-def make_truth(rng, zips, products, sender_pool):
+BLANK_RATE = 0.12   # 任意項目（フリガナ・電話・会社名・のし）が空欄で出される割合
+
+
+def make_truth(rng, zips, products, sender_pool, blank_rate: float = BLANK_RATE):
     name, kana = person(rng)
     z, a = address(rng, zips)
     sender = rng.choice(sender_pool)
-    truth = {"applicant": {"name": name, "name_kana": kana, "zip": z, "address": a, "phone": sender["phone"],
+
+    def maybe_blank(v):
+        return "" if rng.random() < blank_rate else v
+
+    truth = {"applicant": {"name": name, "name_kana": maybe_blank(kana), "zip": z, "address": a, "phone": sender["phone"],
                            "organization": rng.choice(ORGS)}, "deliveries": []}
     for _ in range(rng.choice([1, 1, 2, 3])):
         n, k = person(rng)
         dz, da = address(rng, zips)
-        truth["deliveries"].append({"name": n, "name_kana": k, "zip": dz, "address": da, "phone": phone(rng),
+        truth["deliveries"].append({"name": n, "name_kana": maybe_blank(k), "zip": dz, "address": da,
+                                    "phone": maybe_blank(phone(rng)),
                                     "product_code": rng.choice(products), "qty": rng.choice([1, 1, 1, 2, 3]),
                                     "noshi_name": rng.choice(NOSHI)})
     return truth, sender["id"]
