@@ -97,12 +97,15 @@ def review_form(form_id: str):
     fd = pipeline.store.get_form(form_id)
     if not fd:
         raise HTTPException(404)
-    from app.judge.agent import explain_review
     from app.judge.zones import load_zones
     pipeline.mark_review_opened(form_id)   # 確認時間の実測（開いた時刻）
+    if fd.explanation is None:             # 旧データ: 一度だけ生成して保存
+        from app.judge.agent import explain_review
+        fd.explanation = explain_review(fd)
+        pipeline.store.put_form(fd, b"")
     tpl = env.get_template("review.html")
     zones = {k: list(v) for k, v in load_zones(fd.format_id).items()}
-    return tpl.render(fd=fd, FieldStatus=FieldStatus, explanation=explain_review(fd), zones_json=json.dumps(zones),
+    return tpl.render(fd=fd, FieldStatus=FieldStatus, explanation=fd.explanation, zones_json=json.dumps(zones),
                       groups=_group_fields(fd))
 
 

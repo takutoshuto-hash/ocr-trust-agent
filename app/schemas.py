@@ -164,6 +164,7 @@ class FormDecision(BaseModel):
     status: str = "pending"   # pending | confirmed
     final: Optional[OrderForm] = None
     expires_at: Optional[datetime] = None   # 保持期限（Firestore TTL で自動削除）
+    explanation: Optional[str] = None             # ADK 説明エージェントの要確認理由（受付時に生成して保存。確認画面を即時に開くため）
     review_opened_at: Optional[datetime] = None   # 人が確認画面を最初に開いた時刻（実測用）
     review_seconds: Optional[float] = None        # 開いてから確定までの秒数（要確認項目だけ見る場合の実測）
 

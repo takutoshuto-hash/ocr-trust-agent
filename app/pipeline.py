@@ -107,6 +107,13 @@ class Pipeline:
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,
                           extraction=ex1, verdicts=verdicts, decisions=decisions,
                           expires_at=now_utc() + timedelta(days=retention))
+        if fd.needs_review:
+            # 要確認理由の説明文は受付時に作って保存（確認画面を開くときに LLM を待たせない）
+            try:
+                from app.judge.agent import explain_review
+                fd.explanation = explain_review(fd)
+            except Exception as e:   # 説明が作れなくても受付は止めない
+                fd.explanation = f"（説明の生成に失敗: {str(e)[:120]}）"
         self.store.put_form(fd, image)
         self._audit(form_id, "decided", {"review": fd.review_paths, "auto": len(decisions) - len(fd.review_paths)})
         return fd
