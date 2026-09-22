@@ -165,13 +165,14 @@ class FormDecision(BaseModel):
     final: Optional[OrderForm] = None
     expires_at: Optional[datetime] = None   # 保持期限（Firestore TTL で自動削除）
     explanation: Optional[str] = None             # ADK 説明エージェントの要確認理由（受付時に生成して保存。確認画面を即時に開くため）
+    form_flags: list[str] = Field(default_factory=list)   # 帳票全体の警告（例: お届け先ブロックの読み落とし疑い）
     review_opened_at: Optional[datetime] = None   # 人が確認画面を最初に開いた時刻（実測用）
     review_seconds: Optional[float] = None        # 開いてから確定までの秒数（要確認項目だけ見る場合の実測）
 
     @property
     def needs_review(self) -> bool:
-        """人が開く必要があるか（要確認 or 監査サンプル）。"""
-        return any(d.human_sees for d in self.decisions.values())
+        """人が開く必要があるか（要確認 or 監査サンプル or 帳票全体の警告）。"""
+        return bool(self.form_flags) or any(d.human_sees for d in self.decisions.values())
 
     @property
     def review_paths(self) -> list[str]:
@@ -198,6 +199,7 @@ class TrainingRecord(BaseModel):
     was_auto: bool
     verified: bool = True      # 人が実際に目視したラベルか（自動確定で未監査なら False → 学習に使わない）
     judge_ok: bool = True
+    weight: float = 1.0        # 重要度重み。監査サンプル（自動確定からの無作為抽出）は 1/監査率。要確認項目は 1（選択バイアスの補正）
     features: dict[str, float]
     created_at: datetime = Field(default_factory=now_utc)
 

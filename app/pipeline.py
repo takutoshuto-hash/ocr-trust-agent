@@ -126,8 +126,11 @@ class Pipeline:
         self.budget.add_auto(sum(1 for d in decisions.values() if d.status == FieldStatus.AUTO))
 
         retention = int(self.policy.raw.get("retention_days", 30))
+        form_flags = self.judge.detect_missing_blocks(ex1, image=image, format_id=format_id)
+        if form_flags:
+            self._audit(form_id, "block_missing", {"flags": form_flags, "extracted_deliveries": len(ex1.form.deliveries)})
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,
-                          extraction=ex1, verdicts=verdicts, decisions=decisions,
+                          extraction=ex1, verdicts=verdicts, decisions=decisions, form_flags=form_flags,
                           expires_at=now_utc() + timedelta(days=retention))
         if not fd.needs_review:
             fd.explanation = "要確認項目はありません。原本を一瞥して確定してください。"
@@ -228,10 +231,12 @@ class Pipeline:
                 {"sender": self.ledger.stat(f"{d.field_type}|sender:{fd.sender_id}"),
                  "format": self.ledger.stat(f"{d.field_type}|format:{fd.format_id}"),
                  "global": self.ledger.stat(f"{d.field_type}|global")})
+            # 選択バイアスの補正: 監査サンプル（自動確定からの無作為抽出）は 1/監査率 の重みで母集団を代表させる
+            weight = (1.0 / max(1e-3, float(self.policy.raw.get("audit_sampling_rate", 0.02)))) if d.audit else 1.0
             recs.append(TrainingRecord(form_id=form_id, path=path, field_type=d.field_type, sender_id=fd.sender_id,
                                        format_id=fd.format_id, extracted=d.value, final=final, corrected=corrected,
                                        was_auto=d.status == FieldStatus.AUTO, verified=d.human_sees,
-                                       judge_ok=d.judge_ok, features=feats))
+                                       judge_ok=d.judge_ok, weight=weight, features=feats))
             if d.human_sees:   # 台帳も人が見た実績だけで更新
                 ledger_events += self.ledger.record(d.field_type, fd.sender_id, fd.format_id, corrected, judge_ok=d.judge_ok)
 

@@ -49,39 +49,48 @@ class CorrectionRouter:
             return {"trained": False, "n": len(records), "min_samples": self.min_samples}
         X = np.array([to_vector(r.features) for r in records], dtype=float)
         y = np.array([1 if r.corrected else 0 for r in records], dtype=int)
+        w = np.array([float(getattr(r, "weight", 1.0) or 1.0) for r in records], dtype=float)
         if y.sum() == 0 or y.sum() == len(y):
             return {"trained": False, "n": len(records), "reason": "ラベルが片側のみ"}
 
         from sklearn.ensemble import HistGradientBoostingClassifier
-        from sklearn.model_selection import StratifiedKFold, cross_val_predict
+        from sklearn.model_selection import StratifiedKFold
 
         def make():
             return HistGradientBoostingClassifier(max_iter=200, learning_rate=0.05, max_leaf_nodes=15, random_state=42)
 
-        # 閾値は out-of-fold 予測（全データ）で決める。25% の検証分割だと少量期に 1 件の誤りで閾値が 0 に振れて不安定なため
+        # 閾値は out-of-fold 予測（全データ）で決める。25% の検証分割だと少量期に 1 件の誤りで閾値が 0 に振れて不安定なため。
+        # 重み: 監査サンプル（自動確定からの無作為抽出）は 1/監査率 → 「人が見た項目」に偏った学習データを母集団に戻す（選択バイアス補正）
         n_splits = 5 if y.sum() >= 5 else 2
-        p = cross_val_predict(make(), X, y, cv=StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42), method="predict_proba")[:, 1]
-        threshold = self._threshold_for_target(p, y)
-        model = make().fit(X, y)
+        p = np.zeros(len(y))
+        for tr, va in StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42).split(X, y):
+            m = make().fit(X[tr], y[tr], sample_weight=w[tr])
+            p[va] = m.predict_proba(X[va])[:, 1]
+        threshold = self._threshold_for_target(p, y, w)
+        model = make().fit(X, y, sample_weight=w)
 
         self.model, self.threshold, self.trained_on = model, threshold, len(records)
         self._save()
         auto_mask = p < threshold
         return {
             "trained": True, "n": len(records), "threshold": round(float(threshold), 4),
-            "cv_auto_rate": round(float(auto_mask.mean()), 4),
-            "cv_auto_error_rate": round(float(y[auto_mask].mean()) if auto_mask.any() else 0.0, 4),
+            "weighted_n": round(float(w.sum()), 1),
+            "cv_auto_rate": round(float(w[auto_mask].sum() / w.sum()), 4),
+            "cv_auto_error_rate": round(float((w[auto_mask] * y[auto_mask]).sum() / w[auto_mask].sum()) if auto_mask.any() else 0.0, 4),
         }
 
-    def _threshold_for_target(self, p: np.ndarray, y: np.ndarray) -> float:
-        """out-of-fold 予測上で、自動確定集合の誤り率の上側信頼限界（Wilson 95%）が target 以下になる最大の閾値。
+    def _threshold_for_target(self, p: np.ndarray, y: np.ndarray, w: Optional[np.ndarray] = None) -> float:
+        """out-of-fold 予測上で、自動確定集合の（重み付き）誤り率の上側信頼限界（Wilson 95%）が target 以下になる最大の閾値。
 
         単純な標本誤り率だと n が小さいうちに楽観的になるので、信頼区間の上限で判定して安全側に倒す。
+        重みは有効標本数として扱う（重み付き件数の合計を n とする）。
         """
+        if w is None:
+            w = np.ones(len(p))
         order = np.argsort(p)
-        ps, ys = p[order], y[order]
-        cum_err = np.cumsum(ys)
-        n = np.arange(1, len(ys) + 1)
+        ps, ys, ws = p[order], y[order], w[order]
+        cum_err = np.cumsum(ws * ys)
+        n = np.cumsum(ws)
         z = 1.96
         phat = cum_err / n
         upper = (phat + z * z / (2 * n) + z * np.sqrt(phat * (1 - phat) / n + z * z / (4 * n * n))) / (1 + z * z / n)

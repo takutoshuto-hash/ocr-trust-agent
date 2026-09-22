@@ -48,6 +48,25 @@ class Judge:
             verdicts[path] = v
         return verdicts
 
+    def detect_missing_blocks(self, primary: Extraction, *, image: Optional[bytes], format_id: Optional[str]) -> list[str]:
+        """抽出結果に無いお届け先ブロックの欄にインクがあれば「読み落とし疑い」を返す（帳票全体の警告）。"""
+        if not image or not format_id:
+            return []
+        zones = load_zones(format_id)
+        img = open_image(image)
+        if img is None or not zones:
+            return []
+        n_extracted = len(primary.form.deliveries)
+        flags: list[str] = []
+        b = n_extracted
+        while f"deliveries[{b}].name" in zones:
+            inked = [k for k in ("name", "zip", "address") if f"deliveries[{b}].{k}" in zones
+                     and ink_ratio(img, zones[f"deliveries[{b}].{k}"]) >= self.blank_ink_ratio]
+            if len(inked) >= 2:
+                flags.append(f"お届け先 {b + 1} が読み取られていません（欄に記入あり: {', '.join(inked)}）。原本を確認して追加してください")
+            b += 1
+        return flags
+
     # --- 項目種別ごとの検証セット ---
     def _checks_for(self, ft: str, path: str, value, flat: dict) -> list:
         prefix = path.rsplit(".", 1)[0]

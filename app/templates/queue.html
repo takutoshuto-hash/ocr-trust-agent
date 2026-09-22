@@ -18,7 +18,7 @@ body{font-family:system-ui,sans-serif;margin:24px;color:#222}
 <table><tr><th>ID</th><th>送り主</th><th>様式</th><th>要確認項目</th><th></th></tr>
 {% for f in forms %}
 <tr><td>{{ f.form_id }}</td><td>{{ f.sender_id }}</td><td>{{ f.format_id }}</td>
-<td>{% for p in f.review_paths %}<span class="tag">{{ p }}</span> {% endfor %}</td>
+<td>{% for fl in f.form_flags %}<span class="tag">⚠ {{ fl[:24] }}…</span> {% endfor %}{% for p in f.review_paths %}<span class="tag">{{ p }}</span> {% endfor %}</td>
 <td><a href="/review/{{ f.form_id }}">確認する</a></td></tr>
 {% else %}<tr><td colspan="5">要確認の帳票はありません</td></tr>{% endfor %}
 </table>
