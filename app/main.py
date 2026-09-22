@@ -98,9 +98,33 @@ def review_form(form_id: str):
     if not fd:
         raise HTTPException(404)
     from app.judge.agent import explain_review
+    from app.judge.zones import load_zones
     pipeline.mark_review_opened(form_id)   # 確認時間の実測（開いた時刻）
     tpl = env.get_template("review.html")
-    return tpl.render(fd=fd, FieldStatus=FieldStatus, explanation=explain_review(fd))
+    zones = {k: list(v) for k, v in load_zones(fd.format_id).items()}
+    return tpl.render(fd=fd, FieldStatus=FieldStatus, explanation=explain_review(fd), zones_json=json.dumps(zones),
+                      groups=_group_fields(fd))
+
+
+_JP = {"zip": "郵便番号", "address": "住所", "name": "氏名", "name_kana": "フリガナ", "phone": "電話番号",
+       "organization": "会社名", "product_code": "商品番号", "qty": "数量", "noshi_name": "のし名入れ"}
+
+
+def _group_fields(fd) -> list[dict]:
+    """確認画面用: 依頼主／お届け先ごとに項目をまとめ、日本語ラベルを付ける。"""
+    import re
+    groups: dict[str, dict] = {}
+    for path, d in fd.decisions.items():
+        m = re.fullmatch(r"applicant\.(\w+)", path)
+        if m:
+            key, title, field = "applicant", "ご依頼主", m.group(1)
+        else:
+            m = re.fullmatch(r"deliveries\[(\d+)\]\.(\w+)", path)
+            key, title, field = f"d{m.group(1)}", f"お届け先 {int(m.group(1)) + 1}", m.group(2)
+        g = groups.setdefault(key, {"title": title, "fields": [], "review": 0})
+        g["fields"].append({"path": path, "label": _JP.get(field, field), "d": d, "v": fd.verdicts[path]})
+        g["review"] += int(d.human_sees)
+    return list(groups.values())
 
 
 @app.post("/review/{form_id}")

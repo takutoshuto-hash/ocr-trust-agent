@@ -1,34 +1,88 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><title>確認 {{ fd.form_id }}</title>
 <style>
-body{font-family:system-ui,sans-serif;margin:0;color:#222}
-.wrap{display:grid;grid-template-columns:1fr 1fr;height:100vh}
-.img{overflow:auto;background:#f4f4f4;padding:12px}.img img{max-width:100%}
-.form{overflow:auto;padding:16px}
-.row{display:grid;grid-template-columns:220px 1fr;gap:8px;align-items:center;padding:6px 8px;border-radius:6px}
-.row.review{background:#fff3f3;border:2px solid #e33}.row.auto{opacity:.55}
-.row.audit{background:#fffbe6;border:2px solid #d9a400}
-.row input{width:100%;padding:6px;font-size:15px}
+body{font-family:system-ui,sans-serif;margin:0;color:#222;background:#fff}
+.wrap{display:grid;grid-template-columns:minmax(360px,48%) 1fr;height:100vh}
+.img{overflow:auto;background:#f0f0f0;padding:12px;position:relative}
+.imgbox{position:relative;display:inline-block}.imgbox img{max-width:100%;display:block}
+.hl{position:absolute;border:3px solid #e33;background:rgba(238,51,51,.10);border-radius:4px;display:none;pointer-events:none}
+.form{overflow:auto;padding:14px 18px}
+h2{margin:0 0 6px;font-size:18px}.meta{color:#666;font-size:13px;margin-bottom:8px}
+.explain{background:#f7f7ff;border:1px solid #ccd;padding:8px 10px;white-space:pre-wrap;font-size:12px;margin-bottom:10px;max-height:120px;overflow:auto}
+.group{margin:10px 0 14px}.group h3{margin:0 0 4px;font-size:14px;color:#333;border-bottom:1px solid #ddd;padding-bottom:3px}
+.group h3 small{color:#a00;font-weight:normal;margin-left:8px}
+.row{display:grid;grid-template-columns:96px 1fr;gap:6px;align-items:center;padding:5px 8px;border-radius:6px;margin:2px 0}
+.row.review{background:#fff3f3;border:2px solid #e33}.row.audit{background:#fffbe6;border:2px solid #d9a400}.row.auto{opacity:.5}
+.row.focus{outline:3px solid #2a78d6}
+.row label{font-size:13px}.row label small{display:block;color:#888;font-size:11px}
+.row input{width:100%;padding:6px;font-size:16px;box-sizing:border-box}
+.crop{grid-column:1/3;background:#fff;border:1px solid #ddd;border-radius:4px;overflow:hidden}
+.crop canvas{display:block;width:100%;height:auto}
 .reason{grid-column:1/3;font-size:12px;color:#a00}
-.explain{background:#f7f7ff;border:1px solid #ccd;padding:10px;white-space:pre-wrap;font-size:13px;margin-bottom:12px}
-button{font-size:16px;padding:10px 18px}
-</style></head><body>
+.done summary{cursor:pointer;color:#666;font-size:13px;margin:6px 0}
+.bar{position:sticky;bottom:0;background:#fff;border-top:1px solid #ddd;padding:10px 0;display:flex;gap:12px;align-items:center}
+button{font-size:16px;padding:10px 18px}.hint{color:#666;font-size:12px}
+</style></head>
+<body>
 <div class="wrap">
-  <div class="img"><img src="/forms/{{ fd.form_id }}/image" alt="原本"></div>
+  <div class="img"><div class="imgbox"><img id="src" src="/forms/{{ fd.form_id }}/image" alt="原本"><div class="hl" id="hl"></div></div></div>
   <div class="form">
-    <h2>{{ fd.form_id }} <small>送り主 {{ fd.sender_id }} / 様式 {{ fd.format_id }}</small></h2>
+    <h2>要確認 {{ fd.review_paths|length }} 項目 <span style="font-weight:normal;font-size:13px;color:#666">/ 全 {{ fd.decisions|length }} 項目</span></h2>
+    <div class="meta">帳票 {{ fd.form_id }} · 送り主 {{ fd.sender_id }} · 様式 {{ fd.format_id }}</div>
     <div class="explain">{{ explanation }}</div>
-    <form method="post" action="/review/{{ fd.form_id }}">
-      <p>確認者: <input name="reviewer" value="staff" style="width:120px"></p>
-      {% for path, d in fd.decisions.items() %}
-      <div class="row {{ 'review' if d.status == FieldStatus.REVIEW else ('audit' if d.audit else 'auto') }}">
-        <label>{{ path }}<br><small>L{{ d.level.value }}{% if d.p_correction is not none %} · p={{ '%.3f' % d.p_correction }}{% endif %}</small></label>
-        <input name="field:{{ path }}" value="{{ d.value }}" {% if not d.human_sees %}tabindex="-1"{% endif %}>
-        {% if d.human_sees %}<div class="reason">{{ d.reasons | join(' / ') }} — 検証: {{ fd.verdicts[path].reason }}</div>{% endif %}
+    <form method="post" action="/review/{{ fd.form_id }}" id="f">
+      <input type="hidden" name="reviewer" value="staff">
+      {% for g in groups %}
+      <div class="group"><h3>{{ g.title }}{% if g.review %}<small>要確認 {{ g.review }}</small>{% else %}<small style="color:#2a7">自動確定</small>{% endif %}</h3>
+        {% for x in g.fields if x.d.human_sees %}
+        <div class="row {{ 'review' if x.d.status == FieldStatus.REVIEW else 'audit' }}" data-path="{{ x.path }}">
+          <label>{{ x.label }}<small>{{ '抜き取り確認' if x.d.audit else 'L' ~ x.d.level.value }}{% if x.d.resolved_from is not none %} · 修復済{% endif %}</small></label>
+          <input name="field:{{ x.path }}" value="{{ x.d.value }}" data-review="1" autocomplete="off">
+          <div class="crop"><canvas data-path="{{ x.path }}"></canvas></div>
+          <div class="reason">{{ x.v.reason }}{% if x.d.resolved_from is not none %} ／ エージェントが {{ x.d.resolved_from }} → {{ x.d.value }} に修復{% endif %}</div>
+        </div>
+        {% endfor %}
+        {% set autos = g.fields|rejectattr('d.human_sees')|list %}
+        {% if autos %}
+        <details class="done"><summary>自動確定 {{ autos|length }} 項目を表示</summary>
+          {% for x in autos %}
+          <div class="row auto" data-path="{{ x.path }}"><label>{{ x.label }}<small>L{{ x.d.level.value }}</small></label><input name="field:{{ x.path }}" value="{{ x.d.value }}" tabindex="-1"></div>
+          {% endfor %}
+        </details>
+        {% endif %}
       </div>
       {% endfor %}
-      <p><button type="submit">確定して次へ（Enter）</button></p>
+      <div class="bar"><button type="submit" id="submit">確定（次の帳票へ）</button><span class="hint">Enter: 次の要確認項目へ ／ 最後の項目で Enter: 確定 ／ Esc: 原本の位置へ戻る</span></div>
     </form>
   </div>
 </div>
+<script>
+const ZONES = {{ zones_json|safe }};
+const img = document.getElementById('src'), hl = document.getElementById('hl');
+const inputs = Array.from(document.querySelectorAll('input[data-review="1"]'));
+function showZone(path){
+  const z = ZONES[path]; if (!z) { hl.style.display='none'; return; }
+  hl.style.left = (z[0]*100)+'%'; hl.style.top = (z[1]*100)+'%'; hl.style.width = ((z[2]-z[0])*100)+'%'; hl.style.height = ((z[3]-z[1])*100)+'%'; hl.style.display='block';
+  const box = img.parentElement.parentElement; const y = z[1]*img.clientHeight - box.clientHeight*0.35; box.scrollTo({top: Math.max(0,y), behavior:'smooth'});
+}
+function drawCrops(){
+  document.querySelectorAll('canvas[data-path]').forEach(c => {
+    const z = ZONES[c.dataset.path]; if (!z) { c.parentElement.style.display='none'; return; }
+    const W = img.naturalWidth, H = img.naturalHeight, pad = 0.004;
+    const x1 = Math.max(0,(z[0]-pad)*W), y1 = Math.max(0,(z[1]-pad)*H), w = Math.min(W,(z[2]+pad)*W)-x1, h = Math.min(H,(z[3]+pad)*H)-y1;
+    c.width = Math.round(w); c.height = Math.round(h);
+    c.getContext('2d').drawImage(img, x1, y1, w, h, 0, 0, c.width, c.height);
+  });
+}
+img.complete ? drawCrops() : img.addEventListener('load', drawCrops);
+inputs.forEach((inp, i) => {
+  inp.addEventListener('focus', () => { document.querySelectorAll('.row.focus').forEach(r=>r.classList.remove('focus')); inp.closest('.row').classList.add('focus'); showZone(inp.closest('.row').dataset.path); });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); if (i + 1 < inputs.length) inputs[i+1].focus(); else document.getElementById('submit').click(); }
+    if (e.key === 'Escape') { showZone(inp.closest('.row').dataset.path); }
+  });
+});
+if (inputs.length) { inputs[0].focus(); inputs[0].closest('.row').classList.add('focus'); showZone(inputs[0].closest('.row').dataset.path); }
+else document.getElementById('submit').focus();
+</script>
 </body></html>
