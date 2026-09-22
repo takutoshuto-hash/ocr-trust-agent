@@ -30,7 +30,7 @@ def test_ink_ratio_distinguishes_blank_and_filled():
     img, zones = open_image(png), load_zones("fax_v1")
     filled = ink_ratio(img, zones["applicant.name"])
     blank = ink_ratio(img, zones["applicant.name_kana"])   # blank_rate=1.0 → フリガナは必ず空欄
-    assert filled > 0.0055 > blank, (filled, blank)
+    assert filled > 0.008 > blank, (filled, blank)
 
 
 def test_blank_zone_flags_invented_value():

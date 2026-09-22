@@ -35,16 +35,17 @@ def open_image(image: bytes) -> Optional[Image.Image]:
 
 
 def ink_ratio(img: Image.Image, zone: tuple[float, float, float, float], inset: int = 5, dark: int = 128,
-              max_run: int = 60) -> float:
+              max_run: int = 60, window_px: int = 320) -> float:
     """ゾーン内の「文字らしい」暗画素率。
 
-    枠線（横一直線）や FAX の縦筋（縦一直線）は、行または列の大半が暗い線として除外してから数える。
-    傾いた帳票で枠線がゾーンに入っても空欄を誤って「記入あり」にしないため。
+    - 枠線（横）や FAX の縦筋（縦）は「長い run」として除外してから数える（傾いた帳票でも空欄を誤らない）
+    - 記入は左寄せが普通なので、欄の左端から window_px だけを見る（数量「1」のような短い値を空欄と誤らない）
     """
     import numpy as np
 
     W, H = img.size
     x1, y1, x2, y2 = int(zone[0] * W) + inset, int(zone[1] * H) + inset, int(zone[2] * W) - inset, int(zone[3] * H) - inset
+    x2 = min(x2, x1 + window_px)
     if x2 <= x1 or y2 <= y1:
         return 0.0
     a = np.asarray(img.crop((x1, y1, x2, y2)), dtype=np.uint8) < dark

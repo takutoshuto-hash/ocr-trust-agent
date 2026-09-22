@@ -16,7 +16,7 @@ from .zones import ink_ratio, load_zones, open_image
 
 
 class Judge:
-    def __init__(self, blank_ink_ratio: float = 0.0055, evidence_max_distance: float = 0.5):
+    def __init__(self, blank_ink_ratio: float = 0.008, evidence_max_distance: float = 0.5):
         self.blank_ink_ratio = blank_ink_ratio
         self.evidence_max_distance = evidence_max_distance
 
@@ -32,8 +32,10 @@ class Judge:
             ft = field_type_of(path)
             v = FieldVerdict(path=path, field_type=ft)
             v.checks = self._checks_for(ft, path, value, flat)
-            # ハルシネーション対策
-            if img is not None and path in zones:
+            # ハルシネーション対策（空欄検知）
+            #   - 整数項目（数量）は「未記入なら 1」がプロンプト上の既定値なので対象外
+            #   - 1 文字の値は薄い線 1 本と FAX ノイズを画素で区別できないため対象外（2 文字以上のみ）
+            if img is not None and path in zones and not isinstance(value, int) and len(str(value).strip()) != 1:
                 v.checks.append(T.check_blank_zone(ink_ratio(img, zones[path]), str(value), self.blank_ink_ratio))
             fv = primary.fields.get(path)
             if fv is not None and fv.evidence and primary.model != "mock" and not isinstance(value, int):
