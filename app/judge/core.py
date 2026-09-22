@@ -40,6 +40,8 @@ class Judge:
             fv = primary.fields.get(path)
             if fv is not None and fv.evidence and primary.model != "mock" and not isinstance(value, int):
                 v.checks.append(T.check_evidence(str(value), fv.evidence, self.evidence_max_distance))
+                if path.rsplit(".", 1)[-1] in ("name", "organization", "address", "noshi_name"):
+                    v.checks.append(T.check_variant_kanji(str(value), fv.evidence))   # 復元済みなら PASS、残っていれば FAIL
             if flat2 is not None:
                 v.agreement = _norm(flat2.get(path)) == _norm(value)
             v.reason = self._explain(v)

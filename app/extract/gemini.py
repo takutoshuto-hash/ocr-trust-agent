@@ -60,6 +60,8 @@ PROMPTS = [
         "- 読めない項目は value を空文字にし、推測で創作しない\n"
         "- zip は NNN-NNNN、phone はハイフン区切り、qty は整数（無ければ 1）\n"
         "- name_kana はカタカナ。product_code は商品番号欄の英数字をそのまま\n"
+        "- 氏名・会社名・住所・のし名入れの漢字は書かれたとおりに保つ。異体字（髙・﨑・邊・邉・齋・齊・德・栁・濵・瀨 など）を"
+        "常用漢字（高・崎・辺・斎・斉・徳・柳・浜・瀬）に置き換えない。宛名に使う文字なので字体そのものが情報である\n"
         "- 空欄のお届け先は配列に含めない\n"
         "- raw_text に画像全体の文字起こしを入れる"
     ),
@@ -68,7 +70,9 @@ PROMPTS = [
         "Transcribe the applicant and up to 3 delivery destinations into the given JSON schema. "
         "For each field return value (normalized), confidence (0-1), and evidence (exact characters as seen). "
         "Never invent values; leave unreadable fields empty. zip=NNN-NNNN, phone with hyphens, qty integer (default 1), "
-        "name_kana in katakana, product_code as written. Omit empty delivery blocks. Put the full transcription in raw_text."
+        "name_kana in katakana, product_code as written. Keep kanji exactly as written for names, company names, addresses and "
+        "noshi names: never normalize variant characters (髙→高, 﨑→崎, 邊/邉→辺, 齋→斎, 齊→斉, 德→徳, 栁→柳, 濵→浜, 瀨→瀬) — the glyph itself "
+        "is information on a shipping label. Omit empty delivery blocks. Put the full transcription in raw_text."
     ),
 ]
 
@@ -98,7 +102,8 @@ class GeminiExtractor:
         """欄の切り出し画像を1項目だけ読む（行動するエージェントの再読み取り）。戻り値 (value, evidence) or None。"""
         key = field_type.rsplit(".", 1)[-1]
         prompt = FIELD_PROMPT.get(key, "この画像は注文書の1つの欄だけを切り出したものです。手書きの記入内容を読んでください。")
-        prompt += " 空欄なら value を空文字にし、推測で創作しないこと。evidence には読んだ文字列そのものを入れること。"
+        prompt += (" 空欄なら value を空文字にし、推測で創作しないこと。evidence には読んだ文字列そのものを入れること。"
+                   "漢字は書かれたとおりに保ち、異体字（髙・﨑・邊・齋 など）を常用漢字に置き換えないこと。")
         resp = self.client.models.generate_content(
             model=self.premium_model if premium else self.model,
             contents=[types.Part.from_bytes(data=crop, mime_type="image/png"), prompt],
@@ -168,6 +173,15 @@ def _to_extraction(data: dict, *, model: str, latency_ms: int) -> Extraction:
         for k in ["name", "name_kana", "zip", "address", "phone", "product_code", "noshi_name"]:
             take(f"deliveries[{i}].{k}", d.get(k))
         take(f"deliveries[{i}].qty", d.get("qty"), as_int=True)
+
+    # 異体字の復元: モデルが value を常用漢字に寄せても evidence（読んだ文字列そのもの）に異体字があれば value を戻す
+    from app.judge.tools import restore_variant_kanji
+    for path, fv in fields.items():
+        if isinstance(fv.value, str) and fv.evidence and path.rsplit(".", 1)[-1] in ("name", "organization", "address", "noshi_name"):
+            new, restored = restore_variant_kanji(fv.value, fv.evidence)
+            if restored:
+                fv.value = new
+                flat[path] = new
 
     return Extraction(
         form=OrderForm.from_flat(flat),

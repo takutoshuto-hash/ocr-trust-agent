@@ -129,7 +129,9 @@ class Pipeline:
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,
                           extraction=ex1, verdicts=verdicts, decisions=decisions,
                           expires_at=now_utc() + timedelta(days=retention))
-        if fd.needs_review and self.explain:
+        if not fd.needs_review:
+            fd.explanation = "要確認項目はありません。原本を一瞥して確定してください。"
+        elif self.explain:
             # 要確認理由の説明文は受付時に作って保存（確認画面を開くときに LLM を待たせない）
             try:
                 from app.judge.agent import explain_review

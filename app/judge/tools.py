@@ -140,6 +140,39 @@ def check_evidence(value: str, evidence: str, max_distance: float) -> CheckResul
     return CheckResult(name="evidence", status=CheckStatus.PASS)
 
 
+# 宛名でよく使われる異体字と、モデルが寄せがちな常用漢字
+VARIANT_KANJI = {"髙": "高", "﨑": "崎", "邊": "辺", "邉": "辺", "齋": "斎", "齊": "斉", "德": "徳", "栁": "柳",
+                 "濵": "浜", "濱": "浜", "瀨": "瀬", "𠮷": "吉", "𩙿": "飯", "眞": "真", "櫻": "桜", "澤": "沢", "壽": "寿"}
+
+
+def restore_variant_kanji(value: str, evidence: str) -> tuple[str, list[str]]:
+    """evidence（読んだ文字列そのもの）に異体字があり、value で常用漢字に置き換わっていれば value 側を異体字に戻す。
+
+    戻り値: (復元後の値, 復元した文字の一覧)。位置は空白を除いた文字列で対応づける。
+    """
+    if not value or not evidence:
+        return value, []
+    v = list(value)
+    ev = [ch for ch in evidence if not ch.isspace()]
+    vi = [i for i, ch in enumerate(v) if not ch.isspace()]
+    if len(ev) != len(vi):
+        return value, []
+    restored = []
+    for pos, ch in zip(vi, ev):
+        if ch in VARIANT_KANJI and v[pos] == VARIANT_KANJI[ch]:
+            v[pos] = ch
+            restored.append(f"{VARIANT_KANJI[ch]}→{ch}")
+    return "".join(v), restored
+
+
+def check_variant_kanji(value: str, evidence: str) -> CheckResult:
+    """value に常用漢字があり evidence が異体字なら、字体が失われた疑い（宛名では別字扱い）。"""
+    _, restored = restore_variant_kanji(value, evidence)
+    if restored:
+        return CheckResult(name="variant_kanji", status=CheckStatus.FAIL, detail="異体字が常用漢字に置換された疑い: " + ", ".join(restored))
+    return CheckResult(name="variant_kanji", status=CheckStatus.PASS)
+
+
 def _squash(s) -> str:
     """比較用の正規化: NFKC（全角英数→半角、半角カナ→全角）、空白・ハイフン類・記号を除去、大文字化。"""
     import unicodedata

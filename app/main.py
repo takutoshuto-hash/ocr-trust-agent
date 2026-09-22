@@ -99,6 +99,7 @@ def review_form(form_id: str):
         raise HTTPException(404)
     from app.judge.zones import load_zones
     pipeline.mark_review_opened(form_id)   # 確認時間の実測（開いた時刻）
+    fd = pipeline.store.get_form(form_id)  # 開いた時刻を含む最新の状態を取り直す（古いオブジェクトで上書きしない）
     if fd.explanation is None:             # 旧データ: 一度だけ生成して保存
         from app.judge.agent import explain_review
         fd.explanation = explain_review(fd)
