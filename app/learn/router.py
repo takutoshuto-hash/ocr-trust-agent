@@ -100,6 +100,11 @@ class CorrectionRouter:
         return float(self.model.predict_proba(np.array([to_vector(features)], dtype=float))[0, 1])
 
     def is_auto(self, p: Optional[float]) -> Optional[bool]:
-        if p is None or self.threshold is None:
+        """True=自動確定 / False=要確認 / None=ルーターは判断を保留（台帳の判断に委ねる）。
+
+        閾値が 0 のときは「目標誤り率を統計的に保証できる集合が無い」＝データ不足なので、
+        全項目を要確認にするのではなく保留にする（少量期に台帳の自動確定まで潰さない）。
+        """
+        if p is None or self.threshold is None or self.threshold <= 0.0:
             return None
         return p < self.threshold
