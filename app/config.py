@@ -48,12 +48,31 @@ def make_genai_client():
     from google import genai
     if settings.use_vertex:
         creds = None
-        token = os.getenv("GOOGLE_OAUTH_ACCESS_TOKEN")
-        if token:
+        if os.getenv("GOOGLE_GENAI_USE_GCLOUD_TOKEN", "").lower() in ("1", "true", "yes"):
+            creds = GcloudCliCredentials()          # ローカルの長時間実行用: gcloud のトークンを失効前に自動更新
+        elif os.getenv("GOOGLE_OAUTH_ACCESS_TOKEN"):
             from google.oauth2.credentials import Credentials
-            creds = Credentials(token=token)
+            creds = Credentials(token=os.environ["GOOGLE_OAUTH_ACCESS_TOKEN"])
         return genai.Client(vertexai=True, project=settings.gcp_project or None, location=settings.vertex_location, credentials=creds)
     return genai.Client(api_key=settings.gemini_api_key)
+
+
+def GcloudCliCredentials():
+    """`gcloud auth print-access-token` を refresh() で呼ぶ資格情報（ADC 未設定のローカル用）。"""
+    import datetime
+    import subprocess
+    from google.auth import credentials as ga_credentials
+
+    class _Creds(ga_credentials.Credentials):
+        def refresh(self, request):
+            exe = "gcloud.cmd" if os.name == "nt" else "gcloud"
+            token = subprocess.run([exe, "auth", "print-access-token"], capture_output=True, text=True, check=True).stdout.strip()
+            self.token = token
+            self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(minutes=50)
+
+    c = _Creds()
+    c.refresh(None)
+    return c
 
 
 settings = Settings()
