@@ -21,5 +21,19 @@ body{font-family:system-ui,sans-serif;margin:24px;color:#222}
 <td><a href="/review/{{ f.form_id }}">確認する</a></td></tr>
 {% else %}<tr><td colspan="5">要確認の帳票はありません</td></tr>{% endfor %}
 </table>
-<p><a href="/metrics">指標(JSON)</a> · <a href="/ledger">台帳</a> · <a href="/audit">監査ログ</a></p>
+{% if proposals %}
+<h2>振り返りエージェントの提案（承認するまで何も変わりません）</h2>
+<table><tr><th>種類</th><th>提案</th><th>根拠</th><th>内容</th><th></th></tr>
+{% for p in proposals %}
+<tr><td>{{ '読み取りルール' if p.kind.value == 'rule' else 'ポリシー変更' }}</td><td><b>{{ p.title }}</b><br><small>{{ p.proposer }} · {{ p.created_at.strftime('%m/%d %H:%M') }}</small></td>
+<td style="max-width:360px"><small>{{ p.rationale }}</small></td>
+<td style="max-width:360px"><small>{% if p.kind.value == 'rule' %}{{ p.rule_text }}（{{ p.rule_scope }}）{% else %}{{ p.policy_key }}: {{ p.policy_from }} → {{ p.policy_to }}{% endif %}</small></td>
+<td style="white-space:nowrap">
+  <form method="post" action="/proposals/{{ p.proposal_id }}/approve" style="display:inline"><input type="hidden" name="reviewer" value="staff"><button>承認</button></form>
+  <form method="post" action="/proposals/{{ p.proposal_id }}/reject" style="display:inline"><input type="hidden" name="reviewer" value="staff"><button>却下</button></form>
+</td></tr>
+{% endfor %}
+</table>
+{% endif %}
+<p><a href="/metrics">指標(JSON)</a> · <a href="/ledger">台帳</a> · <a href="/audit">監査ログ</a> · <a href="/rules">承認済みルール</a> · <a href="/proposals?status=">提案履歴</a></p>
 </body></html>

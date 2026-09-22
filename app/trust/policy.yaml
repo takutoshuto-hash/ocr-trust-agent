@@ -21,6 +21,12 @@ actions:
   allow_premium: false       # 高精度モデル（gemini-2.5-pro）での再読み取り。lean では不許可、高予算プロファイルで true
   premium_model: gemini-2.5-pro
 
+# 振り返りエージェント（夜間に修正ログを集計し、読み取りルール／ポリシー値の変更を提案。人が承認するまで何も変えない）
+reflection:
+  planner: adk               # adk | rules
+  window_days: 1
+  # 提案してよいポリシーキーと範囲は app/reflect/agent.py の ALLOWED_POLICY_KEYS（コードで固定＝エージェントは変更できない）
+
 # 自律レベルの昇格条件（項目種別 × キー階層ごとに評価）
 # 修正率の上限は router.target_error_rate（0.5%）と整合させる。少量の現場では最初の数週間は昇格しにくいのが正しい挙動
 promotion:

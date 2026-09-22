@@ -199,6 +199,39 @@ class TrainingRecord(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+# ---------- 振り返りエージェントの提案 ----------
+
+class ProposalKind(str, Enum):
+    RULE = "rule"        # 読み取りルール（抽出プロンプトに注入するヒント）
+    POLICY = "policy"    # ポリシー値の変更（許可されたキー・範囲内のみ）
+
+
+class Proposal(BaseModel):
+    proposal_id: str
+    kind: ProposalKind
+    title: str
+    rationale: str                          # 根拠（集計値を含む）
+    evidence: dict[str, Any] = Field(default_factory=dict)
+    rule_text: Optional[str] = None         # kind=rule
+    rule_scope: str = "global"              # global | format:<id> | sender:<id>
+    policy_key: Optional[str] = None        # kind=policy 例 "hallucination.blank_ink_ratio"
+    policy_from: Optional[Any] = None
+    policy_to: Optional[Any] = None
+    status: str = "pending"                 # pending | approved | rejected
+    decided_by: Optional[str] = None
+    decided_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=now_utc)
+    proposer: str = "reflection_agent"      # reflection_agent(adk) | reflection_rules
+
+
+class ApprovedRule(BaseModel):
+    rule_id: str
+    text: str
+    scope: str = "global"
+    source_proposal: str = ""
+    created_at: datetime = Field(default_factory=now_utc)
+
+
 # ---------- 監査ログ ----------
 
 class AuditEvent(BaseModel):

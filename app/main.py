@@ -88,7 +88,8 @@ def get_image(form_id: str):
 @app.get("/review", response_class=HTMLResponse)
 def review_queue():
     tpl = env.get_template("queue.html")
-    return tpl.render(forms=pipeline.store.list_pending(), metrics=pipeline.metrics())
+    return tpl.render(forms=pipeline.store.list_pending(), metrics=pipeline.metrics(),
+                      proposals=pipeline.store.list_proposals(status="pending"))
 
 
 @app.get("/review/{form_id}", response_class=HTMLResponse)
@@ -124,6 +125,33 @@ def metrics():
 @app.post("/admin/retrain")
 def retrain():
     return pipeline.retrain()
+
+
+@app.post("/admin/reflect")
+def reflect(days: int = 1):
+    return pipeline.reflect(days=days)
+
+
+@app.get("/proposals")
+def proposals(status: Optional[str] = "pending"):
+    return [p.model_dump(mode="json") for p in pipeline.store.list_proposals(status=status)]
+
+
+@app.post("/proposals/{proposal_id}/{decision}")
+async def decide_proposal(proposal_id: str, decision: str, request: Request):
+    if decision not in ("approve", "reject"):
+        raise HTTPException(400, "decision は approve か reject")
+    form = await request.form() if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded") else {}
+    actor = f"human:{form.get('reviewer', 'anonymous')}" if form else "human:api"
+    p = pipeline.decide_proposal(proposal_id, decision == "approve", actor)
+    if form:
+        return RedirectResponse("/review", status_code=303)
+    return p.model_dump(mode="json")
+
+
+@app.get("/rules")
+def rules():
+    return [r.model_dump(mode="json") for r in pipeline.store.list_rules()]
 
 
 @app.get("/audit")

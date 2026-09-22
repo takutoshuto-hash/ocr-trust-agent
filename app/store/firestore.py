@@ -86,6 +86,38 @@ class FirestoreStore:
     def count_training(self):
         return self._c("training").count().get()[0][0].value
 
+    # ---- 振り返り ----
+    def put_proposal(self, p):
+        self._c("proposals").document(p.proposal_id).set(p.model_dump(mode="json"))
+
+    def get_proposal(self, proposal_id):
+        from app.schemas import Proposal
+        d = self._c("proposals").document(proposal_id).get()
+        return Proposal.model_validate(d.to_dict()) if d.exists else None
+
+    def list_proposals(self, status=None, limit=100):
+        from app.schemas import Proposal
+        q = self._c("proposals")
+        if status:
+            q = q.where(filter=firestore.FieldFilter("status", "==", status))
+        ps = [Proposal.model_validate(d.to_dict()) for d in q.limit(500).stream()]
+        return sorted(ps, key=lambda p: p.created_at, reverse=True)[:limit]
+
+    def put_rule(self, rule):
+        self._c("rules").document(rule.rule_id).set(rule.model_dump(mode="json"))
+
+    def list_rules(self, scope=None):
+        from app.schemas import ApprovedRule
+        rs = [ApprovedRule.model_validate(d.to_dict()) for d in self._c("rules").limit(200).stream()]
+        return [r for r in rs if scope is None or r.scope == scope or r.scope == "global"]
+
+    def put_policy_override(self, key, value):
+        self._c("policy").document("overrides").set({key.replace(".", "__"): value}, merge=True)
+
+    def get_policy_overrides(self):
+        d = self._c("policy").document("overrides").get()
+        return {k.replace("__", "."): v for k, v in (d.to_dict() or {}).items()} if d.exists else {}
+
     # ---- audit ----
     def add_audit(self, ev):
         self._c("audit").document().set(ev.model_dump(mode="json"))

@@ -23,6 +23,7 @@ class Extractor(Protocol):
         examples: Optional[list[tuple[str, OrderForm]]] = None,   # (説明, 過去の確定値) few-shot
         variant: int = 0,                                         # 二重読み取り用: 0=通常, 1=別プロンプト
         hint: Optional[OrderForm] = None,                         # モック専用: 正解（合成データの sidecar）
+        rules: Optional[list[str]] = None,                        # 振り返りで承認された読み取りルール
     ) -> Extraction: ...
 
 

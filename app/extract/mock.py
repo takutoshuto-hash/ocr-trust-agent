@@ -75,14 +75,14 @@ class MockExtractor:
         nv = v if rng.random() >= p else _perturb(v, rng)
         return nv, nv
 
-    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: Optional[OrderForm] = None) -> Extraction:
+    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: Optional[OrderForm] = None, rules=None) -> Extraction:
         if hint is None:
             raise ValueError("MockExtractor には hint（正解 OrderForm）が必要です")
         # 画像とvariantから決定的な乱数系列を作る（再現性のため）
         seed = int(hashlib.sha256(image[:4096] + bytes([variant])).hexdigest(), 16) % (2**32)
         rng = random.Random(seed)
-        # few-shot が渡されたら誤り率を下げる（送り主の癖を学習した効果のモデル化）
-        scale = self.error_scale * (0.6 if examples else 1.0)
+        # few-shot / 承認済みルールが渡されたら誤り率を下げる（学習・振り返りの効果のモデル化）
+        scale = self.error_scale * (0.6 if examples else 1.0) * (0.9 ** min(len(rules or []), 5))
 
         from app.schemas import field_type_of
         flat = hint.flatten()

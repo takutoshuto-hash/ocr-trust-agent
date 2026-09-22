@@ -14,6 +14,7 @@ from app.extract import Extractor, get_extractor, sends_to_cloud
 from app.judge import Judge
 from app.judge.zones import load_zones, mask_zones
 from app.learn import CorrectionRouter, build_features
+from app.reflect.agent import ReflectionAgent, _set_path
 from app.resolve import Resolver
 from app.schemas import (AuditEvent, AutonomyLevel, Extraction, FieldDecision, FieldStatus, FormDecision,
                          OrderForm, TrainingRecord, field_type_of, now_utc)
@@ -37,6 +38,11 @@ class Pipeline:
         # ADK プランナーは Gemini 抽出器のときだけ（モック・ローカル Gemma では決定的なルールプランナー）
         planner = str(ac.get("planner", "rules")) if self.extractor.name == "gemini" else "rules"
         self.resolver = Resolver(self.extractor, self.judge, ac, planner=planner)
+        # 振り返りで承認済みのポリシー上書きを反映
+        for key, val in (self.store.get_policy_overrides() or {}).items():
+            _set_path(self.policy.raw, key, val)
+        rf = self.policy.raw.get("reflection", {}) or {}
+        self.reflection = ReflectionAgent(self.store, self.policy.raw, planner=str(rf.get("planner", "rules")) if self.extractor.name == "gemini" else "rules")
         rc = self.policy.router
         self.router = router or CorrectionRouter(
             settings.model_dir,
@@ -62,9 +68,10 @@ class Pipeline:
                 "masked_fields": masked, "profile": self.profile, "purpose": "extraction",
             })
 
-        ex1 = self.extractor.extract(to_send, examples=examples, variant=0, hint=hint)
-        ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint) if double_read else None
-        self._audit(form_id, "extracted", {"model": ex1.model, "double_read": double_read, "few_shot": len(examples)})
+        rules = [r.text for r in self.store.list_rules(scope=f"format:{format_id}")]   # 承認済みルール（global + 様式）
+        ex1 = self.extractor.extract(to_send, examples=examples, variant=0, hint=hint, rules=rules)
+        ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint, rules=rules) if double_read else None
+        self._audit(form_id, "extracted", {"model": ex1.model, "double_read": double_read, "few_shot": len(examples), "rules": len(rules)})
 
         verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id)
         self._audit(form_id, "judged", {"fail": [p for p, v in verdicts.items() if v.any_fail],
@@ -216,6 +223,34 @@ class Pipeline:
         self._since_train = 0
         self._audit("-", "router_trained", summary, actor="system")
         return summary
+
+    # ---------------- 振り返り（夜間） ----------------
+    def reflect(self, days: int = 1) -> dict:
+        """修正ログを集計し、振り返りエージェントが提案を作る。提案は承認されるまで何も変えない。"""
+        from app.reflect import analyze
+        from app.reflect.analysis import default_since
+        analysis = analyze(self.store.list_training(), self.store.list_audit(limit=20_000), since=default_since(days))
+        proposals = self.reflection.propose(analysis)
+        self._audit("-", "reflected", {"window_days": days, "records": analysis.get("window_records"),
+                                       "proposals": [p.model_dump(mode="json", include={"proposal_id", "kind", "title", "status"}) for p in proposals]},
+                    actor="agent")
+        return {"analysis": analysis, "proposals": [p.model_dump(mode="json") for p in proposals]}
+
+    def decide_proposal(self, proposal_id: str, approve: bool, actor: str):
+        p = self.reflection.decide(proposal_id, approve, actor)
+        self._audit("-", "proposal_approved" if approve else "proposal_rejected",
+                    {"proposal_id": p.proposal_id, "kind": p.kind.value, "title": p.title,
+                     "policy_key": p.policy_key, "policy_to": p.policy_to, "rule_text": p.rule_text}, actor=actor)
+        if approve and p.kind.value == "policy" and p.policy_key:
+            self._apply_policy_live(p.policy_key, p.policy_to)
+        return p
+
+    def _apply_policy_live(self, key: str, value) -> None:
+        """承認されたポリシー値を実行中の部品へ反映する。"""
+        if key == "hallucination.blank_ink_ratio":
+            self.judge.blank_ink_ratio = float(value)
+        elif key == "router.target_error_rate":
+            self.router.target_error_rate = float(value)
 
     # ---------------- 指標 ----------------
     def metrics(self) -> dict:

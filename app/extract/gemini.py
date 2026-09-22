@@ -115,8 +115,14 @@ class GeminiExtractor:
             lines.append(f"- {desc}: {json.dumps(form.model_dump(), ensure_ascii=False)}")
         return "\n".join(lines)
 
-    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint=None) -> Extraction:
-        prompt = PROMPTS[variant % len(PROMPTS)] + self._few_shot(examples)
+    @staticmethod
+    def _rules(rules: Optional[list[str]]) -> str:
+        if not rules:
+            return ""
+        return "\n【運用で確認された読み取りルール（振り返りで人が承認したもの）】\n" + "\n".join(f"- {r}" for r in rules[:10])
+
+    def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint=None, rules=None) -> Extraction:
+        prompt = PROMPTS[variant % len(PROMPTS)] + self._rules(rules) + self._few_shot(examples)
         t0 = time.perf_counter()
         resp = self.client.models.generate_content(
             model=self.model,
