@@ -206,10 +206,13 @@ class Pipeline:
 
         fd.final = OrderForm.from_flat(final_flat)
         fd.status = "confirmed"
+        if fd.review_opened_at is not None:
+            fd.review_seconds = round((now_utc() - fd.review_opened_at).total_seconds(), 1)
         self.store.put_form(fd, b"")
         self.store.add_training(recs)
         self._audit(form_id, "confirmed", {"corrected": [r.path for r in recs if r.corrected],
-                                           "auto_errors": [r.path for r in recs if r.corrected and r.was_auto]}, actor=actor)
+                                           "auto_errors": [r.path for r in recs if r.corrected and r.was_auto],
+                                           "review_seconds": fd.review_seconds, "reviewed_fields": len(fd.review_paths)}, actor=actor)
         for ev in ledger_events:
             self._audit(form_id, "ledger_promoted" if ev["to"] > ev["from"] else "ledger_demoted", ev, actor="system")
 
@@ -272,6 +275,52 @@ class Pipeline:
             "profile": self.profile,
             "router": {"trained_on": self.router.trained_on, "threshold": self.router.threshold},
             "ledger_levels": {s.key: s.level for s in self.store.list_ledger() if s.level > 0},
+        }
+
+    def mark_review_opened(self, form_id: str) -> None:
+        fd = self.store.get_form(form_id)
+        if fd is not None and fd.status == "pending" and fd.review_opened_at is None:
+            fd.review_opened_at = now_utc()
+            self.store.put_form(fd, b"")
+
+    def dashboard_data(self) -> dict:
+        """ダッシュボード用: 日次系列（要確認率・自動確定の誤り率）、項目種別ごとの台帳レベル、確認時間の実測。"""
+        from collections import defaultdict
+        from datetime import timezone, timedelta
+        from statistics import median
+        JST = timezone(timedelta(hours=9))
+        forms = self.store.list_forms(limit=10_000)
+        recs = self.store.list_training()
+        by_day: dict = defaultdict(lambda: {"fields": 0, "review": 0, "auto": 0, "forms": 0})
+        for f in forms:
+            d = f.created_at.astimezone(JST).strftime("%m/%d")
+            b = by_day[d]; b["forms"] += 1; b["fields"] += len(f.decisions); b["review"] += len(f.strict_review_paths)
+            b["auto"] += len(f.decisions) - len(f.strict_review_paths)
+        audited: dict = defaultdict(lambda: {"n": 0, "err": 0})
+        for r in recs:
+            if r.was_auto and r.verified:
+                d = r.created_at.astimezone(JST).strftime("%m/%d")
+                audited[d]["n"] += 1; audited[d]["err"] += int(r.corrected)
+        days = sorted(by_day)
+        series = [{"day": d, "forms": by_day[d]["forms"],
+                   "review_rate": round(by_day[d]["review"] / by_day[d]["fields"], 4) if by_day[d]["fields"] else None,
+                   "auto_error_audited": (round(audited[d]["err"] / audited[d]["n"], 4) if audited[d]["n"] else None),
+                   "audited_n": audited[d]["n"]} for d in days]
+        levels: dict = defaultdict(lambda: {"L0": 0, "L1": 0, "L2": 0, "n": 0})
+        for s in self.store.list_ledger():
+            ft = s.key.split("|")[0]
+            levels[ft][f"L{s.level}"] += 1; levels[ft]["n"] = max(levels[ft]["n"], s.n)
+        secs = [f.review_seconds for f in forms if f.review_seconds is not None]
+        per_field = [f.review_seconds / max(1, len(f.review_paths)) for f in forms if f.review_seconds is not None and f.review_paths]
+        m = self.metrics()
+        return {
+            "kpi": {**m, "target_error_rate": self.router.target_error_rate,
+                    "pending_proposals": len(self.store.list_proposals(status="pending")),
+                    "review_seconds_median": round(median(secs), 1) if secs else None,
+                    "review_seconds_per_field_median": round(median(per_field), 1) if per_field else None,
+                    "review_timed_forms": len(secs)},
+            "daily": series,
+            "ledger_levels": [{"field_type": ft, **v} for ft, v in sorted(levels.items())],
         }
 
     def _audit(self, form_id: str, event: str, detail: dict, actor: str = "agent") -> None:

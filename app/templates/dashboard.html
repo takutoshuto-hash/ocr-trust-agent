@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>信頼の推移</title>
+<style>
+.viz-root{color-scheme:light;--surface-1:#fcfcfb;--page:#f9f9f7;--text-primary:#0b0b0b;--text-secondary:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);
+  --series-1:#2a78d6;--series-2:#eb6834;--series-3:#1baf7a;--good:#0ca30c;--critical:#d03b3b;--seq-250:#86b6ef;--seq-450:#2a78d6;--seq-650:#104281}
+@media (prefers-color-scheme: dark){:root:where(:not([data-theme="light"])) .viz-root{color-scheme:dark;--surface-1:#1a1a19;--page:#0d0d0d;--text-primary:#fff;--text-secondary:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--series-1:#3987e5;--series-2:#d95926;--series-3:#199e70;--seq-250:#184f95;--seq-450:#3987e5;--seq-650:#86b6ef}}
+:root[data-theme="dark"] .viz-root{color-scheme:dark;--surface-1:#1a1a19;--page:#0d0d0d;--text-primary:#fff;--text-secondary:#c3c2b7;--muted:#898781;--grid:#2c2c2a;--axis:#383835;--border:rgba(255,255,255,.10);--series-1:#3987e5;--series-2:#d95926;--series-3:#199e70;--seq-250:#184f95;--seq-450:#3987e5;--seq-650:#86b6ef}
+body{margin:0;background:var(--page);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--text-secondary);font-size:13px;margin:0 0 14px}
+.filters{display:flex;gap:8px;align-items:center;margin:0 0 16px;flex-wrap:wrap}
+.filters button{border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+.filters button[aria-pressed="true"]{font-weight:700;box-shadow:inset 0 0 0 2px var(--series-1)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.tile{background:var(--surface-1);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.tile .l{font-size:12px;color:var(--text-secondary)}.tile .v{font-size:22px;font-weight:600;margin-top:2px}.tile .v.hero{font-size:48px;line-height:1.05}
+.tile .d{font-size:12px;color:var(--text-secondary)}.tile .d.good{color:#006300}@media (prefers-color-scheme: dark){.tile .d.good{color:#0ca30c}}
+figure{background:var(--surface-1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:0 0 14px}
+figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+figcaption b{font-size:14px}figcaption small{color:var(--text-secondary)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--text-secondary);margin:6px 0 2px;flex-wrap:wrap}
+.legend span::before{content:"";display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:6px;background:var(--c)}
+.legend span.rect::before{height:10px;border-radius:2px}
+svg{width:100%;height:auto;display:block}
+.grid line{stroke:var(--grid);stroke-width:1}.axis text{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.axis line{stroke:var(--axis)}
+.line{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.dot{stroke:var(--surface-1);stroke-width:2}
+.endlabel{font-size:11px;fill:var(--text-primary)}
+.xhair{stroke:var(--axis);stroke-width:1;display:none}
+.tip{position:absolute;pointer-events:none;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;display:none;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tip b{font-size:13px}.tip .k{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:6px}
+.tv{margin-top:6px;font-size:12px}.tv summary{cursor:pointer;color:var(--text-secondary)}
+table{border-collapse:collapse;width:100%;font-size:12px}td,th{padding:4px 6px;border-bottom:1px solid var(--grid);text-align:left}td.n{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:14px;border-radius:0 4px 4px 0}
+.empty{color:var(--text-secondary);font-size:13px;padding:12px 0}
+</style></head>
+<body class="viz-root"><div class="wrap">
+<h1>信頼の推移</h1>
+<p class="sub">要確認は日ごとに減り、自動確定の誤りは目標以下に保たれているか。台帳のレベルは項目種別ごとにどこまで育ったか。</p>
+<div class="filters" role="group" aria-label="データソース">
+  <button data-src="live" aria-pressed="true">本番データ</button>
+  <button data-src="mock" aria-pressed="false">シミュレーション（手書き合成・1日200枚）</button>
+  <button data-src="gemini" aria-pressed="false">シミュレーション（Gemini 実読み・1日30枚）</button>
+</div>
+<div class="tiles" id="tiles"></div>
+<figure><figcaption><b>要確認率の推移</b><small>人が見る項目の割合（監査サンプルを除く）</small></figcaption>
+  <div id="c1" style="position:relative"></div></figure>
+<figure><figcaption><b>自動確定の誤り率: 実測と目標</b><small>実測＝人が確認した自動確定項目のうち修正されたもの</small></figcaption>
+  <div class="legend"><span style="--c:var(--series-1)">実測（監査サンプル）</span><span style="--c:var(--series-2)">目標（ポリシー）</span><span id="lg3" style="--c:var(--series-3);display:none">真値（シミュレーション）</span></div>
+  <div id="c2" style="position:relative"></div></figure>
+<figure><figcaption><b>台帳の自律レベル（項目種別ごと）</b><small>L0＝人が確認 / L1＝検証合格＋二重読み取り一致で自動 / L2＝検証合格で自動</small></figcaption>
+  <div id="c3"></div></figure>
+<script>
+const $ = s => document.querySelector(s);
+const fmtPct = v => v == null ? '–' : (v*100).toFixed(v < 0.01 ? 2 : 1) + '%';
+let DATA = null, SRC = 'live';
+async function load(){ DATA = await (await fetch('/api/dashboard')).json(); render(); }
+document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
+  SRC = b.dataset.src; document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x === b)); render();
+}));
+function series(){
+  if (SRC === 'live') return (DATA.daily || []).map(d => ({x: d.day, review: d.review_rate, audited: d.auto_error_audited, truth: null, forms: d.forms}));
+  const rows = (DATA.sim || {})[SRC] || [];
+  return rows.map(r => ({x: 'Day ' + r.day, review: r.review_rate, audited: (r.auto_error_rate_audited === 'None' || r.auto_error_rate_audited === '') ? null : r.auto_error_rate_audited, truth: r.auto_error_rate, forms: r.forms}));
+}
+function render(){
+  const k = DATA.kpi, s = series();
+  const last = s[s.length-1] || {}, first = s[0] || {};
+  const tiles = [
+    {l:'要確認率（最新）', v: fmtPct(last.review), hero:true, d: first.review != null && last.review != null ? `初日 ${fmtPct(first.review)} → ${fmtPct(last.review)}` : ''},
+    {l:'自動確定の誤り率（実測）', v: fmtPct(SRC==='live' ? k.auto_error_rate_audited : last.audited), d: `目標 ${fmtPct(k.target_error_rate)} 以下`, good: (SRC==='live' ? k.auto_error_rate_audited : last.audited) != null && (SRC==='live' ? k.auto_error_rate_audited : last.audited) <= k.target_error_rate},
+    {l:'処理した帳票', v: SRC==='live' ? k.forms : s.reduce((a,b)=>a+(b.forms||0),0)},
+    {l:'教師データ（項目）', v: k.training_records},
+    {l:'確認時間の中央値 / 帳票', v: k.review_seconds_median != null ? k.review_seconds_median + ' 秒' : '未計測', d: k.review_seconds_per_field_median != null ? `要確認1項目あたり ${k.review_seconds_per_field_median} 秒（${k.review_timed_forms}枚）` : '確認画面で計測されます'},
+    {l:'振り返りの提案（未処理）', v: k.pending_proposals},
+  ];
+  $('#tiles').innerHTML = tiles.map(t => `<div class="tile"><div class="l">${t.l}</div><div class="v${t.hero?' hero':''}">${t.v}</div>${t.d?`<div class="d${t.good?' good':''}">${t.d}</div>`:''}</div>`).join('');
+  $('#lg3').style.display = SRC === 'live' ? 'none' : '';
+  lineChart($('#c1'), s.map(p=>p.x), [{name:'要確認率', color:'var(--series-1)', values:s.map(p=>p.review)}], {pct:true, label:true});
+  const ser2 = [{name:'実測（監査サンプル）', color:'var(--series-1)', values:s.map(p=>p.audited)}, {name:'目標', color:'var(--series-2)', values:s.map(()=>k.target_error_rate), flat:true}];
+  if (SRC !== 'live') ser2.push({name:'真値', color:'var(--series-3)', values:s.map(p=>p.truth)});
+  const errVals = s.flatMap(p=>[p.audited||0, p.truth||0]);
+  lineChart($('#c2'), s.map(p=>p.x), ser2, {pct:true, ymax: Math.max(k.target_error_rate*2.5, (errVals.length ? Math.max(...errVals) : 0)*1.2)});
+  ledgerTable($('#c3'), DATA.ledger_levels || []);
+}
+function lineChart(el, xs, sers, opt){
+  el.innerHTML = '';
+  if (!xs.length) { el.innerHTML = '<div class="empty">データがまだありません。帳票を処理すると日ごとの推移が表示されます。</div>'; return; }
+  const W = 1000, H = 280, m = {t:16, r: 70, b: 30, l: 46};
+  const vals = sers.flatMap(s=>s.values).filter(v=>v!=null);
+  const ymax = opt.ymax && opt.ymax > 0 ? opt.ymax : (opt.pct ? Math.min(1, Math.max(0.05, Math.max(...vals)*1.15)) : Math.max(...vals)*1.15 || 1);
+  const x = i => m.l + (xs.length === 1 ? (W-m.l-m.r)/2 : i*(W-m.l-m.r)/(xs.length-1));
+  const y = v => m.t + (H-m.t-m.b)*(1 - v/ymax);
+  const ticks = 4, tv = Array.from({length:ticks+1}, (_,i)=>ymax*i/ticks);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${sers.map(s=>s.name).join('、')}">`;
+  svg += `<g class="grid">${tv.map(v=>`<line x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}"/>`).join('')}</g>`;
+  svg += `<g class="axis">${tv.map(v=>`<text x="${m.l-6}" y="${y(v)+4}" text-anchor="end">${opt.pct?(v*100).toFixed(ymax<0.05?1:0)+'%':v}</text>`).join('')}`;
+  svg += `<line x1="${m.l}" x2="${W-m.r}" y1="${y(0)}" y2="${y(0)}"/>`;
+  const step = Math.ceil(xs.length/10);
+  svg += xs.map((t,i)=> i%step===0 || i===xs.length-1 ? `<text x="${x(i)}" y="${H-8}" text-anchor="middle">${t}</text>` : '').join('') + '</g>';
+  sers.forEach(s => {
+    const pts = s.values.map((v,i)=> v==null?null:[x(i),y(Math.min(v,ymax))]).filter(Boolean);
+    if (pts.length > 1) svg += `<path class="line" style="stroke:${s.color}" d="${pts.map((p,i)=>(i?'L':'M')+p[0]+','+p[1]).join(' ')}"/>`;
+    if (!s.flat) svg += pts.map(p=>`<circle class="dot" cx="${p[0]}" cy="${p[1]}" r="4" style="fill:${s.color}"/>`).join('');
+    const lastIdx = s.values.map((v,i)=>v==null?-1:i).filter(i=>i>=0).pop();
+    if (lastIdx != null && lastIdx >= 0) svg += `<text class="endlabel" x="${x(lastIdx)+8}" y="${y(Math.min(s.values[lastIdx],ymax))+4}">${opt.pct?fmtPct(s.values[lastIdx]):s.values[lastIdx]}</text>`;
+  });
+  svg += `<line class="xhair" id="xh" x1="0" x2="0" y1="${m.t}" y2="${y(0)}"/><rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="transparent" id="hit"/></svg>`;
+  svg += `<div class="tip" role="status"></div>`;
+  svg += `<details class="tv"><summary>表で見る</summary><table><tr><th>x</th>${sers.map(s=>`<th>${s.name}</th>`).join('')}</tr>${xs.map((t,i)=>`<tr><td>${t}</td>${sers.map(s=>`<td class="n">${opt.pct?fmtPct(s.values[i]):s.values[i]}</td>`).join('')}</tr>`).join('')}</table></details>`;
+  el.innerHTML = svg;
+  const hit = el.querySelector('#hit'), xh = el.querySelector('#xh'), tip = el.querySelector('.tip'), svgEl = el.querySelector('svg');
+  hit.addEventListener('pointermove', ev => {
+    const r = svgEl.getBoundingClientRect(); const px = (ev.clientX - r.left) * W / r.width;
+    let bi = 0, bd = 1e9; xs.forEach((_,i)=>{ const d = Math.abs(x(i)-px); if (d<bd){bd=d;bi=i;} });
+    xh.setAttribute('x1', x(bi)); xh.setAttribute('x2', x(bi)); xh.style.display = '';
+    tip.innerHTML = ''; const h = document.createElement('div'); h.textContent = xs[bi]; tip.appendChild(h);
+    sers.forEach(s => { const row = document.createElement('div'); const k = document.createElement('span'); k.className='k'; k.style.background = s.color; const b = document.createElement('b'); b.textContent = opt.pct?fmtPct(s.values[bi]):String(s.values[bi]); const n = document.createTextNode(' ' + s.name); row.append(k,b,n); tip.appendChild(row); });
+    tip.style.display = 'block'; tip.style.left = Math.min(r.width-160, (x(bi)*r.width/W)+12) + 'px'; tip.style.top = '8px';
+  });
+  hit.addEventListener('pointerleave', () => { xh.style.display = 'none'; tip.style.display = 'none'; });
+}
+function ledgerTable(el, rows){
+  if (!rows.length) { el.innerHTML = '<div class="empty">台帳にまだ実績がありません。</div>'; return; }
+  const jp = {zip:'郵便番号',address:'住所',name:'氏名',name_kana:'フリガナ',phone:'電話',organization:'会社名',product_code:'商品番号',qty:'数量',noshi_name:'のし名入れ'};
+  const lab = ft => (ft.startsWith('applicant')?'依頼主・':'届け先・') + (jp[ft.split('.').pop()]||ft);
+  const maxn = Math.max(...rows.map(r=>r.n), 1);
+  el.innerHTML = `<table><tr><th>項目種別</th><th>最高レベル</th><th>実績件数（検証合格分）</th><th>L1</th><th>L2</th></tr>` + rows.map(r => {
+    const top = r.L2 ? 'L2' : r.L1 ? 'L1' : 'L0'; const col = top==='L2'?'var(--seq-650)':top==='L1'?'var(--seq-450)':'var(--seq-250)';
+    return `<tr><td>${lab(r.field_type)}</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${col};margin-right:6px;vertical-align:middle"></span>${top}</td><td><div class="bar" style="width:${Math.max(4, r.n/maxn*100)}%;background:${col}" title="${r.n}"></div><small>${r.n}</small></td><td class="n">${r.L1}</td><td class="n">${r.L2}</td></tr>`; }).join('') + '</table>';
+}
+load();
+</script>
+</div></body></html>

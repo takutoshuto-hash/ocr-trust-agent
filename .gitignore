@@ -8,6 +8,8 @@ data/synthetic/out/
 data/fonts/*.ttf
 data/fonts/*.otf
 models/*.joblib
-eval/out/
+eval/out/*
+!eval/out/curve_mock_handwriting.csv
+!eval/out/curve_gemini.csv
 .DS_Store
 .env.review

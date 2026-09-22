@@ -98,6 +98,7 @@ def review_form(form_id: str):
     if not fd:
         raise HTTPException(404)
     from app.judge.agent import explain_review
+    pipeline.mark_review_opened(form_id)   # 確認時間の実測（開いた時刻）
     tpl = env.get_template("review.html")
     return tpl.render(fd=fd, FieldStatus=FieldStatus, explanation=explain_review(fd))
 
@@ -152,6 +153,31 @@ async def decide_proposal(proposal_id: str, decision: str, request: Request):
 @app.get("/rules")
 def rules():
     return [r.model_dump(mode="json") for r in pipeline.store.list_rules()]
+
+
+# ---- ダッシュボード ----
+@app.get("/api/dashboard")
+def dashboard_api(source: str = "live"):
+    """source=live: 本番データ / sim: 同梱のシミュレーション曲線（デモ用）"""
+    data = pipeline.dashboard_data()
+    data["sim"] = _load_sim_curves()
+    return data
+
+
+def _load_sim_curves() -> dict:
+    import csv
+    from app.config import ROOT
+    out = {}
+    for name, path in (("mock", ROOT / "eval/out/curve_mock_handwriting.csv"), ("gemini", ROOT / "eval/out/curve_gemini.csv")):
+        if path.exists():
+            with path.open(encoding="utf-8") as f:
+                out[name] = [{k: (float(v) if v not in ("", "None", "True", "False") and k != "day" else v) for k, v in row.items()} for row in csv.DictReader(f)]
+    return out
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard_page():
+    return env.get_template("dashboard.html").render()
 
 
 @app.get("/audit")

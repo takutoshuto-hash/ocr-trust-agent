@@ -1,0 +1,4 @@
+day,forms,fields,ocr_error_rate,review_rate,auto_error_rate,auto_error_rate_audited,human_corrections,ledger_promoted_keys,router_trained,router_threshold,seconds
+1,30,556,0.0306,1.0,0.0,,17,0,True,0.0,1011.8
+2,30,660,0.0258,0.6348,0.0083,0.0,15,12,True,0.0,1018.3
+3,30,588,0.0221,0.5629,0.0,0.0,13,10,True,0.0,981.0
