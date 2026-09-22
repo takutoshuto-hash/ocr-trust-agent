@@ -47,6 +47,7 @@ def main():
     ap.add_argument("--extractor", choices=["mock", "gemini"], default="mock")
     ap.add_argument("--images", action="store_true", help="帳票画像を描画して渡す（mock でも空欄検知を有効にする）")
     ap.add_argument("--out", default="eval/out/curve.csv")
+    ap.add_argument("--export-state", default=None, help="運用状態（台帳・教師データ・ルーターモデル）をこのディレクトリに書き出す")
     a = ap.parse_args()
 
     rng = random.Random(a.seed)
@@ -118,6 +119,29 @@ def main():
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
             w.writeheader(); w.writerows(rows)
     print(f"-> {out}")
+
+    if a.export_state:
+        import shutil
+        from datetime import datetime, timedelta, timezone
+        d = Path(a.export_state); d.mkdir(parents=True, exist_ok=True)
+        (d / "ledger.json").write_text(json.dumps([s.to_dict() for s in pipe.store.list_ledger()], ensure_ascii=False), encoding="utf-8")
+        # 教師データ: created_at をシミュレーション日に付け替え、夜間の振り返り窓（1日）に入らないようにする
+        recs = pipe.store.list_training()
+        per_day = max(1, len(recs) // a.days)
+        now = datetime.now(timezone.utc)
+        with (d / "training.jsonl").open("w", encoding="utf-8") as f:
+            for i, r in enumerate(recs):
+                day = min(a.days, i // per_day + 1)
+                r.created_at = now - timedelta(days=(a.days - day + 1))
+                r.form_id = "sim-" + r.form_id
+                f.write(r.model_dump_json() + "\n")
+        if router.path.exists():
+            shutil.copy(router.path, d / "router.joblib")
+        (d / "META.json").write_text(json.dumps({"source": "simulation", "extractor": extractor.name, "days": a.days, "per_day": a.per_day,
+                                                  "senders": a.senders, "seed": a.seed, "exported_at": now.isoformat(),
+                                                  "final_review_rate": rows[-1]["review_rate"], "final_auto_error_rate": rows[-1]["auto_error_rate"]},
+                                                 ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"state exported -> {d} (ledger {len(pipe.store.list_ledger())} keys, training {len(recs)} records)")
 
 
 def _norm(x):

@@ -13,12 +13,18 @@ from app.trust.ledger import LedgerStat
 
 class FirestoreStore:
     def __init__(self, project: Optional[str], prefix: str):
-        self.db = firestore.Client(project=project)
+        import os
+        creds = None
+        token = os.getenv("GOOGLE_OAUTH_ACCESS_TOKEN")   # ローカル運用スクリプト用: `gcloud auth print-access-token` の値
+        if token:
+            from google.oauth2.credentials import Credentials
+            creds = Credentials(token=token)
+        self.db = firestore.Client(project=project, credentials=creds)
         self.p = prefix
         self.bucket = None
         if settings.gcs_bucket:
             from google.cloud import storage
-            self.bucket = storage.Client(project=project).bucket(settings.gcs_bucket)
+            self.bucket = storage.Client(project=project, credentials=creds).bucket(settings.gcs_bucket)
 
     def _c(self, name: str):
         return self.db.collection(f"{self.p}_{name}")
