@@ -89,9 +89,12 @@ class Pipeline:
         ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint, rules=rules) if double_read else None
         self._audit(form_id, "extracted", {"model": ex1.model, "double_read": double_read, "few_shot": len(examples), "rules": len(rules)})
 
-        verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id)
+        history = self.store.sender_history(sender_id, limit=10)   # 同じ送り主の過去の確定帳票（履歴照合）
+        verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=history)
         self._audit(form_id, "judged", {"fail": [p for p, v in verdicts.items() if v.any_fail],
-                                        "disagree": [p for p, v in verdicts.items() if v.agreement is False]})
+                                        "disagree": [p for p, v in verdicts.items() if v.agreement is False],
+                                        "history_forms": len(history),
+                                        "history_match": [p for p, v in verdicts.items() if any(c.name == "history" and c.status.value == "pass" for c in v.checks)]})
 
         # 行動するエージェント: 失敗・不一致の項目を人に回す前に修復を試みる（行動はすべて監査へ）
         resolved: dict[str, object] = {}
@@ -107,7 +110,7 @@ class Pipeline:
                     ex1.fields[path].value = new
                 ex1.form = OrderForm.from_flat(flat)
                 # 修復後の値で再検証。修復値は「独立した読みと一致」が採用条件なので二重読み取り一致とみなす
-                verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id)
+                verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=history)
                 for path in updates:
                     verdicts[path].agreement = True
                     verdicts[path].reason = "エージェントが修復（" + verdicts[path].reason + "）"

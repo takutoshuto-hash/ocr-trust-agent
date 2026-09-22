@@ -141,6 +141,9 @@ def main():
                     corrections[path] = tflat[path]       # 人が原本を見て直す（要確認＋監査サンプル）
                     n_human_corr += 1
             pipe.confirm(fd.form_id, corrections, actor="human:sim")
+        if n_fields == 0:
+            print(f"day {day:2d}: 処理できた帳票がありません（API エラー等）。この日は記録せず続行", flush=True)
+            continue
         summary = pipe.retrain()                            # 夜間再学習
         promoted = sum(1 for s in pipe.store.list_ledger() if s.level > 0)
         m = pipe.metrics()

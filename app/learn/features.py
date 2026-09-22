@@ -17,6 +17,7 @@ FIELD_TYPES = [
 FEATURE_NAMES = [
     "self_confidence", "agreement", "agreement_known",
     "checks_fail", "checks_unknown", "checks_pass", "value_len", "value_empty", "has_digits",
+    "history_match",     # 1=過去の確定値と一致 / 0=履歴なし / -1=履歴はあるが不一致
     "sender_n", "sender_rate", "format_n", "format_rate", "global_n", "global_rate",
 ] + [f"ft_{ft}" for ft in FIELD_TYPES]
 
@@ -34,6 +35,7 @@ def build_features(fv: FieldValue, verdict: FieldVerdict, stats: dict[str, Ledge
         "value_len": float(len(val)),
         "value_empty": 1.0 if not val.strip() else 0.0,
         "has_digits": 1.0 if any(ch.isdigit() for ch in val) else 0.0,
+        "history_match": _history_feature(verdict),
     }
     for scope in ("sender", "format", "global"):
         s = stats.get(scope) or LedgerStat(key="")
@@ -42,6 +44,15 @@ def build_features(fv: FieldValue, verdict: FieldVerdict, stats: dict[str, Ledge
     for ft in FIELD_TYPES:
         f[f"ft_{ft}"] = 1.0 if verdict.field_type == ft else 0.0
     return f
+
+
+def _history_feature(verdict: FieldVerdict) -> float:
+    for c in verdict.checks:
+        if c.name == "history":
+            if c.status == CheckStatus.PASS:
+                return 1.0
+            return -1.0 if "不一致" in (c.detail or "") else 0.0
+    return 0.0
 
 
 def to_vector(features: dict[str, float]) -> list[float]:

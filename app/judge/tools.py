@@ -55,12 +55,16 @@ def check_zip_address(zip_code: str, address: str) -> CheckResult:
     key = (zip_code or "").replace("-", "")
     if key not in table:
         return CheckResult(name="zip_address", status=CheckStatus.UNKNOWN, detail="郵便番号がマスタに無い")
-    pref, city, _ = table[key]
+    pref, city, town = table[key]
     a = (address or "").replace(" ", "").replace("　", "")
-    if pref in a and city in a:
-        return CheckResult(name="zip_address", status=CheckStatus.PASS)
-    return CheckResult(name="zip_address", status=CheckStatus.FAIL,
-                       detail=f"郵便番号は「{pref}{city}」だが住所に含まれない")
+    if not (pref in a and city in a):
+        return CheckResult(name="zip_address", status=CheckStatus.FAIL,
+                           detail=f"郵便番号は「{pref}{city}」だが住所に含まれない")
+    # 町域まで突合する。同じ市内の別の郵便番号への誤読（例 870-0001↔870-0021）は市区町村では検出できない
+    if town and town not in a:
+        return CheckResult(name="zip_address", status=CheckStatus.FAIL,
+                           detail=f"郵便番号の町域「{town}」が住所に無い（同じ市内の別番号に誤読の疑い）")
+    return CheckResult(name="zip_address", status=CheckStatus.PASS)
 
 
 def check_phone_format(phone: str) -> CheckResult:
@@ -101,6 +105,23 @@ def check_qty(qty: int) -> CheckResult:
     ok = isinstance(qty, int) and 1 <= qty <= 99
     return CheckResult(name="qty_range", status=CheckStatus.PASS if ok else CheckStatus.FAIL,
                        detail="" if ok else f"範囲外: {qty}")
+
+
+def check_history(value, past_values: list) -> CheckResult:
+    """送り主の過去の確定値との照合（独立した根拠）。
+
+    - 過去に同じ値が確定している → PASS（依頼主の氏名・住所・電話は送り主ごとにほぼ固定）
+    - 過去値はあるが一致しない → UNKNOWN（転居・別人の可能性。誤読の疑いとして特徴量に残す）
+    - 過去値なし → UNKNOWN
+    """
+    if not past_values:
+        return CheckResult(name="history", status=CheckStatus.UNKNOWN, detail="履歴なし")
+    v = _squash(value)
+    if not v:
+        return CheckResult(name="history", status=CheckStatus.UNKNOWN, detail="空欄")
+    if any(_squash(p) == v for p in past_values):
+        return CheckResult(name="history", status=CheckStatus.PASS, detail="過去の確定値と一致")
+    return CheckResult(name="history", status=CheckStatus.UNKNOWN, detail=f"過去の確定値と不一致（例: {past_values[0]!r}）")
 
 
 def check_nonempty(value: str) -> CheckResult:

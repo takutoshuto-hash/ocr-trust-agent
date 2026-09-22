@@ -68,7 +68,8 @@ def GcloudCliCredentials():
             exe = "gcloud.cmd" if os.name == "nt" else "gcloud"
             token = subprocess.run([exe, "auth", "print-access-token"], capture_output=True, text=True, check=True).stdout.strip()
             self.token = token
-            self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(minutes=50)
+            # gcloud は失効までキャッシュした同じトークンを返すので、短い周期で問い合わせ直す（gcloud 側が失効前に更新する）
+            self.expiry = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None) + datetime.timedelta(minutes=5)
 
     c = _Creds()
     c.refresh(None)

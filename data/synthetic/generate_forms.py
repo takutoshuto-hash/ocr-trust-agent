@@ -76,21 +76,39 @@ def phone(rng):
 BLANK_RATE = 0.12   # 任意項目（フリガナ・電話・会社名・のし）が空欄で出される割合
 
 
+REPEAT_RECIPIENT_RATE = 0.3   # お届け先が同じ送り主の過去のお届け先の再登場である割合（お中元・お歳暮の常連）
+
+
 def make_truth(rng, zips, products, sender_pool, blank_rate: float = BLANK_RATE):
-    name, kana = person(rng)
-    z, a = address(rng, zips)
+    """1枚の注文書の正解を作る。
+
+    現実に合わせ、**依頼主（送り主）は送り主IDごとに固定**（氏名・フリガナ・郵便番号・住所・会社名・電話）。
+    お届け先は基本ランダムだが、一定割合で同じ送り主の過去のお届け先が再登場する（履歴照合の効果が出る）。
+    """
     sender = rng.choice(sender_pool)
+    if "identity" not in sender:   # 初回に依頼主の固定情報を作る
+        name, kana = person(rng)
+        z, a = address(rng, zips)
+        sender["identity"] = {"name": name, "name_kana": kana, "zip": z, "address": a, "organization": rng.choice(ORGS)}
+        sender["recipients"] = []
 
     def maybe_blank(v):
         return "" if rng.random() < blank_rate else v
 
-    truth = {"applicant": {"name": name, "name_kana": maybe_blank(kana), "zip": z, "address": a, "phone": sender["phone"],
-                           "organization": rng.choice(ORGS)}, "deliveries": []}
+    ident = sender["identity"]
+    truth = {"applicant": {"name": ident["name"], "name_kana": maybe_blank(ident["name_kana"]), "zip": ident["zip"],
+                           "address": ident["address"], "phone": sender["phone"], "organization": ident["organization"]},
+             "deliveries": []}
     for _ in range(rng.choice([1, 1, 2, 3])):
-        n, k = person(rng)
-        dz, da = address(rng, zips)
-        truth["deliveries"].append({"name": n, "name_kana": maybe_blank(k), "zip": dz, "address": da,
-                                    "phone": maybe_blank(phone(rng)),
+        if sender["recipients"] and rng.random() < REPEAT_RECIPIENT_RATE:
+            d = dict(rng.choice(sender["recipients"]))
+        else:
+            n, k = person(rng)
+            dz, da = address(rng, zips)
+            d = {"name": n, "name_kana": k, "zip": dz, "address": da, "phone": phone(rng)}
+            sender["recipients"].append(dict(d))
+        truth["deliveries"].append({"name": d["name"], "name_kana": maybe_blank(d["name_kana"]), "zip": d["zip"], "address": d["address"],
+                                    "phone": maybe_blank(d["phone"]),
                                     "product_code": rng.choice(products), "qty": rng.choice([1, 1, 1, 2, 3]),
                                     "noshi_name": rng.choice(NOSHI)})
     return truth, sender["id"]

@@ -44,6 +44,15 @@ class MemoryStore:
                     break
         return out
 
+    def sender_history(self, sender_id, limit=10):
+        out = []
+        for f in reversed(self.forms.values()):
+            if f.status == "confirmed" and f.final and f.sender_id == sender_id:
+                out.append(f.final)
+                if len(out) >= limit:
+                    break
+        return out
+
     def get_ledger(self, key):
         return self.ledger.get(key)
 

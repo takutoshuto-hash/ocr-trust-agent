@@ -49,7 +49,7 @@ def test_evidence_mismatch():
 def test_judge_catches_mock_hallucination_on_real_image():
     """空欄だらけの帳票をモックで読むと創作値が出る → 空欄検知で必ず FAIL になる。"""
     checked = 0
-    for seed in range(11, 60):
+    for seed in range(11, 260):
         truth, png = _synthetic(seed=seed)
         ex = MockExtractor(error_scale=1.0).extract(png, hint=truth, variant=0)
         tflat = truth.flatten()

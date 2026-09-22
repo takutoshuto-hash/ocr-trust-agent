@@ -67,6 +67,12 @@ class FirestoreStore:
         forms.sort(key=lambda f: f.created_at, reverse=True)
         return [(f"sender={f.sender_id}", f.final) for f in forms if f.status == "confirmed" and f.final][:limit]
 
+    def sender_history(self, sender_id, limit=10):
+        q = self._c("forms").where(filter=firestore.FieldFilter("sender_id", "==", sender_id)).limit(50)
+        forms = [FormDecision.model_validate(d.to_dict()) for d in q.stream()]
+        forms.sort(key=lambda f: f.created_at, reverse=True)
+        return [f.final for f in forms if f.status == "confirmed" and f.final][:limit]
+
     # ---- ledger ----
     def get_ledger(self, key):
         d = self._c("ledger").document(key.replace("/", "_")).get()

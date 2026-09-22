@@ -21,17 +21,22 @@ class Judge:
         self.evidence_max_distance = evidence_max_distance
 
     def judge(self, primary: Extraction, secondary: Optional[Extraction] = None, *,
-              image: Optional[bytes] = None, format_id: Optional[str] = None) -> dict[str, FieldVerdict]:
+              image: Optional[bytes] = None, format_id: Optional[str] = None,
+              history: Optional[list] = None) -> dict[str, FieldVerdict]:
+        """history: 同じ送り主の過去の確定 OrderForm（新しい順）。依頼主項目とお届け先項目の履歴照合に使う。"""
         flat = primary.form.flatten()
         flat2 = secondary.form.flatten() if secondary else None
         zones = load_zones(format_id) if format_id else {}
         img = open_image(image) if (image and zones) else None
+        past = _history_index(history or [])
         verdicts: dict[str, FieldVerdict] = {}
 
         for path, value in flat.items():
             ft = field_type_of(path)
             v = FieldVerdict(path=path, field_type=ft)
             v.checks = self._checks_for(ft, path, value, flat)
+            if history and not isinstance(value, int) and ft.rsplit(".", 1)[-1] in ("name", "name_kana", "zip", "address", "phone", "organization"):
+                v.checks.append(T.check_history(value, _past_values(past, path, ft, flat)))
             # ハルシネーション対策（空欄検知）
             #   - 整数項目（数量）は「未記入なら 1」がプロンプト上の既定値なので対象外
             #   - 1 文字の値は薄い線 1 本と FAX ノイズを画素で区別できないため対象外（2 文字以上のみ）
@@ -100,6 +105,30 @@ class Judge:
         if not parts:
             return "検証すべて合格" + ("・二重読み取り一致" if v.agreement else "")
         return "; ".join(parts)
+
+
+def _history_index(history: list) -> dict:
+    """過去の確定 OrderForm から、依頼主項目の値リストと、お届け先（氏名キー）ごとの値を索引にする。"""
+    idx = {"applicant": {}, "recipients": {}}
+    for form in history:
+        for k, v in form.applicant.model_dump().items():
+            idx["applicant"].setdefault(k, []).append(v)
+        for d in form.deliveries:
+            key = _norm(d.name)
+            if key:
+                idx["recipients"].setdefault(key, []).append(d.model_dump())
+    return idx
+
+
+def _past_values(past: dict, path: str, ft: str, flat: dict) -> list:
+    field = ft.rsplit(".", 1)[-1]
+    if ft.startswith("applicant"):
+        return [x for x in past["applicant"].get(field, []) if x]
+    # お届け先: 同じ氏名の過去のお届け先があれば、その郵便番号・住所・電話などと照合
+    prefix = path.rsplit(".", 1)[0]
+    name_key = _norm(flat.get(f"{prefix}.name", ""))
+    recs = past["recipients"].get(name_key, []) if name_key else []
+    return [r.get(field) for r in recs if r.get(field)]
 
 
 def _norm(x) -> str:
