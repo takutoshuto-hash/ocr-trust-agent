@@ -13,3 +13,4 @@ eval/out/*
 !eval/out/curve_gemini.csv
 .DS_Store
 .env.review
+data/measurement/out/
