@@ -51,7 +51,8 @@ def explain_review(fd: FormDecision) -> str:
         return "要確認項目はありません。"
     if not settings.use_gemini:
         return "【オフライン】\n" + _summary_text(fd)
-    return asyncio.run(_explain_async(fd))
+    from ._async import run_coro
+    return run_coro(_explain_async(fd))
 
 
 async def _explain_async(fd: FormDecision) -> str:

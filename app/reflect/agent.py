@@ -38,7 +38,8 @@ class ReflectionAgent:
         proposer = "reflection_rules"
         if self.planner == "adk":
             try:
-                raw = asyncio.run(_propose_with_adk(analysis, self.policy))
+                from app.judge._async import run_coro
+                raw = run_coro(_propose_with_adk(analysis, self.policy), timeout=300)
                 proposer = "reflection_agent(adk)"
             except Exception as e:
                 raw = _propose_with_rules(analysis, self.policy)

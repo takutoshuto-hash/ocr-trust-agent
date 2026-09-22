@@ -95,7 +95,8 @@ class Resolver:
     def _plan(self, ctx: FieldContext) -> list[str]:
         if self.planner == "adk":
             try:
-                return asyncio.run(_plan_with_adk(ctx, self.allow_premium))
+                from app.judge._async import run_coro
+                return run_coro(_plan_with_adk(ctx, self.allow_premium))
             except Exception as e:      # ADK 失敗時はルールに退避（監査に残す）
                 ctx.log.append({"planner": "adk", "error": str(e)[:200]})
         return _plan_with_rules(ctx, self.allow_premium)
