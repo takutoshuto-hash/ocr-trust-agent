@@ -49,6 +49,7 @@ def main():
     ap.add_argument("--out", default="eval/out/curve.csv")
     ap.add_argument("--export-state", default=None, help="運用状態（台帳・教師データ・ルーターモデル）をこのディレクトリに書き出す")
     ap.add_argument("--workers", type=int, default=1, help="1日分の帳票を並列に処理するスレッド数（Gemini は I/O 待ちが主なので 8 程度）")
+    ap.add_argument("--field-log", default=None, help="項目ごとの判定・真偽・ルーター p・閾値を日別に書き出す CSV（誤りの内訳分析用）")
     a = ap.parse_args()
 
     rng = random.Random(a.seed)
@@ -76,6 +77,13 @@ def main():
 
     out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True)
     rows = []
+    field_log = None
+    if a.field_log:
+        Path(a.field_log).parent.mkdir(parents=True, exist_ok=True)
+        field_log = open(a.field_log, "w", newline="", encoding="utf-8")
+        field_writer = csv.DictWriter(field_log, fieldnames=["day", "form_id", "sender", "path", "field_type", "status", "audit", "level",
+                                                             "judge_ok", "agreement", "router_p", "router_threshold", "resolved", "correct"])
+        field_writer.writeheader()
     for day in range(1, a.days + 1):
         t0 = time.perf_counter()
         n_fields = n_review = n_auto = n_auto_wrong = n_human_corr = n_ocr_wrong = 0
@@ -116,6 +124,14 @@ def main():
                 n_fields += 1
                 ok = _norm(d.value) == _norm(tflat[path])
                 n_ocr_wrong += (not ok)
+                if field_log is not None:
+                    v = fd.verdicts[path]
+                    field_writer.writerow({"day": day, "form_id": fd.form_id, "sender": fd.sender_id, "path": path, "field_type": d.field_type,
+                                           "status": d.status.value, "audit": int(d.audit), "level": int(d.level), "judge_ok": int(d.judge_ok),
+                                           "agreement": ("" if v.agreement is None else int(v.agreement)),
+                                           "router_p": ("" if d.p_correction is None else round(d.p_correction, 5)),
+                                           "router_threshold": ("" if pipe.router.threshold is None else round(pipe.router.threshold, 5)),
+                                           "resolved": int(d.resolved_from is not None), "correct": int(ok)})
                 if d.status == FieldStatus.REVIEW:
                     n_review += 1
                 else:
@@ -143,6 +159,11 @@ def main():
         with out.open("w", newline="", encoding="utf-8") as f:   # 毎日書き出す（途中で止めても残る）
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
             w.writeheader(); w.writerows(rows)
+        if field_log is not None:
+            field_log.flush()
+    if field_log is not None:
+        field_log.close()
+        print(f"field log -> {a.field_log}")
     print(f"-> {out}")
 
     if a.export_state:
