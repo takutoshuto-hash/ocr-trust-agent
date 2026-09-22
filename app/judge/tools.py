@@ -64,7 +64,9 @@ def check_zip_address(zip_code: str, address: str) -> CheckResult:
 
 
 def check_phone_format(phone: str) -> CheckResult:
-    """電話番号の形式（0始まり・ハイフン区切り・桁数）。"""
+    """電話番号の形式（0始まり・ハイフン区切り・桁数）。空欄は任意項目として判定不能（空欄検知が真偽を見る）。"""
+    if not (phone or "").strip():
+        return CheckResult(name="phone_format", status=CheckStatus.UNKNOWN, detail="空欄")
     digits = re.sub(r"\D", "", phone or "")
     ok = bool(PHONE_RE.fullmatch(phone or "")) and len(digits) in (10, 11)
     return CheckResult(name="phone_format", status=CheckStatus.PASS if ok else CheckStatus.FAIL,

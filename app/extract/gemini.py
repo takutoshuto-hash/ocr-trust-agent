@@ -73,12 +73,39 @@ PROMPTS = [
 ]
 
 
+FIELD_PROMPT = {
+    "zip": "この画像は注文書の郵便番号欄だけを切り出したものです。手書きの郵便番号を NNN-NNNN 形式で読んでください。",
+    "address": "この画像は注文書の住所欄だけを切り出したものです。手書きの住所を都道府県から番地・建物名まで読んでください。",
+    "name": "この画像は注文書の氏名欄だけを切り出したものです。手書きの氏名（漢字）を読んでください。姓と名の間は半角スペース。",
+    "name_kana": "この画像は注文書のフリガナ欄だけを切り出したものです。カタカナで読んでください。姓と名の間は半角スペース。",
+    "phone": "この画像は注文書の電話番号欄だけを切り出したものです。ハイフン区切りで読んでください。",
+    "organization": "この画像は注文書の会社名欄だけを切り出したものです。会社名・団体名を読んでください。",
+    "product_code": "この画像は注文書の商品番号欄だけを切り出したものです。英数字とハイフンの商品コードをそのまま読んでください。",
+    "noshi_name": "この画像は注文書の「のし名入れ」欄だけを切り出したものです。名入れの文字を読んでください。",
+}
+FIELD_SCHEMA = {"type": "OBJECT", "properties": {"value": {"type": "STRING"}, "evidence": {"type": "STRING"}}, "required": ["value", "evidence"]}
+
+
 class GeminiExtractor:
     name = "gemini"
 
-    def __init__(self, api_key: str, model: str):
+    def __init__(self, api_key: str, model: str, premium_model: str = "gemini-2.5-pro"):
         self.client = genai.Client(api_key=api_key)
         self.model = model
+        self.premium_model = premium_model
+
+    def extract_field(self, crop: bytes, field_type: str, *, premium: bool = False, hint=None):
+        """欄の切り出し画像を1項目だけ読む（行動するエージェントの再読み取り）。戻り値 (value, evidence) or None。"""
+        key = field_type.rsplit(".", 1)[-1]
+        prompt = FIELD_PROMPT.get(key, "この画像は注文書の1つの欄だけを切り出したものです。手書きの記入内容を読んでください。")
+        prompt += " 空欄なら value を空文字にし、推測で創作しないこと。evidence には読んだ文字列そのものを入れること。"
+        resp = self.client.models.generate_content(
+            model=self.premium_model if premium else self.model,
+            contents=[types.Part.from_bytes(data=crop, mime_type="image/png"), prompt],
+            config=types.GenerateContentConfig(temperature=0, response_mime_type="application/json", response_schema=FIELD_SCHEMA),
+        )
+        data = json.loads(resp.text or "{}")
+        return str(data.get("value", "") or "").strip(), str(data.get("evidence", "") or "")
 
     def _few_shot(self, examples: Optional[list[tuple[str, OrderForm]]]) -> str:
         if not examples:

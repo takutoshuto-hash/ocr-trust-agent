@@ -64,6 +64,17 @@ class MockExtractor:
     def __init__(self, error_scale: float = 1.0):
         self.error_scale = error_scale
 
+    def extract_field(self, crop: bytes, field_type: str, *, premium: bool = False, hint=None):
+        """欄だけの再読み取りを模倣: 誤り率は通常の 1/2（高精度モデルなら 1/5）。hint は正解値。"""
+        if hint is None:
+            return None
+        seed = int(hashlib.sha256(crop[:2048] + (b"p" if premium else b"z")).hexdigest(), 16) % (2**32)
+        rng = random.Random(seed)
+        p = BASE_ERROR_RATE.get(field_type, 0.05) * self.error_scale * (0.2 if premium else 0.5)
+        v = str(hint)
+        nv = v if rng.random() >= p else _perturb(v, rng)
+        return nv, nv
+
     def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: Optional[OrderForm] = None) -> Extraction:
         if hint is None:
             raise ValueError("MockExtractor には hint（正解 OrderForm）が必要です")

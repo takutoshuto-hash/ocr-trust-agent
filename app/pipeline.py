@@ -14,6 +14,7 @@ from app.extract import Extractor, get_extractor, sends_to_cloud
 from app.judge import Judge
 from app.judge.zones import load_zones, mask_zones
 from app.learn import CorrectionRouter, build_features
+from app.resolve import Resolver
 from app.schemas import (AuditEvent, AutonomyLevel, Extraction, FieldDecision, FieldStatus, FormDecision,
                          OrderForm, TrainingRecord, field_type_of, now_utc)
 from app.store import Store, get_store
@@ -32,6 +33,10 @@ class Pipeline:
         hc = self.policy.raw.get("hallucination", {}) or {}
         self.judge = Judge(blank_ink_ratio=float(hc.get("blank_ink_ratio", 0.004)),
                            evidence_max_distance=float(hc.get("evidence_max_distance", 0.5)))
+        ac = self.policy.raw.get("actions", {}) or {}
+        # ADK プランナーは Gemini 抽出器のときだけ（モック・ローカル Gemma では決定的なルールプランナー）
+        planner = str(ac.get("planner", "rules")) if self.extractor.name == "gemini" else "rules"
+        self.resolver = Resolver(self.extractor, self.judge, ac, planner=planner)
         rc = self.policy.router
         self.router = router or CorrectionRouter(
             settings.model_dir,
@@ -65,9 +70,31 @@ class Pipeline:
         self._audit(form_id, "judged", {"fail": [p for p, v in verdicts.items() if v.any_fail],
                                         "disagree": [p for p, v in verdicts.items() if v.agreement is False]})
 
+        # 行動するエージェント: 失敗・不一致の項目を人に回す前に修復を試みる（行動はすべて監査へ）
+        resolved: dict[str, object] = {}
+        if self.resolver.enabled:
+            updates, actions_log = self.resolver.resolve(ex1, ex2, verdicts, image=to_send, format_id=format_id, hint=hint)
+            if actions_log:
+                self._audit(form_id, "resolved", {"actions": actions_log, "updated": list(updates)})
+            if updates:
+                flat = ex1.form.flatten()
+                for path, new in updates.items():
+                    resolved[path] = flat[path]
+                    flat[path] = new
+                    ex1.fields[path].value = new
+                ex1.form = OrderForm.from_flat(flat)
+                # 修復後の値で再検証。修復値は「独立した読みと一致」が採用条件なので二重読み取り一致とみなす
+                verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id)
+                for path in updates:
+                    verdicts[path].agreement = True
+                    verdicts[path].reason = "エージェントが修復（" + verdicts[path].reason + "）"
+
         decisions: dict[str, FieldDecision] = {}
         for path, fv in ex1.fields.items():
             decisions[path] = self._decide(fv, verdicts[path], sender_id, format_id)
+            if path in resolved:
+                decisions[path].resolved_from = resolved[path]
+                decisions[path].reasons.insert(0, f"エージェントが {resolved[path]!r} → {fv.value!r} に修復")
 
         retention = int(self.policy.raw.get("retention_days", 30))
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,

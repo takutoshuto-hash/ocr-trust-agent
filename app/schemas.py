@@ -144,6 +144,7 @@ class FieldDecision(BaseModel):
     level: AutonomyLevel
     audit: bool = False                    # 自動確定だが監査サンプリングで人にも見せる
     judge_ok: bool = False                 # 検証に FAIL が無かった
+    resolved_from: Optional[Any] = None    # 行動するエージェントが修復した場合の元の値
     p_correction: Optional[float] = None   # 学習ルーターの予測（未学習なら None）
     reasons: list[str] = Field(default_factory=list)
 

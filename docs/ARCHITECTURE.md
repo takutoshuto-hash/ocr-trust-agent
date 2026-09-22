@@ -33,6 +33,19 @@ flowchart LR
 | 保存 | `app/store/` | Memory（ローカル）／Firestore + Cloud Storage（本番） |
 | 監査 | `AuditEvent` | 抽出・判定・確定・昇降格・再学習を全て記録。後から「なぜ自動確定したか」を再現できる |
 
+## 行動するエージェント（`app/resolve/`）
+
+ジャッジで FAIL または二重読み取り不一致になった項目を、**人に回す前にエージェントが自分で修復**する。
+
+| 役割 | 実装 | 決定性 |
+|---|---|---|
+| 行動の選択 | ADK エージェント（Gemini あり）／ルールプランナー（オフライン） | LLM（失敗時はルールに退避） |
+| 行動の実行 | `reread_zone`（欄の切り出し再読み取り）／`reread_premium`（高精度モデル。ポリシー許可時のみ）／`complete_address_from_zip`（郵便番号マスタで住所先頭を補完）／`nearest_product_code`（マスタ近似一致が一意）／`escalate_to_human` | 決定的 |
+| 候補の採否 | 候補で再検証して FAIL なし **かつ** 独立した2つの読みが一致（二重読み取り or 元の読み。マスタ由来の補完は決定的根拠として可） | 決定的 |
+| ガバナンス | `actions.max_per_form`／`max_rereads_per_field`／`allow_premium`（lean は false）。全行動・候補・採否理由を監査ログ `resolved` に記録 | policy.yaml |
+
+修復された項目は「エージェントが X → Y に修復」と理由に残り、その後の自動確定／要確認の判定は通常どおり台帳とルーターが行う。
+
 ## 判定ロジック（`Pipeline._decide`）
 
 1. 検証に FAIL があれば **要確認**（学習より安全側を優先）

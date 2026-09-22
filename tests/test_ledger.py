@@ -15,10 +15,10 @@ def test_new_field_is_L0():
 
 def test_promotion_then_demotion():
     L = _ledger()
-    for _ in range(30):
+    for _ in range(50):   # policy: L1 = min_samples 50 / streak 30 / 修正率 ≤ 1%
         L.record("deliveries.zip", "S1", "fax_v1", corrected=False)
     lvl, stat, _ = L.resolve("deliveries.zip", "S1", "fax_v1")
-    assert lvl == AutonomyLevel.L1 and stat.streak == 30
+    assert lvl == AutonomyLevel.L1 and stat.streak == 50
     events = L.record("deliveries.zip", "S1", "fax_v1", corrected=True)
     assert events and all(e["to"] == 0 for e in events)
     assert L.resolve("deliveries.zip", "S1", "fax_v1")[0] == AutonomyLevel.L0
@@ -26,7 +26,7 @@ def test_promotion_then_demotion():
 
 def test_new_sender_falls_back_to_global_but_name_needs_review():
     L = _ledger()
-    for i in range(40):
+    for i in range(60):
         L.record("deliveries.zip", f"S{i}", "fax_v1", corrected=False)
         L.record("deliveries.name", f"S{i}", "fax_v1", corrected=False)
     # 未知の送り主でも zip は format/global 層の実績で L1
@@ -45,6 +45,6 @@ def test_judge_fail_records_do_not_count():
 
 def test_never_l2_for_address():
     L = _ledger()
-    for _ in range(250):
+    for _ in range(400):
         L.record("deliveries.address", "S1", "fax_v1", corrected=False)
     assert L.resolve("deliveries.address", "S1", "fax_v1")[0] == AutonomyLevel.L1
