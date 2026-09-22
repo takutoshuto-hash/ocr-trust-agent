@@ -71,3 +71,20 @@ def test_pipeline_uses_sender_history():
     fd2 = pipe.process(b"b", sender_id="S1", hint=truth)
     ev = [e for e in pipe.store.list_audit(fd2.form_id) if e.event == "judged"][0]
     assert ev.detail["history_forms"] == 1 and "applicant.name" in ev.detail["history_match"]
+
+
+def test_customer_history_matches_across_senders():
+    """同じ依頼主（電話番号が同じ）が別の送り主IDから送ってきても、顧客照合で過去の確定値と一致する。"""
+    from app.pipeline import _phone_key
+    assert _phone_key("097-555-1234") == "0975551234" and _phone_key("097-55") == "" and _phone_key("") == ""
+    store = MemoryStore()
+    router = CorrectionRouter(Path(tempfile.mkdtemp()), min_samples=10_000, target_error_rate=0.005)
+    pipe = Pipeline(store=store, extractor=MockExtractor(error_scale=0.0), policy=Policy.load(settings.policy_path), router=router, seed=1,
+                    budget_enabled=False)
+    truth = OrderForm.from_flat(BASE)
+    fd = pipe.process(b"img-a", sender_id="FAX-A", hint=truth)
+    pipe.confirm(fd.form_id, {p: truth.flatten()[p] for p in fd.review_paths})
+    assert store.customer_history("0975551234") and not store.customer_history("0000000000")
+    fd2 = pipe.process(b"img-b", sender_id="FAX-B", hint=truth)     # 別の送り主IDから同じ依頼主
+    for p in ("applicant.name", "applicant.address", "applicant.zip"):
+        assert any(c.name == "history" and c.status == CheckStatus.PASS for c in fd2.verdicts[p].checks), p

@@ -98,10 +98,15 @@ class Pipeline:
                                            "few_shot": len(examples), "rules": len(rules)})
 
         history = self.store.sender_history(sender_id, limit=10)   # 同じ送り主の過去の確定帳票（履歴照合）
-        verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=history)
+        # 顧客照合: 読み取った依頼主の電話番号で、送り主IDをまたいで過去の確定帳票を引く（別のFAX・別の様式から来ても同じ顧客）
+        phone_key = _phone_key(ex1.form.applicant.phone)
+        customer = [f for f in self.store.customer_history(phone_key, limit=10)] if phone_key else []
+        seen_ids = {id(f) for f in history}
+        merged = history + [f for f in customer if id(f) not in seen_ids and f.model_dump() not in [h.model_dump() for h in history]]
+        verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=merged)
         self._audit(form_id, "judged", {"fail": [p for p, v in verdicts.items() if v.any_fail],
                                         "disagree": [p for p, v in verdicts.items() if v.agreement is False],
-                                        "history_forms": len(history),
+                                        "history_forms": len(history), "customer_forms": len(customer),
                                         "history_match": [p for p, v in verdicts.items() if any(c.name == "history" and c.status.value == "pass" for c in v.checks)]})
 
         # 行動するエージェント: 失敗・不一致の項目を人に回す前に修復を試みる（行動はすべて監査へ）
@@ -118,7 +123,7 @@ class Pipeline:
                     ex1.fields[path].value = new
                 ex1.form = OrderForm.from_flat(flat)
                 # 修復後の値で再検証。修復値は「独立した読みと一致」が採用条件なので二重読み取り一致とみなす
-                verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=history)
+                verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=merged)
                 for path in updates:
                     verdicts[path].agreement = True
                     verdicts[path].reason = "エージェントが修復（" + verdicts[path].reason + "）"
@@ -254,6 +259,7 @@ class Pipeline:
 
         fd.final = OrderForm.from_flat(final_flat)
         fd.status = "confirmed"
+        fd.applicant_phone_key = _phone_key(fd.final.applicant.phone)
         if fd.review_opened_at is not None:
             fd.review_seconds = round((now_utc() - fd.review_opened_at).total_seconds(), 1)
         self.store.put_form(fd, b"")
@@ -451,3 +457,9 @@ class _CountingExtractor:
 
 def _norm(x) -> str:
     return str(x if x is not None else "").replace(" ", "").replace("　", "").replace("-", "").upper()
+
+
+def _phone_key(phone) -> str:
+    """電話番号を数字だけにした照合キー（10〜11桁でなければ空: 誤読・空欄は照合しない）。"""
+    digits = "".join(ch for ch in str(phone or "") if ch.isdigit())
+    return digits if len(digits) in (10, 11) else ""

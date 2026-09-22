@@ -53,6 +53,17 @@ class MemoryStore:
                     break
         return out
 
+    def customer_history(self, phone_key, limit=10):
+        out = []
+        if not phone_key:
+            return out
+        for f in reversed(self.forms.values()):
+            if f.status == "confirmed" and f.final and f.applicant_phone_key == phone_key:
+                out.append(f.final)
+                if len(out) >= limit:
+                    break
+        return out
+
     def get_ledger(self, key):
         return self.ledger.get(key)
 
