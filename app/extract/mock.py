@@ -20,7 +20,8 @@ CONFUSIONS = {
 }
 
 # 空欄に対して値を創作する確率（ハルシネーション）と、その内容
-HALLUCINATION_RATE = 0.15
+# Gemini 2.5 Flash 実測（手書き合成60枚）: 空欄 82 件中 2 件を創作 = 0.024 → 少し安全側に 0.03
+HALLUCINATION_RATE = 0.03
 HALLUCINATIONS = {
     "applicant.organization": ["株式会社", "有限会社", "商店"],
     "deliveries.noshi_name": ["御中元", "御歳暮", "内祝"],
@@ -28,13 +29,15 @@ HALLUCINATIONS = {
     "deliveries.phone": ["090-0000-0000"], "applicant.phone": ["090-0000-0000"],
 }
 
-# 項目種別ごとの誤り率（手書きの難しさを反映）
+# 項目種別ごとの誤り率。Gemini 2.5 Flash の実測（手書き合成60枚・1,160項目、全体 96.5%）に合わせて校正
+#   applicant: address .100 name .033 kana .050 org .000 phone .100 zip .017
+#   deliveries: address .060 name .030 kana .040 noshi .010 phone .040 product .040 qty .000 zip .010
 BASE_ERROR_RATE = {
-    "applicant.name": 0.12, "applicant.name_kana": 0.10, "applicant.zip": 0.04,
-    "applicant.address": 0.15, "applicant.phone": 0.05, "applicant.organization": 0.10,
-    "deliveries.name": 0.14, "deliveries.name_kana": 0.10, "deliveries.zip": 0.04,
-    "deliveries.address": 0.18, "deliveries.phone": 0.05, "deliveries.product_code": 0.06,
-    "deliveries.qty": 0.03, "deliveries.noshi_name": 0.12,
+    "applicant.name": 0.035, "applicant.name_kana": 0.05, "applicant.zip": 0.02,
+    "applicant.address": 0.10, "applicant.phone": 0.09, "applicant.organization": 0.01,
+    "deliveries.name": 0.03, "deliveries.name_kana": 0.04, "deliveries.zip": 0.01,
+    "deliveries.address": 0.065, "deliveries.phone": 0.04, "deliveries.product_code": 0.04,
+    "deliveries.qty": 0.005, "deliveries.noshi_name": 0.01,
 }
 
 
