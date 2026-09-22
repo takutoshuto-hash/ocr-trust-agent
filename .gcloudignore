@@ -1,0 +1,16 @@
+# Cloud Run --source のアップロード対象。.gitignore とは別（models/*.joblib はデプロイに含める）
+.git/
+.gitignore
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+data/synthetic/out/
+data/measurement/
+data/fonts/
+eval/out/state_*/
+tests/
+docs/
+.env
+.env.review
