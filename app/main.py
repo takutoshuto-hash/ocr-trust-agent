@@ -16,9 +16,9 @@ pipeline = Pipeline()
 env = Environment(loader=PackageLoader("app", "templates"), autoescape=select_autoescape(["html"]))
 
 
-@app.get("/healthz")
-def healthz():
-    return {"ok": True, "extractor": pipeline.extractor.name}
+@app.get("/health")          # /healthz は Cloud Run のフロントエンドに予約されていて 404 になるため /health を使う
+def health():
+    return {"ok": True, "extractor": pipeline.extractor.name, "store": type(pipeline.store).__name__}
 
 
 # ---- 受付 ----
