@@ -26,7 +26,7 @@ def main():
     if a.mock:
         from app.extract.mock import MockExtractor
         extractor = MockExtractor()
-    pipe = Pipeline(store=MemoryStore(), extractor=extractor)
+    pipe = Pipeline(store=MemoryStore(), extractor=extractor, explain=False)
     print(f"extractor = {pipe.extractor.name}")
     per_ft = defaultdict(lambda: {"n": 0, "correct": 0, "review": 0, "auto_wrong": 0})
     hal = {"blank_truth": 0, "invented": 0, "invented_caught": 0}   # 空欄の正解数 / 創作された数 / うち検知された数

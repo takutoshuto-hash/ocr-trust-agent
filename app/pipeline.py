@@ -25,7 +25,7 @@ from app.trust import Policy, TrustLedger
 class Pipeline:
     def __init__(self, store: Optional[Store] = None, extractor: Optional[Extractor] = None,
                  policy: Optional[Policy] = None, router: Optional[CorrectionRouter] = None,
-                 seed: Optional[int] = None):
+                 seed: Optional[int] = None, explain: Optional[bool] = None):
         self.store = store or get_store()
         self.policy = policy or Policy.load(settings.policy_path)
         self.profile = str(self.policy.raw.get("profile", "lean"))
@@ -51,6 +51,8 @@ class Pipeline:
         )
         self._since_train = 0
         self._rng = random.Random(seed)
+        # 受付時の説明文生成（ADK）: Gemini 抽出器の本番運用でのみ既定 ON。モック・シミュレーション・テストでは OFF
+        self.explain = (self.extractor.name == "gemini") if explain is None else bool(explain)
 
     # ---------------- 受付 → 判定 ----------------
     def process(self, image: bytes, *, sender_id: str, format_id: str = "fax_v1",
@@ -107,7 +109,7 @@ class Pipeline:
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,
                           extraction=ex1, verdicts=verdicts, decisions=decisions,
                           expires_at=now_utc() + timedelta(days=retention))
-        if fd.needs_review:
+        if fd.needs_review and self.explain:
             # 要確認理由の説明文は受付時に作って保存（確認画面を開くときに LLM を待たせない）
             try:
                 from app.judge.agent import explain_review

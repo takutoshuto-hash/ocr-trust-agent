@@ -68,7 +68,7 @@ def main():
         from app.extract.mock import MockExtractor
         extractor = MockExtractor()
         use_images = a.images
-    pipe = Pipeline(store=MemoryStore(), extractor=extractor, policy=policy, router=router, seed=a.seed)
+    pipe = Pipeline(store=MemoryStore(), extractor=extractor, policy=policy, router=router, seed=a.seed, explain=False)
     print(f"extractor={extractor.name} images={use_images} days={a.days} per_day={a.per_day} senders={a.senders}", flush=True)
 
     out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True)
