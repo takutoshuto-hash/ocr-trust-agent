@@ -14,7 +14,7 @@ gcloud run deploy "$SERVICE" \
   --project "$PROJECT" \
   --region "$REGION" \
   --allow-unauthenticated \
-  --set-env-vars "STORE_BACKEND=${STORE_BACKEND:-firestore},GOOGLE_CLOUD_PROJECT=${PROJECT},GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}" \
+  --set-env-vars "STORE_BACKEND=${STORE_BACKEND:-firestore},GOOGLE_CLOUD_PROJECT=${PROJECT},GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash},GOOGLE_GENAI_USE_VERTEXAI=${USE_VERTEX:-true},GOOGLE_CLOUD_LOCATION=${VERTEX_LOCATION:-global}" \
   --set-secrets "GEMINI_API_KEY=GEMINI_API_KEY:latest,REVIEW_USER=REVIEW_USER:latest,REVIEW_PASSWORD=REVIEW_PASSWORD:latest" \
   --memory 1Gi --cpu 1 --min-instances 0 --max-instances 5
 

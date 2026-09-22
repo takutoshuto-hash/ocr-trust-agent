@@ -93,8 +93,9 @@ FIELD_SCHEMA = {"type": "OBJECT", "properties": {"value": {"type": "STRING"}, "e
 class GeminiExtractor:
     name = "gemini"
 
-    def __init__(self, api_key: str, model: str, premium_model: str = "gemini-2.5-pro"):
-        self.client = genai.Client(api_key=api_key)
+    def __init__(self, api_key: str = "", model: str = "gemini-2.5-flash", premium_model: str = "gemini-2.5-pro"):
+        from app.config import make_genai_client
+        self.client = make_genai_client()   # Vertex AI（GOOGLE_GENAI_USE_VERTEXAI）または AI Studio キー
         self.model = model
         self.premium_model = premium_model
 

@@ -26,6 +26,10 @@ _load_dotenv(ROOT / ".env")
 class Settings:
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    # Vertex AI 経由（本番推奨）: 上限が AI Studio キーと別枠で、Google Cloud のクレジットで課金される。
+    # Cloud Run では ADC（サービスアカウント）で認証。ローカルは GOOGLE_OAUTH_ACCESS_TOKEN でも可
+    use_vertex: bool = os.getenv("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in ("1", "true", "yes")
+    vertex_location: str = os.getenv("GOOGLE_CLOUD_LOCATION", "global")
     store_backend: str = os.getenv("STORE_BACKEND", "memory")
     gcp_project: str = os.getenv("GOOGLE_CLOUD_PROJECT", "")
     firestore_prefix: str = os.getenv("FIRESTORE_COLLECTION_PREFIX", "ocr_trust")
@@ -36,7 +40,20 @@ class Settings:
 
     @property
     def use_gemini(self) -> bool:
-        return bool(self.gemini_api_key)
+        return bool(self.gemini_api_key) or self.use_vertex
+
+
+def make_genai_client():
+    """google-genai クライアント。Vertex AI（ADC or アクセストークン）か AI Studio キー。"""
+    from google import genai
+    if settings.use_vertex:
+        creds = None
+        token = os.getenv("GOOGLE_OAUTH_ACCESS_TOKEN")
+        if token:
+            from google.oauth2.credentials import Credentials
+            creds = Credentials(token=token)
+        return genai.Client(vertexai=True, project=settings.gcp_project or None, location=settings.vertex_location, credentials=creds)
+    return genai.Client(api_key=settings.gemini_api_key)
 
 
 settings = Settings()
