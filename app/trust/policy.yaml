@@ -64,10 +64,13 @@ router:
   target_error_rate: 0.005       # 自動確定した項目の許容誤り率（予測確率がこれ未満なら自動）
   retrain_every_records: 500
 
-# 予算・上限（1日あたり）
+# 予算・上限（1日あたり、JST）。段階的に縮退する:
+#   呼び出しが上限の degrade_at 以上 → reduced（二重読み取り・再読み取りを省略）
+#   呼び出しが上限以上 or 自動確定数が上限以上 → exhausted（自動確定を停止し全件を人へ。読み取りは単読で継続）
 budget:
   max_gemini_calls: 5000
   max_auto_accepts: 3000
+  degrade_at: 0.8
 
 # 監査サンプリング: 自動確定のうちこの割合を人が抜き取り再確認
 audit_sampling_rate: 0.02

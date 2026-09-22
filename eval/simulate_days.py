@@ -48,6 +48,7 @@ def main():
     ap.add_argument("--images", action="store_true", help="帳票画像を描画して渡す（mock でも空欄検知を有効にする）")
     ap.add_argument("--out", default="eval/out/curve.csv")
     ap.add_argument("--export-state", default=None, help="運用状態（台帳・教師データ・ルーターモデル）をこのディレクトリに書き出す")
+    ap.add_argument("--workers", type=int, default=1, help="1日分の帳票を並列に処理するスレッド数（Gemini は I/O 待ちが主なので 8 程度）")
     a = ap.parse_args()
 
     rng = random.Random(a.seed)
@@ -77,6 +78,8 @@ def main():
     for day in range(1, a.days + 1):
         t0 = time.perf_counter()
         n_fields = n_review = n_auto = n_auto_wrong = n_human_corr = n_ocr_wrong = 0
+        # 1日分の帳票を先に生成し、処理（抽出＋ジャッジ＋判定）は並列、確定（学習）は逐次
+        batch = []
         for i in range(a.per_day):
             truth_d, sender = make_truth(rng, zips, products, pool)
             truth = OrderForm.model_validate(truth_d)
@@ -84,7 +87,28 @@ def main():
                 buf = io.BytesIO(); render(truth_d, fnts, rng).save(buf, format="PNG"); image = buf.getvalue()
             else:
                 image = json.dumps(truth_d, ensure_ascii=False).encode() + bytes([day % 251, i % 251])
-            fd = pipe.process(image, sender_id=sender, format_id="fax_v1", hint=truth)
+            batch.append((image, sender, truth))
+
+        def _proc(item):
+            image, sender, truth = item
+            for attempt in range(3):   # API の一時エラーは再試行
+                try:
+                    return pipe.process(image, sender_id=sender, format_id="fax_v1", hint=truth), truth
+                except Exception as e:
+                    if attempt == 2:
+                        print("  process failed:", str(e)[:120], flush=True); return None, truth
+                    time.sleep(2 * (attempt + 1))
+
+        if a.workers > 1:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=a.workers) as ex:
+                results = list(ex.map(_proc, batch))
+        else:
+            results = [_proc(b) for b in batch]
+
+        for fd, truth in results:
+            if fd is None:
+                continue
             tflat = truth.flatten()
             corrections = {}
             for path, d in fd.decisions.items():

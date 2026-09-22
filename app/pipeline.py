@@ -53,12 +53,25 @@ class Pipeline:
         self._rng = random.Random(seed)
         # 受付時の説明文生成（ADK）: Gemini 抽出器の本番運用でのみ既定 ON。モック・シミュレーション・テストでは OFF
         self.explain = (self.extractor.name == "gemini") if explain is None else bool(explain)
+        # 予算縮退: 1日の Gemini 呼び出し数・自動確定数を数え、上限に応じて段階的に縮退する
+        self.budget = BudgetGuard(self.policy.budget, count_calls=(self.extractor.name == "gemini"))
+        if self.budget.count_calls:
+            self.extractor = _CountingExtractor(self.extractor, self.budget)
+            self.resolver.extractor = self.extractor
 
     # ---------------- 受付 → 判定 ----------------
     def process(self, image: bytes, *, sender_id: str, format_id: str = "fax_v1",
                 hint: Optional[OrderForm] = None, double_read: bool = True) -> FormDecision:
         form_id = uuid.uuid4().hex[:12]
         examples = self.store.recent_confirmed(sender_id, format_id)
+
+        # 予算縮退の段階を判定（normal → reduced: 二重読み取り・再読み取り省略 → exhausted: 自動確定停止）
+        mode, changed = self.budget.mode()
+        if changed:
+            self._audit("-", "budget_state", {"mode": mode, **self.budget.snapshot()}, actor="system")
+        if mode != "normal":
+            double_read = False
+        self.resolver.enabled = bool(self.policy.raw.get("actions", {}).get("enabled", True)) and mode == "normal"
 
         # データ最小化: クラウドへ送る場合は機密欄をマスクし、送信内容を監査ログに残す
         to_send = image
@@ -104,6 +117,13 @@ class Pipeline:
             if path in resolved:
                 decisions[path].resolved_from = resolved[path]
                 decisions[path].reasons.insert(0, f"エージェントが {resolved[path]!r} → {fv.value!r} に修復")
+            if mode == "exhausted" and decisions[path].status == FieldStatus.AUTO:
+                decisions[path].status = FieldStatus.REVIEW
+                decisions[path].audit = False
+                decisions[path].reasons.append("予算縮退（exhausted）: 上限超過のため自動確定を停止し人が確認")
+            elif mode == "reduced" and decisions[path].status == FieldStatus.AUTO:
+                decisions[path].reasons.append("予算縮退（reduced）: 二重読み取りを省略して判定")
+        self.budget.add_auto(sum(1 for d in decisions.values() if d.status == FieldStatus.AUTO))
 
         retention = int(self.policy.raw.get("retention_days", 30))
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,
@@ -282,6 +302,7 @@ class Pipeline:
             "hallucination_flags": sum(1 for f in forms for v in f.verdicts.values()
                                        for c in v.checks if c.name == "blank_zone" and c.status.value == "fail"),
             "profile": self.profile,
+            "budget": {"mode": self.budget.mode()[0], **self.budget.snapshot()},
             "router": {"trained_on": self.router.trained_on, "threshold": self.router.threshold},
             "ledger_levels": {s.key: s.level for s in self.store.list_ledger() if s.level > 0},
         }
@@ -334,6 +355,78 @@ class Pipeline:
 
     def _audit(self, form_id: str, event: str, detail: dict, actor: str = "agent") -> None:
         self.store.add_audit(AuditEvent(form_id=form_id, event=event, actor=actor, detail=detail))
+
+
+class BudgetGuard:
+    """1日の Gemini 呼び出し数と自動確定数を数え、段階的に縮退する（policy.yaml の budget）。
+
+    normal    : 通常
+    reduced   : 呼び出しが上限の degrade_at（既定 80%）以上 → 二重読み取り・再読み取りを省略（判定は台帳・ルーターのまま）
+    exhausted : 呼び出しが上限以上、または自動確定数が上限以上 → 自動確定を停止し全件を人へ（読み取りは単読で継続）
+    カウンタはプロセス内（Cloud Run の複数インスタンスでは近似）。日付（JST）が変わるとリセット。
+    """
+
+    def __init__(self, cfg: dict, count_calls: bool = True):
+        from datetime import timedelta, timezone
+        self.max_calls = int((cfg or {}).get("max_gemini_calls", 0) or 0)
+        self.max_auto = int((cfg or {}).get("max_auto_accepts", 0) or 0)
+        self.degrade_at = float((cfg or {}).get("degrade_at", 0.8))
+        self.count_calls = count_calls
+        self._jst = timezone(timedelta(hours=9))
+        self._day = self._today()
+        self.calls = 0
+        self.auto = 0
+        self._last_mode = "normal"
+
+    def _today(self):
+        from datetime import datetime
+        return datetime.now(self._jst).date()
+
+    def _roll(self):
+        if self._today() != self._day:
+            self._day, self.calls, self.auto = self._today(), 0, 0
+
+    def add_call(self, n: int = 1):
+        self._roll(); self.calls += n
+
+    def add_auto(self, n: int):
+        self._roll(); self.auto += n
+
+    def mode(self) -> tuple[str, bool]:
+        self._roll()
+        m = "normal"
+        if self.max_calls and self.calls >= self.max_calls:
+            m = "exhausted"
+        elif self.max_auto and self.auto >= self.max_auto:
+            m = "exhausted"
+        elif self.max_calls and self.calls >= self.max_calls * self.degrade_at:
+            m = "reduced"
+        changed = m != self._last_mode
+        self._last_mode = m
+        return m, changed
+
+    def snapshot(self) -> dict:
+        self._roll()
+        return {"date": self._day.isoformat(), "gemini_calls": self.calls, "max_gemini_calls": self.max_calls,
+                "auto_accepts": self.auto, "max_auto_accepts": self.max_auto, "degrade_at": self.degrade_at}
+
+
+class _CountingExtractor:
+    """抽出器をラップして Gemini 呼び出し回数を数える（extract / extract_field）。"""
+
+    def __init__(self, inner, budget: BudgetGuard):
+        self._inner, self._budget = inner, budget
+        self.name = inner.name
+        self.model = getattr(inner, "model", "")
+
+    def extract(self, *args, **kwargs):
+        self._budget.add_call(); return self._inner.extract(*args, **kwargs)
+
+    def extract_field(self, *args, **kwargs):
+        self._budget.add_call(); return self._inner.extract_field(*args, **kwargs)
+
+    def __getattr__(self, item):
+        return getattr(self._inner, item)
 
 
 def _norm(x) -> str:
