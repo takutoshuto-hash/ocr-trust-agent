@@ -46,6 +46,7 @@ table{border-collapse:collapse;width:100%;font-size:12px}td,th{padding:4px 6px;b
 </div>
 <div class="tiles" id="tiles"></div>
 <figure><figcaption><b>要確認率の推移</b><small>人が見る項目の割合（監査サンプルを除く）</small></figcaption>
+  <div class="legend" id="lg1" style="display:none"></div>
   <div id="c1" style="position:relative"></div></figure>
 <figure><figcaption><b>自動確定の誤り率: 実測と目標</b><small>実測＝人が確認した自動確定項目のうち修正されたもの</small></figcaption>
   <div class="legend"><span style="--c:var(--series-1)">実測（監査サンプル）</span><span style="--c:var(--series-2)">目標（ポリシー）</span><span id="lg3" style="--c:var(--series-3);display:none">真値（シミュレーション）</span></div>
@@ -82,6 +83,7 @@ function render(){
   const ser1 = [{name:'要確認率', color:'var(--series-1)', values:s.map(p=>p.review)}];
   if (SRC === 'gemini' && (DATA.sim||{}).gemini_baseline) ser1.push({name:'改善前', color:'var(--series-2)', values:(DATA.sim.gemini_baseline).map(r=>r.review_rate)});
   if (SRC === 'gemini' && s[0] && s[0].seen != null) ser1.push({name:'人が見た割合（監査込み）', color:'var(--series-3)', values:s.map(p=>p.seen)});
+  const lg1 = $('#lg1'); lg1.innerHTML = ser1.map(q=>`<span style="--c:${q.color}">${q.name}</span>`).join(''); lg1.style.display = ser1.length > 1 ? '' : 'none';
   lineChart($('#c1'), s.map(p=>p.x), ser1, {pct:true, label:true});
   const ser2 = [{name:'実測（監査サンプル）', color:'var(--series-1)', values:s.map(p=>p.audited)}, {name:'目標', color:'var(--series-2)', values:s.map(()=>k.target_error_rate), flat:true}];
   if (SRC !== 'live') ser2.push({name:'真値', color:'var(--series-3)', values:s.map(p=>p.truth)});
