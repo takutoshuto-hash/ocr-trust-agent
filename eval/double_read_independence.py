@@ -30,7 +30,8 @@ from generate_forms import fonts, load_master, make_truth, phone, render  # noqa
 from app.extract.gemini import GeminiExtractor  # noqa: E402
 from app.schemas import OrderForm, field_type_of  # noqa: E402
 
-MODELS = {"flash": "gemini-2.5-flash", "lite": "gemini-2.5-flash-lite", "pro": "gemini-2.5-pro"}
+MODELS = {"flash": "gemini-2.5-flash", "lite": "gemini-2.5-flash-lite", "pro": "gemini-2.5-pro",
+          "flash0": "gemini-2.5-flash", "lite0": "gemini-2.5-flash-lite"}     # *0 = 思考なし（thinking_budget=0）
 
 
 def _norm(x):
@@ -61,7 +62,7 @@ def main():
     readers = {}
     for v in variants:
         m, mode = v.split(":")
-        readers[v] = GeminiExtractor(model=MODELS[m], second_read=mode)
+        readers[v] = GeminiExtractor(model=MODELS[m], second_read=mode, thinking_budget=(0 if m.endswith("0") else None))
 
     def call(fn, *args, **kw):
         for attempt in range(5):
@@ -75,7 +76,8 @@ def main():
     def read(item):
         truth, png = item
         r1 = call(primary.extract, png, variant=0, format_id="fax_v1")
-        outs = {v: call(rd.extract, png, variant=1, format_id="fax_v1") for v, rd in readers.items()}
+        # *:page の候補は variant=0（1回目と同じプロンプト）で読み、思考の有無だけの差を測れるようにする
+        outs = {v: call(rd.extract, png, variant=(0 if v.endswith("0:page") else 1), format_id="fax_v1") for v, rd in readers.items()}
         return truth, r1, outs
 
     stats = defaultdict(lambda: defaultdict(int))

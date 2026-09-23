@@ -15,6 +15,7 @@ from google import genai
 from google.genai import types
 
 from app.schemas import Extraction, FieldValue, OrderForm
+from app.extract.usage import GLOBAL as USAGE
 
 _FIELD_SCHEMA = {
     "type": "OBJECT",
@@ -155,11 +156,15 @@ class GeminiExtractor:
     name = "gemini"
 
     def __init__(self, api_key: str = "", model: str = "gemini-2.5-flash", premium_model: str = "gemini-2.5-pro",
-                 second_read: str = "zones", second_model: str = ""):
+                 second_read: str = "zones", second_model: str = "", thinking_budget: Optional[int] = None):
+        import os
         from app.config import make_genai_client
         self.client = make_genai_client()   # Vertex AI（GOOGLE_GENAI_USE_VERTEXAI）または AI Studio キー
         self.model = model
         self.premium_model = premium_model
+        # 思考トークンの上限（0 = 思考なし）。転記作業では思考が精度に効かない一方、費用の 4 割を占める（実測）
+        tb = os.getenv("GEMINI_THINKING_BUDGET")
+        self.thinking_budget = thinking_budget if thinking_budget is not None else (int(tb) if tb not in (None, "") else None)
         # 二重読み取りの 2 回目: "zones"=欄ごとの切り出し画像（独立した入力）/ "page"=全面画像を別プロンプトで
         self.second_read = second_read
         self.second_model = second_model or model
@@ -173,10 +178,18 @@ class GeminiExtractor:
         resp = self.client.models.generate_content(
             model=self.premium_model if premium else self.model,
             contents=[types.Part.from_bytes(data=crop, mime_type="image/png"), prompt],
-            config=types.GenerateContentConfig(temperature=0, response_mime_type="application/json", response_schema=FIELD_SCHEMA),
+            config=types.GenerateContentConfig(temperature=0, response_mime_type="application/json", response_schema=FIELD_SCHEMA,
+                                               **self._thinking(premium)),
         )
+        USAGE.add(self.premium_model if premium else self.model, getattr(resp, "usage_metadata", None))
         data = json.loads(resp.text or "{}")
         return str(data.get("value", "") or "").strip(), str(data.get("evidence", "") or "")
+
+    def _thinking(self, premium: bool) -> dict:
+        """思考トークンの設定（Flash 系のみ。Pro は思考を止められないので触らない）。"""
+        if self.thinking_budget is None or premium:
+            return {}
+        return {"thinking_config": types.ThinkingConfig(thinking_budget=int(self.thinking_budget))}
 
     def _few_shot(self, examples: Optional[list[tuple[str, OrderForm]]]) -> str:
         if not examples:
@@ -210,9 +223,11 @@ class GeminiExtractor:
                 temperature=0,
                 response_mime_type="application/json",
                 response_schema=RESPONSE_SCHEMA,
+                **self._thinking(False),
             ),
         )
         latency = int((time.perf_counter() - t0) * 1000)
+        USAGE.add(model, getattr(resp, "usage_metadata", None))
         data = json.loads(resp.text or "{}")
         return _to_extraction(data, model=model + (":zones" if parts else ""), latency_ms=latency)
 

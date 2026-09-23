@@ -312,6 +312,8 @@ class Pipeline:
 
     # ---------------- 指標 ----------------
     def metrics(self) -> dict:
+        from app.extract.usage import GLOBAL as USAGE
+        usage = USAGE.snapshot()      # 起動後の Gemini 実測トークンと費用（推定ではなく usage_metadata）
         forms = self.store.list_forms(limit=10_000)
         n_fields = sum(len(f.decisions) for f in forms)
         n_review = sum(len(f.strict_review_paths) for f in forms)
@@ -319,6 +321,7 @@ class Pipeline:
         recs = self.store.list_training()
         audited = [r for r in recs if r.was_auto and r.verified]   # 監査サンプルで実測した自動確定の誤り
         return {
+            "usage": usage,
             "forms": len(forms),
             "fields": n_fields,
             "review_rate": round(n_review / n_fields, 4) if n_fields else None,

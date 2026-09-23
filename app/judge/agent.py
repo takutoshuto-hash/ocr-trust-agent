@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 from typing import Optional
 
-from app.config import make_adk_model, settings
+from app.config import make_adk_config, make_adk_model, settings
 from app.schemas import FieldStatus, FormDecision
 from . import tools as T
 
@@ -33,6 +33,7 @@ def _build_agent():
         description="OCR結果の要確認項目を説明する検証エージェント",
         instruction=_INSTRUCTION,
         tools=[T.check_zip_address, T.check_product_code, T.check_phone_format, T.check_kana, T.check_evidence],
+        **({"generate_content_config": make_adk_config()} if make_adk_config() else {}),
     )
 
 
@@ -63,7 +64,9 @@ async def _explain_async(fd: FormDecision) -> str:
     session = await runner.session_service.create_session(app_name="ocr_trust", user_id="reviewer")
     msg = types.Content(role="user", parts=[types.Part(text="要確認項目:\n" + _summary_text(fd))])
     out: Optional[str] = None
+    from app.extract.usage import GLOBAL as USAGE
     async for ev in runner.run_async(user_id="reviewer", session_id=session.id, new_message=msg):
+        USAGE.add(settings.gemini_model, getattr(ev, "usage_metadata", None))
         if ev.is_final_response() and ev.content and ev.content.parts:
             out = "".join(p.text or "" for p in ev.content.parts)
     return out or _summary_text(fd)

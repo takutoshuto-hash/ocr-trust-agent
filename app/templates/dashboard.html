@@ -76,6 +76,7 @@ function render(){
     {l:'教師データ（項目）', v: k.training_records},
     {l:'確認時間の中央値 / 帳票', v: k.review_seconds_median != null ? k.review_seconds_median + ' 秒' : '未計測', d: k.review_seconds_per_field_median != null ? `要確認1項目あたり ${k.review_seconds_per_field_median} 秒（${k.review_timed_forms}枚）` : '確認画面で計測されます'},
     {l:'振り返りの提案（未処理）', v: k.pending_proposals},
+    {l:'Gemini 費用（起動後の実測トークン）', v: k.usage ? `¥${k.usage.cost_jpy}` : '–', d: k.usage ? `${k.usage.calls} 回 · 入力 ${k.usage.prompt} · 出力 ${k.usage.output} · 思考 ${k.usage.thoughts}` : ''},
     {l:'予算（本日の Gemini 呼び出し）', v: k.budget ? `${k.budget.gemini_calls} / ${k.budget.max_gemini_calls}` : '–', d: k.budget ? ({normal:'通常', reduced:'縮退: 二重読み取り省略', exhausted:'停止: 自動確定なし'}[k.budget.mode] + ` · 自動確定 ${k.budget.auto_accepts}/${k.budget.max_auto_accepts}`) : ''},
   ];
   $('#tiles').innerHTML = tiles.map(t => `<div class="tile"><div class="l">${t.l}</div><div class="v${t.hero?' hero':''}">${t.v}</div>${t.d?`<div class="d${t.good?' good':''}">${t.d}</div>`:''}</div>`).join('');

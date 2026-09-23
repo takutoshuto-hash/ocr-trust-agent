@@ -89,6 +89,8 @@ def main():
     for day in range(1, a.days + 1):
         t0 = time.perf_counter()
         n_fields = n_review = n_auto = n_auto_wrong = n_human_corr = n_ocr_wrong = n_seen = 0
+        from app.extract.usage import GLOBAL as USAGE, diff as usage_diff
+        usage0 = USAGE.snapshot()
         from datetime import datetime, timezone
         day_started = datetime.now(timezone.utc)
         # 1日分の帳票を先に生成し、処理（抽出＋ジャッジ＋判定）は並列、確定（学習）は逐次
@@ -174,12 +176,14 @@ def main():
                "review_rate": round(n_review / n_fields, 4),
                "human_sees_rate": round(n_seen / n_fields, 4),                          # 監査サンプルを含めて人が見た割合
                "proposals": n_prop, "approved": n_appr,
+               **{f"gemini_{k}": v for k, v in usage_diff(usage0, USAGE.snapshot()).items()},   # その日の実測トークン・費用
                "auto_error_rate": round(n_auto_wrong / n_auto, 5) if n_auto else 0.0,   # 真値比較（神の視点）
                "auto_error_rate_audited": m["auto_error_rate_audited"],                   # 監査サンプルからの推定
                "human_corrections": n_human_corr, "ledger_promoted_keys": promoted,
                "router_trained": summary.get("trained", False), "router_threshold": summary.get("threshold"),
                "seconds": round(time.perf_counter() - t0, 1)}
         rows.append(row)
+        print(f"  gemini: calls {row['gemini_calls']}  in {row['gemini_prompt']}  out {row['gemini_output']}  thoughts {row['gemini_thoughts']}  ≈ ¥{row['gemini_cost_jpy']}", flush=True)
         print(f"day {day:2d}: ocr_err {row['ocr_error_rate']:.3f}  review {row['review_rate']:.3f}  "
               f"auto_err {row['auto_error_rate']:.4f} (audited {row['auto_error_rate_audited']})  "
               f"promoted {promoted:4d}  router {'yes' if row['router_trained'] else 'no '} thr={row['router_threshold']}  {row['seconds']}s", flush=True)

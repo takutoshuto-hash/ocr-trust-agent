@@ -229,15 +229,16 @@ async def _propose_with_adk(analysis: dict, policy: dict) -> list[dict]:
         got["p"] = proposals[:5]
         return {"ok": True, "count": len(got["p"])}
 
-    from app.config import make_adk_model
-    agent = Agent(name="ocr_reflection", model=make_adk_model(), instruction=_ADK_INSTRUCTION, tools=[propose])
+    from app.config import make_adk_model, make_adk_config
+    agent = Agent(name="ocr_reflection", model=make_adk_model(), instruction=_ADK_INSTRUCTION, tools=[propose], **({"generate_content_config": make_adk_config()} if make_adk_config() else {}))
     runner = InMemoryRunner(agent=agent, app_name="ocr_trust")
     session = await runner.session_service.create_session(app_name="ocr_trust", user_id="reflection")
     cur = {k: _get_path(policy, k) for k in ALLOWED_POLICY_KEYS}
     text = "集計:\n" + json.dumps(analysis, ensure_ascii=False, indent=1) + "\n\n現在のポリシー値:\n" + json.dumps(cur, ensure_ascii=False)
-    async for _ in runner.run_async(user_id="reflection", session_id=session.id,
-                                    new_message=types.Content(role="user", parts=[types.Part(text=text)])):
-        pass
+    from app.extract.usage import GLOBAL as USAGE
+    async for ev in runner.run_async(user_id="reflection", session_id=session.id,
+                                     new_message=types.Content(role="user", parts=[types.Part(text=text)])):
+        USAGE.add(settings.gemini_model, getattr(ev, "usage_metadata", None))
     return got.get("p") or _propose_with_rules(analysis, policy)
 
 

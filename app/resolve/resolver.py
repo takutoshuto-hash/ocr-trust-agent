@@ -196,8 +196,8 @@ async def _plan_with_adk(ctx: FieldContext, allow_premium: bool) -> list[str]:
         chosen["plan"] = allowed
         return {"ok": True, "plan": allowed}
 
-    from app.config import make_adk_model
-    agent = Agent(name="ocr_resolver", model=make_adk_model(), instruction=_ADK_INSTRUCTION, tools=[choose_actions])
+    from app.config import make_adk_model, make_adk_config
+    agent = Agent(name="ocr_resolver", model=make_adk_model(), instruction=_ADK_INSTRUCTION, tools=[choose_actions], **({"generate_content_config": make_adk_config()} if make_adk_config() else {}))
     runner = InMemoryRunner(agent=agent, app_name="ocr_trust")
     session = await runner.session_service.create_session(app_name="ocr_trust", user_id="resolver")
     text = (f"項目: {ctx.path}（種別 {ctx.field_type}）\n値: {ctx.value!r}\n根拠: {ctx.evidence!r}\n"
@@ -205,8 +205,9 @@ async def _plan_with_adk(ctx: FieldContext, allow_premium: bool) -> list[str]:
             f"過去の確定値: {ctx.history_values[:3]!r}\n"
             f"高精度モデル: {'許可' if allow_premium else '不許可'}")
     msg = types.Content(role="user", parts=[types.Part(text=text)])
-    async for _ in runner.run_async(user_id="resolver", session_id=session.id, new_message=msg):
-        pass
+    from app.extract.usage import GLOBAL as USAGE
+    async for ev in runner.run_async(user_id="resolver", session_id=session.id, new_message=msg):
+        USAGE.add(settings.gemini_model, getattr(ev, "usage_metadata", None))
     return chosen.get("plan") or _plan_with_rules(ctx, allow_premium)
 
 

@@ -43,6 +43,16 @@ class Settings:
         return bool(self.gemini_api_key) or self.use_vertex
 
 
+def make_adk_config():
+    """ADK エージェントの生成設定。GEMINI_ADK_THINKING_BUDGET（0 = 思考なし）で思考トークンを抑える。
+    行動計画・振り返りは短い判断なので、思考を止めても選択の質はほぼ変わらず、費用の大半（実測で 1 帳票 3.5k 思考トークン）が消える。"""
+    from google.genai import types
+    tb = os.getenv("GEMINI_ADK_THINKING_BUDGET")
+    if tb in (None, ""):
+        return None
+    return types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_budget=int(tb)))
+
+
 def make_adk_model():
     """ADK の LlmAgent に渡すモデル。抽出器と同じ genai クライアント（Vertex / AI Studio、ローカルの gcloud トークン更新）を共有する。
     ADK 既定のクライアントは ADC しか見ないため、ローカルの長時間実行では ADC が無いと ADK だけ黙って失敗していた。"""
