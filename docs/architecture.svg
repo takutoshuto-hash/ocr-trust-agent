@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" font-family="'Noto Sans JP','Yu Gothic UI','Meiryo',sans-serif" font-size="15">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a4a4a"/>
+    </marker>
+    <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2a78d6"/>
+    </marker>
+    <style>
+      .box{fill:#fff;stroke:#3a3a3a;stroke-width:1.5;rx:8}
+      .agent{fill:#eaf2ff;stroke:#2a78d6;stroke-width:2;rx:8}
+      .det{fill:#f4f4f2;stroke:#3a3a3a;stroke-width:1.5;rx:8}
+      .human{fill:#fff4e0;stroke:#d9a400;stroke-width:2;rx:8}
+      .store{fill:#eefaf3;stroke:#1baf7a;stroke-width:1.5;rx:8}
+      .title{font-size:17px;font-weight:700}
+      .small{font-size:13px;fill:#444}
+      .tiny{font-size:12px;fill:#666}
+      .flow{stroke:#4a4a4a;stroke-width:1.8;fill:none;marker-end:url(#arr)}
+      .learn{stroke:#2a78d6;stroke-width:1.8;fill:none;stroke-dasharray:6 4;marker-end:url(#arrb)}
+      .region{fill:none;stroke:#999;stroke-dasharray:4 4;rx:12}
+    </style>
+  </defs>
+
+  <text x="40" y="40" font-size="24" font-weight="700">OCR Trust Agent ― 信頼が育つ手書き注文書エージェント（アーキテクチャ）</text>
+  <text x="40" y="64" class="small">青枠 = ADK エージェント（Gemini が判断）／灰色 = 決定的な処理（コードが判断）／黄色 = 人／緑 = 保存。点線の青矢印 = 学習の流れ</text>
+
+  <!-- Cloud Run region -->
+  <rect x="40" y="90" width="1520" height="490" class="region"/>
+  <text x="56" y="112" class="tiny">Cloud Run（FastAPI）　プロファイル lean: Vertex AI の Gemini 2.5 Flash ／ secure: VPC 内の Gemma（画像を外に出さない）</text>
+
+  <!-- Row 1 -->
+  <rect x="60" y="150" width="120" height="80" class="box"/>
+  <text x="120" y="185" text-anchor="middle" class="title">手書き FAX</text>
+  <text x="120" y="208" text-anchor="middle" class="small">注文書の画像</text>
+
+  <rect x="210" y="130" width="290" height="120" class="det"/>
+  <text x="355" y="156" text-anchor="middle" class="title">① 抽出（二重読み取り）</text>
+  <text x="222" y="180" class="small">1回目: 全面画像を読む（Gemini 2.5 Flash）</text>
+  <text x="222" y="200" class="small">2回目: 欄ごとに切り出して読む（独立）</text>
+  <text x="222" y="220" class="small">送り主の確定例を few-shot で注入</text>
+  <text x="222" y="240" class="tiny">承認ルールも注入。機密欄はマスクして送信</text>
+
+  <rect x="530" y="130" width="300" height="120" class="det"/>
+  <text x="680" y="156" text-anchor="middle" class="title">② ジャッジ（決定的検証）</text>
+  <text x="542" y="180" class="small">形式・商品マスタ・郵便番号↔住所（町域）</text>
+  <text x="542" y="200" class="small">空欄のインク量・根拠整合（幻覚検知）</text>
+  <text x="542" y="220" class="small">市外局番↔都道府県・姓↔読み（相互検証）</text>
+  <text x="542" y="240" class="small">送り主履歴・顧客照合（過去の確定値）</text>
+
+  <rect x="860" y="130" width="270" height="120" class="agent"/>
+  <text x="995" y="156" text-anchor="middle" class="title">③ 行動するエージェント</text>
+  <text x="872" y="180" class="small">ADK が行動を計画: 欄の再読み取り、</text>
+  <text x="872" y="200" class="small">郵便番号→住所補完、商品番号の近似、</text>
+  <text x="872" y="220" class="small">人が確定した字体の復元</text>
+  <text x="872" y="240" class="tiny">採否はコード（独立した根拠の一致のみ）</text>
+
+  <rect x="1160" y="130" width="360" height="120" class="det"/>
+  <text x="1340" y="156" text-anchor="middle" class="title">④ 判定（自動確定 or 要確認）</text>
+  <text x="1172" y="180" class="small">検証失敗 → 要確認　ポリシー必須確認 → 要確認</text>
+  <text x="1172" y="200" class="small">学習ルーター（目標誤り率から閾値を逆算）</text>
+  <text x="1172" y="220" class="small">信頼台帳 L0/L1/L2（送り主／様式／全体）</text>
+  <text x="1172" y="240" class="tiny">監査サンプリング 5%: 自動確定も一部は人が見る</text>
+
+  <!-- Row 2 -->
+  <rect x="60" y="310" width="440" height="120" class="agent"/>
+  <text x="280" y="336" text-anchor="middle" class="title">⑦ 振り返りエージェント（毎晩）</text>
+  <text x="72" y="360" class="small">修正ログを集計 → 読み取りルール／ポリシー値の変更を提案</text>
+  <text x="72" y="380" class="small">ガバナンス: 許可キー・範囲・矛盾・異体字はコードで自動却下</text>
+  <text x="72" y="400" class="small">効果を測り、効かなかった自分の提案は取り消しを提案</text>
+  <text x="72" y="420" class="tiny">承認されるまで何も変えない。提案・承認・取り消しは監査ログへ</text>
+
+  <rect x="530" y="310" width="600" height="120" class="det"/>
+  <text x="830" y="336" text-anchor="middle" class="title">⑥ 学習（毎晩・Cloud Scheduler）</text>
+  <text x="542" y="360" class="small">信頼台帳の昇格・降格（修正率と連続無修正で判断。修正が出れば即 L0 に戻す）</text>
+  <text x="542" y="380" class="small">学習ルーターの再学習（監査サンプルで検証したラベルのみ・選択バイアスを重みで補正）</text>
+  <text x="542" y="400" class="small">Wilson 上限で保証できる閾値だけ採用し、無ければ保留して台帳に任せる</text>
+  <text x="542" y="420" class="tiny">毎日の確定が翌日の few-shot・履歴照合・顧客照合の根拠になる</text>
+
+  <rect x="1160" y="310" width="360" height="120" class="human"/>
+  <text x="1340" y="336" text-anchor="middle" class="title">⑤ 人の確認（要確認だけ）</text>
+  <text x="1172" y="360" class="small">赤枠の項目だけ原本と見比べて確定（実測 7 秒/枚）</text>
+  <text x="1172" y="380" class="small">説明エージェント（ADK）が理由を日本語で示す</text>
+  <text x="1172" y="400" class="small">確定値と修正差分がそのまま教師データになる</text>
+  <text x="1172" y="420" class="tiny">監査サンプル分は「自動確定の誤り率」の実測になる</text>
+
+  <!-- Row 3 -->
+  <rect x="60" y="480" width="440" height="80" class="human"/>
+  <text x="280" y="506" text-anchor="middle" class="title">朝のブリーフィング／ダッシュボード</text>
+  <text x="72" y="530" class="small">昨日のまとめと「〜してよいですか？」の質問に はい／いいえ</text>
+  <text x="72" y="550" class="small">要確認率・人が見た割合・自動確定の誤り率・費用を毎日確認</text>
+
+  <rect x="530" y="480" width="600" height="80" class="det"/>
+  <text x="830" y="506" text-anchor="middle" class="title">ガバナンス（policy.yaml: 人が宣言した範囲でしか自律しない）</text>
+  <text x="542" y="530" class="small">never_l2（住所・氏名は必ず二重確認）　新規送り主は必須確認　目標誤り率 0.5%</text>
+  <text x="542" y="550" class="small">予算縮退 normal → reduced（二重読み取り省略）→ exhausted（自動確定停止）　保持 30 日</text>
+
+  <rect x="1160" y="480" width="360" height="80" class="store"/>
+  <text x="1340" y="506" text-anchor="middle" class="title">Firestore（asia-northeast1）</text>
+  <text x="1172" y="530" class="small">帳票・確定値（TTL）・台帳・教師データ・提案・ルール</text>
+  <text x="1172" y="550" class="small">監査ログ（外部送信・行動・承認をすべて記録）</text>
+
+  <!-- Flow arrows -->
+  <path d="M180,190 L210,190" class="flow"/>
+  <path d="M500,190 L530,190" class="flow"/>
+  <path d="M830,190 L860,190" class="flow"/>
+  <path d="M1130,190 L1160,190" class="flow"/>
+  <path d="M1340,250 L1340,310" class="flow"/>
+  <text x="1352" y="285" class="tiny">要確認＋監査サンプル</text>
+
+  <!-- Learning arrows -->
+  <path d="M1160,370 L1130,370" class="learn"/>
+  <path d="M530,370 L500,370" class="learn"/>
+  <text x="515" y="360" class="tiny" text-anchor="middle">集計</text>
+  <path d="M830,310 C830,280 1340,280 1340,250" class="learn"/>
+  <text x="1150" y="303" class="tiny" text-anchor="middle">閾値・台帳レベルを翌日の判定へ</text>
+  <path d="M280,310 C280,280 355,280 355,250" class="learn"/>
+  <text x="200" y="285" class="tiny" text-anchor="end">承認ルールを注入</text>
+  <path d="M280,430 L280,480" class="learn"/>
+  <text x="292" y="460" class="tiny">提案を質問として提示</text>
+
+  <!-- Footer -->
+  <rect x="40" y="610" width="1520" height="260" class="region"/>
+  <text x="56" y="632" class="tiny">Google Cloud のサービスと拡張性</text>
+  <rect x="60" y="650" width="280" height="80" class="box"/>
+  <text x="200" y="676" text-anchor="middle" class="title">Vertex AI（Gemini 2.5 Flash）</text>
+  <text x="72" y="700" class="small">読み取りと ADK エージェントに使用</text>
+  <text x="72" y="720" class="small">学習に使われない・リージョン固定</text>
+  <rect x="380" y="650" width="280" height="80" class="box"/>
+  <text x="520" y="676" text-anchor="middle" class="title">Cloud Scheduler</text>
+  <text x="392" y="700" class="small">02:00 夜間再学習（/admin/retrain）</text>
+  <text x="392" y="720" class="small">02:30 振り返り（/admin/reflect）</text>
+  <rect x="700" y="650" width="280" height="80" class="box"/>
+  <text x="840" y="676" text-anchor="middle" class="title">Secret Manager</text>
+  <text x="712" y="700" class="small">API キー・確認画面の認証情報</text>
+  <text x="712" y="720" class="small">（コードにも環境変数にも直書きしない）</text>
+  <rect x="1020" y="650" width="520" height="80" class="box"/>
+  <text x="1280" y="676" text-anchor="middle" class="title">業種依存はデータ 3 種だけ（拡張性）</text>
+  <text x="1032" y="700" class="small">様式ゾーン JSON／マスタ CSV（郵便番号・商品・市外局番・姓の読み）</text>
+  <text x="1032" y="720" class="small">検証の組み合わせ。ジャッジ・台帳・ルーター・振り返りは業種を問わない</text>
+
+  <rect x="60" y="750" width="1480" height="100" class="box"/>
+  <text x="800" y="776" text-anchor="middle" class="title">実測（実 Gemini・200 枚/日 × 14 日の運用シミュレーション、正解付きの合成手書き）</text>
+  <text x="72" y="802" class="small">要確認率 51%（改善前）→ 10.6%（改善後 v2）　自動確定の誤り率 0.27% → 0.14%（目標 0.5%）</text>
+  <text x="72" y="822" class="small">振り返りの提案: 承認 47・ガバナンスで自動却下 30・効果なしで取り消し 34　現場の実測: 手入力 52 秒/件 → 確認 7 秒/枚</text>
+  <text x="72" y="842" class="tiny">残る要確認の 8 割は初見のお届け先氏名（照合する根拠がない）。常連の宛名と依頼主はほぼ自動化。</text>
+</svg>

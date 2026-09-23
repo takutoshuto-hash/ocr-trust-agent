@@ -1,0 +1,8 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#fff">
+<img id="i" src="architecture.svg" style="display:block">
+<script>
+window.png = null;
+const img = document.getElementById('i');
+img.onload = () => { const s = 1.5, c = document.createElement('canvas'); c.width = img.naturalWidth * s; c.height = img.naturalHeight * s;
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0,0,c.width,c.height); g.scale(s,s); g.drawImage(img,0,0); window.png = c.toDataURL('image/png'); };
+</script>
