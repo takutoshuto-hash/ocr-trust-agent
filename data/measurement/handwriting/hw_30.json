@@ -1,0 +1,36 @@
+{
+ "sender_id": "H04",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "首藤 大輔",
+   "name_kana": "シュトウ ダイスケ",
+   "zip": "812-0011",
+   "address": "福岡県福岡市博多区博多駅前2-3-3",
+   "phone": "0942-86-9826",
+   "organization": "株式会社大分商事"
+  },
+  "deliveries": [
+   {
+    "name": "山本 花子",
+    "name_kana": "ヤマモト ハナコ",
+    "zip": "870-0035",
+    "address": "大分県大分市中央町2-3-17",
+    "phone": "0978-40-7604",
+    "product_code": "SAU-20",
+    "qty": 1,
+    "noshi_name": "御歳暮"
+   },
+   {
+    "name": "小川 さくら",
+    "name_kana": "オガワ サクラ",
+    "zip": "530-0001",
+    "address": "大阪府大阪市北区梅田3-19-13",
+    "phone": "",
+    "product_code": "HAM-50",
+    "qty": 2,
+    "noshi_name": "御歳暮"
+   }
+  ]
+ }
+}

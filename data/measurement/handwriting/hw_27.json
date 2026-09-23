@@ -1,0 +1,26 @@
+{
+ "sender_id": "H05",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "中島 太郎",
+   "name_kana": "ナカジマ タロウ",
+   "zip": "060-0001",
+   "address": "北海道札幌市中央区北一条西5-4-17",
+   "phone": "090-1583-8912",
+   "organization": "湯布院観光協会"
+  },
+  "deliveries": [
+   {
+    "name": "小川 愛",
+    "name_kana": "オガワ アイ",
+    "zip": "220-0001",
+    "address": "神奈川県横浜市西区北幸1-25-4",
+    "phone": "070-5259-4189",
+    "product_code": "SAU-20",
+    "qty": 2,
+    "noshi_name": "御礼"
+   }
+  ]
+ }
+}

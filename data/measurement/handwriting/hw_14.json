@@ -1,0 +1,36 @@
+{
+ "sender_id": "H00",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "石川 恵子",
+   "name_kana": "イシカワ ケイコ",
+   "zip": "812-0011",
+   "address": "福岡県福岡市博多区博多駅前5-16-13",
+   "phone": "0942-11-1575",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "斎藤 愛",
+    "name_kana": "サイトウ アイ",
+    "zip": "870-0001",
+    "address": "大分県大分市王子北町3-23-9",
+    "phone": "070-1316-9150",
+    "product_code": "YKN-40",
+    "qty": 2,
+    "noshi_name": ""
+   },
+   {
+    "name": "阿部 愛",
+    "name_kana": "",
+    "zip": "812-0011",
+    "address": "福岡県福岡市博多区博多駅前5-23-6",
+    "phone": "092-500-8955",
+    "product_code": "YKN-60",
+    "qty": 1,
+    "noshi_name": "内祝"
+   }
+  ]
+ }
+}

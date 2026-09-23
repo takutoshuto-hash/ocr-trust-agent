@@ -1,0 +1,36 @@
+{
+ "sender_id": "H07",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "石川 大輔",
+   "name_kana": "イシカワ ダイスケ",
+   "zip": "542-0081",
+   "address": "大阪府大阪市中央区南船場3-10-3",
+   "phone": "070-5604-7032",
+   "organization": "別府温泉組合"
+  },
+  "deliveries": [
+   {
+    "name": "山本 隆",
+    "name_kana": "ヤマモト タカシ",
+    "zip": "870-0021",
+    "address": "大分県大分市府内町2-30-12",
+    "phone": "0979-33-2719",
+    "product_code": "SAU-20",
+    "qty": 1,
+    "noshi_name": ""
+   },
+   {
+    "name": "橋本 拓也",
+    "name_kana": "ハシモト タクヤ",
+    "zip": "870-0001",
+    "address": "大分県大分市王子北町2-10-9",
+    "phone": "",
+    "product_code": "CUR-10",
+    "qty": 1,
+    "noshi_name": ""
+   }
+  ]
+ }
+}

@@ -1,0 +1,26 @@
+{
+ "sender_id": "H00",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "石川 恵子",
+   "name_kana": "",
+   "zip": "812-0011",
+   "address": "福岡県福岡市博多区博多駅前5-16-13",
+   "phone": "0942-11-1575",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "池田 さくら",
+    "name_kana": "イケダ サクラ",
+    "zip": "874-0000",
+    "address": "大分県別府市3-17-19",
+    "phone": "097-766-8725",
+    "product_code": "HAM-30",
+    "qty": 1,
+    "noshi_name": "内祝"
+   }
+  ]
+ }
+}

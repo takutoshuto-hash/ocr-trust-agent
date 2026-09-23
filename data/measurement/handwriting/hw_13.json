@@ -1,0 +1,26 @@
+{
+ "sender_id": "H02",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "松本 隆",
+   "name_kana": "マツモト タカシ",
+   "zip": "870-0001",
+   "address": "大分県大分市王子北町4-28-15",
+   "phone": "0973-96-1663",
+   "organization": "湯布院観光協会"
+  },
+  "deliveries": [
+   {
+    "name": "松本 愛",
+    "name_kana": "マツモト アイ",
+    "zip": "870-0021",
+    "address": "大分県大分市府内町5-20-4",
+    "phone": "0979-47-2544",
+    "product_code": "YKN-60",
+    "qty": 1,
+    "noshi_name": ""
+   }
+  ]
+ }
+}

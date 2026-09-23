@@ -1,0 +1,46 @@
+{
+ "sender_id": "H07",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "石川 大輔",
+   "name_kana": "イシカワ ダイスケ",
+   "zip": "542-0081",
+   "address": "大阪府大阪市中央区南船場3-10-3",
+   "phone": "070-5604-7032",
+   "organization": "別府温泉組合"
+  },
+  "deliveries": [
+   {
+    "name": "石川 直樹",
+    "name_kana": "イシカワ ナオキ",
+    "zip": "860-0001",
+    "address": "熊本県熊本市中央区千葉城町4-24-18",
+    "phone": "0965-20-5493",
+    "product_code": "YKN-40",
+    "qty": 1,
+    "noshi_name": "御中元"
+   },
+   {
+    "name": "田中 太郎",
+    "name_kana": "タナカ タロウ",
+    "zip": "220-0001",
+    "address": "神奈川県横浜市西区北幸1-21-5",
+    "phone": "070-6620-1990",
+    "product_code": "HMB-6",
+    "qty": 2,
+    "noshi_name": ""
+   },
+   {
+    "name": "清水 健一",
+    "name_kana": "シミズ ケンイチ",
+    "zip": "160-0022",
+    "address": "東京都新宿区新宿4-21-20",
+    "phone": "03-1772-8370",
+    "product_code": "YKN-60",
+    "qty": 3,
+    "noshi_name": ""
+   }
+  ]
+ }
+}

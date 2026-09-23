@@ -1,0 +1,46 @@
+{
+ "sender_id": "H06",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "佐藤 美咲",
+   "name_kana": "サトウ ミサキ",
+   "zip": "870-0021",
+   "address": "大分県大分市府内町4-25-5",
+   "phone": "0978-43-5179",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "山本 隆",
+    "name_kana": "ヤマモト タカシ",
+    "zip": "730-0011",
+    "address": "広島県広島市中区基町3-16-16",
+    "phone": "082-495-7361",
+    "product_code": "SAU-20",
+    "qty": 1,
+    "noshi_name": "内祝"
+   },
+   {
+    "name": "斎藤 隆",
+    "name_kana": "サイトウ タカシ",
+    "zip": "980-0001",
+    "address": "宮城県仙台市青葉区中央4-22-19",
+    "phone": "070-7361-6416",
+    "product_code": "SAU-20",
+    "qty": 3,
+    "noshi_name": ""
+   },
+   {
+    "name": "加藤 美咲",
+    "name_kana": "カトウ ミサキ",
+    "zip": "460-0002",
+    "address": "愛知県名古屋市中区丸の内2-6-2",
+    "phone": "0562-53-6853",
+    "product_code": "SAU-20",
+    "qty": 1,
+    "noshi_name": "御中元"
+   }
+  ]
+ }
+}

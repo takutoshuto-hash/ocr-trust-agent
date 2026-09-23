@@ -1,0 +1,46 @@
+{
+ "sender_id": "H03",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "佐々木 裕子",
+   "name_kana": "ササキ ユウコ",
+   "zip": "220-0001",
+   "address": "神奈川県横浜市西区北幸4-19-13",
+   "phone": "045-316-6025",
+   "organization": "株式会社大分商事"
+  },
+  "deliveries": [
+   {
+    "name": "山崎 美咲",
+    "name_kana": "ヤマザキ ミサキ",
+    "zip": "980-0001",
+    "address": "宮城県仙台市青葉区中央1-24-18",
+    "phone": "070-3180-9182",
+    "product_code": "BMN-80",
+    "qty": 1,
+    "noshi_name": "御歳暮"
+   },
+   {
+    "name": "石井 愛",
+    "name_kana": "イシイ アイ",
+    "zip": "100-0001",
+    "address": "東京都千代田区千代田4-8-4",
+    "phone": "0422-18-5572",
+    "product_code": "YKN-60",
+    "qty": 1,
+    "noshi_name": "御礼"
+   },
+   {
+    "name": "山田 美咲",
+    "name_kana": "ヤマダ ミサキ",
+    "zip": "220-0001",
+    "address": "神奈川県横浜市西区北幸5-18-8",
+    "phone": "0466-14-7129",
+    "product_code": "YKN-40",
+    "qty": 1,
+    "noshi_name": "御歳暮"
+   }
+  ]
+ }
+}

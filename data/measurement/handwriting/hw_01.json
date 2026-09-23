@@ -1,0 +1,26 @@
+{
+ "sender_id": "H04",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "首藤 大輔",
+   "name_kana": "",
+   "zip": "812-0011",
+   "address": "福岡県福岡市博多区博多駅前2-3-3",
+   "phone": "0942-86-9826",
+   "organization": "株式会社大分商事"
+  },
+  "deliveries": [
+   {
+    "name": "森 健一",
+    "name_kana": "モリ ケンイチ",
+    "zip": "874-0000",
+    "address": "大分県別府市5-15-3",
+    "phone": "0979-78-2744",
+    "product_code": "STK-2",
+    "qty": 1,
+    "noshi_name": "御歳暮"
+   }
+  ]
+ }
+}

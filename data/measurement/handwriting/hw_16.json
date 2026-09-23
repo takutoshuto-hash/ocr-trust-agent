@@ -1,0 +1,46 @@
+{
+ "sender_id": "H06",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "佐藤 美咲",
+   "name_kana": "サトウ ミサキ",
+   "zip": "870-0021",
+   "address": "大分県大分市府内町4-25-5",
+   "phone": "0978-43-5179",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "佐藤 花子",
+    "name_kana": "サトウ ハナコ",
+    "zip": "874-0000",
+    "address": "大分県別府市1-25-16",
+    "phone": "080-6596-5474",
+    "product_code": "HAM-30",
+    "qty": 1,
+    "noshi_name": "御中元"
+   },
+   {
+    "name": "橋本 由美",
+    "name_kana": "",
+    "zip": "604-0001",
+    "address": "京都府京都市中京区1-6-14",
+    "phone": "080-7605-4070",
+    "product_code": "BMN-80",
+    "qty": 3,
+    "noshi_name": "内祝"
+   },
+   {
+    "name": "小林 大輔",
+    "name_kana": "コバヤシ ダイスケ",
+    "zip": "220-0001",
+    "address": "神奈川県横浜市西区北幸5-28-6",
+    "phone": "080-2986-3544",
+    "product_code": "HAM-50",
+    "qty": 1,
+    "noshi_name": "御礼"
+   }
+  ]
+ }
+}

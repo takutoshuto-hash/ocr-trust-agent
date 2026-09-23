@@ -1,0 +1,26 @@
+{
+ "sender_id": "H01",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "鈴木 裕子",
+   "name_kana": "",
+   "zip": "160-0022",
+   "address": "東京都新宿区新宿4-19-1",
+   "phone": "03-1437-1134",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "池田 翔太",
+    "name_kana": "",
+    "zip": "879-0000",
+    "address": "大分県由布市3-15-5",
+    "phone": "0977-18-2174",
+    "product_code": "SAU-20",
+    "qty": 2,
+    "noshi_name": "御歳暮"
+   }
+  ]
+ }
+}

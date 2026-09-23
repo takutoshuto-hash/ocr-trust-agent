@@ -1,0 +1,26 @@
+{
+ "sender_id": "H06",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "佐藤 美咲",
+   "name_kana": "サトウ ミサキ",
+   "zip": "870-0021",
+   "address": "大分県大分市府内町4-25-5",
+   "phone": "0978-43-5179",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "伊藤 健一",
+    "name_kana": "イトウ ケンイチ",
+    "zip": "870-0021",
+    "address": "大分県大分市府内町5-24-13",
+    "phone": "097-282-8891",
+    "product_code": "YKN-40",
+    "qty": 1,
+    "noshi_name": "御礼"
+   }
+  ]
+ }
+}

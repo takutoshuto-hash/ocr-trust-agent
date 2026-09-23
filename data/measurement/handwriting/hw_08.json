@@ -1,0 +1,46 @@
+{
+ "sender_id": "H05",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "中島 太郎",
+   "name_kana": "",
+   "zip": "060-0001",
+   "address": "北海道札幌市中央区北一条西5-4-17",
+   "phone": "090-1583-8912",
+   "organization": "湯布院観光協会"
+  },
+  "deliveries": [
+   {
+    "name": "鈴木 健一",
+    "name_kana": "",
+    "zip": "870-0001",
+    "address": "大分県大分市王子北町1-24-12",
+    "phone": "0973-61-9809",
+    "product_code": "YKN-40",
+    "qty": 3,
+    "noshi_name": "御中元"
+   },
+   {
+    "name": "高橋 陽子",
+    "name_kana": "タカハシ ヨウコ",
+    "zip": "879-0000",
+    "address": "大分県由布市5-26-7",
+    "phone": "080-1861-9935",
+    "product_code": "YKN-40",
+    "qty": 2,
+    "noshi_name": "御礼"
+   },
+   {
+    "name": "中村 裕子",
+    "name_kana": "ナカムラ ユウコ",
+    "zip": "460-0002",
+    "address": "愛知県名古屋市中区丸の内4-24-14",
+    "phone": "052-478-3752",
+    "product_code": "SAU-20",
+    "qty": 3,
+    "noshi_name": "御歳暮"
+   }
+  ]
+ }
+}

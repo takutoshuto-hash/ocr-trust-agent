@@ -1,0 +1,26 @@
+{
+ "sender_id": "H00",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "石川 恵子",
+   "name_kana": "イシカワ ケイコ",
+   "zip": "812-0011",
+   "address": "福岡県福岡市博多区博多駅前5-16-13",
+   "phone": "0942-11-1575",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "松本 陽子",
+    "name_kana": "マツモト ヨウコ",
+    "zip": "812-0011",
+    "address": "福岡県福岡市博多区博多駅前1-20-6",
+    "phone": "090-1921-5152",
+    "product_code": "HAM-50",
+    "qty": 3,
+    "noshi_name": "御歳暮"
+   }
+  ]
+ }
+}

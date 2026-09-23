@@ -1,0 +1,46 @@
+{
+ "sender_id": "H01",
+ "format_id": "fax_v1",
+ "truth": {
+  "applicant": {
+   "name": "鈴木 裕子",
+   "name_kana": "スズキ ユウコ",
+   "zip": "160-0022",
+   "address": "東京都新宿区新宿4-19-1",
+   "phone": "03-1437-1134",
+   "organization": ""
+  },
+  "deliveries": [
+   {
+    "name": "中村 直樹",
+    "name_kana": "ナカムラ ナオキ",
+    "zip": "060-0001",
+    "address": "北海道札幌市中央区北一条西1-29-5",
+    "phone": "",
+    "product_code": "HAM-50",
+    "qty": 3,
+    "noshi_name": "御礼"
+   },
+   {
+    "name": "山下 裕子",
+    "name_kana": "ヤマシタ ユウコ",
+    "zip": "980-0001",
+    "address": "宮城県仙台市青葉区中央3-20-4",
+    "phone": "0229-47-9862",
+    "product_code": "HAM-50",
+    "qty": 1,
+    "noshi_name": "内祝"
+   },
+   {
+    "name": "高橋 太郎",
+    "name_kana": "タカハシ タロウ",
+    "zip": "875-0000",
+    "address": "大分県臼杵市1-3-4",
+    "phone": "0978-20-7965",
+    "product_code": "YKN-60",
+    "qty": 1,
+    "noshi_name": "御礼"
+   }
+  ]
+ }
+}
