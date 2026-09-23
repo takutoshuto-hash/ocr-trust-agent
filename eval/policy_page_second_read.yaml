@@ -1,0 +1,85 @@
+# ガバナンスポリシー（人が宣言し、エージェントはこの範囲でしか自律しない）
+
+# 運用プロファイル
+#   lean   : 現場向け（予算が限られる）。Gemini Flash 系。切り出し・マスクしてクラウドへ送る
+#   secure : 高機密向け。VPC 内 / オンプレの Gemma（Ollama 互換 API）で読む。画像を外に出さない
+profile: lean
+
+# クラウドへ送る前にマスクする項目（secure では無関係。lean で機密欄がある様式に使う）
+# 例: ["applicant.my_number", "deliveries.bank_account"]
+mask_before_cloud: []
+
+# 抽出値の保持日数（Firestore TTL で自動削除）。監査ログは保持対象外
+retention_days: 30
+
+# 二重読み取り（1 回目は全面画像、2 回目は独立した入力にする）
+#   mode: zones = 様式の欄ごとに切り出し・拡大した画像を 1 リクエストで読む（誤りの相関が切れ、「一致」が根拠になる）
+#         page  = 全面画像を別の言い回しのプロンプトで読む（同じ入力なので誤りが揃いやすい）
+#   model: 2 回目に使うモデル（空なら 1 回目と同じ）
+double_read:
+  mode: page
+  model: ""
+
+# 行動するエージェント（検証失敗・二重読み取り不一致の項目を、人に回す前に自分で修復する）
+actions:
+  enabled: true
+  planner: adk               # adk（Gemini があるとき）| rules（決定的）
+  max_per_form: 6            # 1帳票あたりの行動回数上限
+  max_rereads_per_field: 1   # 1項目あたりの再読み取り回数上限
+  allow_premium: false       # 高精度モデル（gemini-2.5-pro）での再読み取り。lean では不許可、高予算プロファイルで true
+  premium_model: gemini-2.5-pro
+
+# 振り返りエージェント（夜間に修正ログを集計し、読み取りルール／ポリシー値の変更を提案。人が承認するまで何も変えない）
+reflection:
+  planner: adk               # adk | rules
+  window_days: 1
+  # 提案してよいポリシーキーと範囲は app/reflect/agent.py の ALLOWED_POLICY_KEYS（コードで固定＝エージェントは変更できない）
+
+# 自律レベルの昇格条件（項目種別 × キー階層ごとに評価）
+# 修正率の上限は router.target_error_rate（0.5%）と整合させる。少量の現場では最初の数週間は昇格しにくいのが正しい挙動
+promotion:
+  L1:                      # ジャッジ全合格＋二重読み取り一致なら自動確定
+    min_samples: 50
+    max_correction_rate: 0.01
+    min_streak: 30         # 連続無修正承認
+  L2:                      # 検証合格なら二重読み取り無しで自動確定（コスト削減）
+    min_samples: 300
+    max_correction_rate: 0.003
+    min_streak: 150
+
+# 降格: 修正が1回あれば即 L0 に戻し、streak をリセット
+demote_on_correction: true
+
+# 絶対に L2 にしない項目（番地以降を含む住所・氏名）
+never_l2:
+  - "*.address"
+  - "*.name"
+
+# 新規送り主（履歴 < min_samples_for_sender）では必ず人が確認する項目
+new_sender_review:
+  - "*.address"
+  - "*.name"
+min_samples_for_sender: 5
+
+# ハルシネーション対策
+hallucination:
+  blank_ink_ratio: 0.013        # 欄左端 320px・上下 8px 内側の「文字らしい」暗画素率（<170）がこれ未満なら「空欄」。手書きフォント合成データ実測: 空欄 max 0.0087 / 2〜3文字の記入 min 0.0208 / 4文字以上 min 0.0282。整数項目と1文字の値は対象外
+  evidence_max_distance: 0.5    # value と evidence の正規化レーベンシュタイン距離がこれ超なら不整合
+
+# 学習ルーター（修正予測分類器）
+router:
+  min_training_samples: 200      # これ未満なら台帳のみで判定
+  target_error_rate: 0.005       # 自動確定した項目の許容誤り率（予測確率がこれ未満なら自動）
+  retrain_every_records: 500
+
+# 予算・上限（1日あたり、JST）。段階的に縮退する:
+#   呼び出しが上限の degrade_at 以上 → reduced（二重読み取り・再読み取りを省略）
+#   呼び出しが上限以上 or 自動確定数が上限以上 → exhausted（自動確定を停止し全件を人へ。読み取りは単読で継続）
+budget:
+  max_gemini_calls: 5000       # 1,000枚/日 × 約3回（二重読み取り＋再読み取り）を想定
+  max_auto_accepts: 20000      # 項目数ベース（1,000枚/日 × 約20項目）。低すぎると自動確定が止まる
+  degrade_at: 0.8
+
+# 監査サンプリング: 自動確定のうちこの割合を人が抜き取り再確認。
+# 偏りのない標本（学習ルーターの重み付け・台帳の昇格判断・自動確定の誤り率の実測）の唯一の源なので、少なすぎると学習が崩れる
+audit_sampling_rate: 0.05
