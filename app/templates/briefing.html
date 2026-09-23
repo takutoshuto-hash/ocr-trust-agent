@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><title>朝のブリーフィング</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:24px;color:#222;max-width:1100px}
+h1{margin-bottom:4px}.sub{color:#666;margin-top:0}
+.lead{font-size:17px;line-height:1.7;background:#f6f8fb;border-left:4px solid #2a78d6;padding:12px 16px;border-radius:6px}
+.kpi{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}.kpi div{border:1px solid #ddd;border-radius:8px;padding:10px 14px;min-width:150px}
+.kpi b{display:block;font-size:22px}.kpi small{color:#666}
+h2{margin-top:28px;border-bottom:1px solid #eee;padding-bottom:4px}
+ul.ev li{margin:6px 0}
+.q{border:1px solid #ddd;border-radius:8px;padding:12px 16px;margin:10px 0}
+.q .ask{font-size:16px;font-weight:600}.q .why{color:#555;font-size:14px;margin:6px 0}
+.q .what{font-family:ui-monospace,monospace;font-size:13px;background:#fafafa;padding:6px 8px;border-radius:4px;margin:6px 0}
+.q form{display:inline}.q button{padding:6px 14px;margin-right:6px}
+.tag{display:inline-block;border-radius:4px;padding:1px 6px;font-size:12px;background:#eef;color:#225}
+.warn{background:#fff6e0;border-left:4px solid #d9a400;padding:8px 12px;border-radius:6px}
+</style></head><body>
+<h1>朝のブリーフィング</h1>
+<p class="sub">{{ b.period_label }} の運用をエージェントがまとめ、判断が必要なことだけ質問します。</p>
+
+<p class="lead">{{ b.headline }}</p>
+
+<div class="kpi">
+  <div>処理した帳票<b>{{ b.forms }}</b><small>{{ b.fields }} 項目</small></div>
+  <div>要確認率<b>{{ '%.1f%%' % (b.review_rate*100) if b.review_rate is not none else '–' }}</b><small>人が見た割合（監査込み） {{ '%.1f%%' % (b.human_sees_rate*100) if b.human_sees_rate is not none else '–' }}</small></div>
+  <div>人が直した項目<b>{{ b.corrections }}</b><small>自動確定の見逃し（監査で発見） {{ b.auto_errors_found }}</small></div>
+  <div>確認時間の中央値<b>{{ b.review_seconds_median if b.review_seconds_median is not none else '–' }}<small style="font-size:14px"> 秒/枚</small></b><small>{{ b.review_forms }} 枚で計測</small></div>
+  <div>エージェントの修復<b>{{ b.resolver_accepted }}</b><small>試行 {{ b.resolver_tried }} 回</small></div>
+  <div>Gemini 費用（起動後累計）<b>¥{{ b.usage.cost_jpy }}</b><small>{{ b.usage.calls }} 回 · 思考 {{ b.usage.thoughts }} トークン</small></div>
+</div>
+
+{% if b.budget_mode != 'normal' %}<p class="warn">予算縮退中: {{ {'reduced':'二重読み取りを省略しています','exhausted':'自動確定を停止し、全件を人が確認しています'}[b.budget_mode] }}</p>{% endif %}
+
+<h2>{{ b.period_label }}に起きたこと</h2>
+<ul class="ev">
+  {% if b.top_corrected %}<li>人の修正が多かった項目: {% for ft, n in b.top_corrected %}<span class="tag">{{ ft }} × {{ n }}</span> {% endfor %}</li>{% endif %}
+  {% if b.promoted %}<li>信頼が育った（自動確定の範囲が広がった）: {% for k in b.promoted %}<span class="tag">{{ k }}</span> {% endfor %}</li>{% endif %}
+  {% if b.demoted %}<li>修正があり信頼を戻した: {% for k in b.demoted %}<span class="tag">{{ k }}</span> {% endfor %}</li>{% endif %}
+  {% if b.retracted %}<li>効果がなかったので取り消したルール: {{ b.retracted }} 件</li>{% endif %}
+  {% if b.rejected_by_governance %}<li>ガバナンスで自動却下した提案: {{ b.rejected_by_governance }} 件（異体字・矛盾・上限）</li>{% endif %}
+  {% if b.router %}<li>学習ルーターを再学習: {{ b.router.n }} 件で学習、自動確定の閾値 {{ '%.4f' % b.router.threshold if b.router.threshold else '保留（保証できる閾値なし）' }}</li>{% endif %}
+  {% if b.block_missing %}<li>お届け先ブロックの読み落とし疑いを {{ b.block_missing }} 枚で警告</li>{% endif %}
+  {% if not (b.top_corrected or b.promoted or b.demoted or b.retracted or b.router) %}<li>特記事項はありません</li>{% endif %}
+</ul>
+
+<h2>エージェントからの質問（{{ b.questions|length }} 件）</h2>
+{% for q in b.questions %}
+<div class="q">
+  <div class="ask">Q{{ loop.index }}. {{ q.ask }}</div>
+  <div class="why">根拠: {{ q.why }}</div>
+  {% if q.what %}<div class="what">{{ q.what }}</div>{% endif %}
+  <form method="post" action="/proposals/{{ q.id }}/approve"><input type="hidden" name="reviewer" value="staff"><input type="hidden" name="next" value="/briefing"><button>はい（承認）</button></form>
+  <form method="post" action="/proposals/{{ q.id }}/reject"><input type="hidden" name="reviewer" value="staff"><input type="hidden" name="next" value="/briefing"><button>いいえ（却下）</button></form>
+  <small style="color:#888">{{ q.proposer }} · {{ q.created }}</small>
+</div>
+{% else %}<p>判断が必要なことはありません。</p>{% endfor %}
+
+<p style="margin-top:28px"><a href="/review">要確認キュー（{{ b.pending_forms }} 枚）</a> · <a href="/dashboard">ダッシュボード</a> · <a href="/rules">有効なルール（{{ b.active_rules }}）</a> · <a href="/proposals?status=">提案履歴</a></p>
+</body></html>

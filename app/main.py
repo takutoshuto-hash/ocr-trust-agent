@@ -92,6 +92,16 @@ def review_queue():
                       proposals=pipeline.store.list_proposals(status="pending"))
 
 
+@app.get("/briefing", response_class=HTMLResponse)
+def briefing_page(hours: int = 24):
+    return env.get_template("briefing.html").render(b=pipeline.briefing(window_hours=hours))
+
+
+@app.get("/api/briefing")
+def briefing_api(hours: int = 24):
+    return JSONResponse(pipeline.briefing(window_hours=hours))
+
+
 @app.get("/review/{form_id}", response_class=HTMLResponse)
 def review_form(form_id: str):
     fd = pipeline.store.get_form(form_id)
@@ -174,7 +184,8 @@ async def decide_proposal(proposal_id: str, decision: str, request: Request):
     actor = f"human:{form.get('reviewer', 'anonymous')}" if form else "human:api"
     p = pipeline.decide_proposal(proposal_id, decision == "approve", actor)
     if form:
-        return RedirectResponse("/review", status_code=303)
+        nxt = str(form.get("next", "/review"))
+        return RedirectResponse(nxt if nxt.startswith("/") and not nxt.startswith("//") else "/review", status_code=303)
     return p.model_dump(mode="json")
 
 

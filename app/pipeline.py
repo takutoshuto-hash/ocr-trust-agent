@@ -342,6 +342,82 @@ class Pipeline:
             fd.review_opened_at = now_utc()
             self.store.put_form(fd, b"")
 
+    def briefing(self, window_hours: int = 24) -> dict:
+        """朝のブリーフィング: 直近 window_hours の運用をまとめ、判断が必要な提案を「質問」の形にする（決定的・費用ゼロ）。"""
+        from collections import Counter
+        from datetime import timedelta, timezone
+        from statistics import median
+        from app.extract.usage import GLOBAL as USAGE
+        from app.reflect.agent import ALLOWED_POLICY_KEYS
+        JST = timezone(timedelta(hours=9))
+        since = now_utc() - timedelta(hours=window_hours)
+        forms = [f for f in self.store.list_forms(limit=10_000) if f.created_at >= since]
+        recs = [r for r in self.store.list_training() if r.created_at >= since]
+        audits = [a for a in self.store.list_audit(limit=20_000) if a.created_at >= since]
+        n_fields = sum(len(f.decisions) for f in forms)
+        n_review = sum(len(f.strict_review_paths) for f in forms)
+        n_seen = sum(sum(1 for d in f.decisions.values() if d.human_sees) for f in forms)
+        corrected = Counter(r.field_type for r in recs if r.corrected and r.verified)
+        auto_errors = sum(1 for r in recs if r.corrected and r.was_auto and r.verified)
+        promoted = [f"{a.detail.get('key', '')} → L{a.detail.get('to')}" for a in audits if a.event == "ledger_promoted"]
+        demoted = [f"{a.detail.get('key', '')} → L{a.detail.get('to')}" for a in audits if a.event == "ledger_demoted"]
+        tried = accepted = 0
+        for a in audits:
+            if a.event == "resolved":
+                for act in a.detail.get("actions", []):
+                    if act.get("candidate") is not None:
+                        tried += 1; accepted += int(bool(act.get("accepted")))
+        routers = [a.detail for a in audits if a.event == "router_trained"]
+        proposals_window = [p for p in self.store.list_proposals(status=None, limit=500) if p.created_at >= since]
+        retracted = sum(1 for p in proposals_window if p.kind.value == "retract" and p.status == "approved")
+        gov_rejected = sum(1 for p in proposals_window if p.status == "rejected" and p.decided_by == "governance")
+        secs = [f.review_seconds for f in forms if f.review_seconds is not None]
+        pending = self.store.list_proposals(status="pending")
+
+        def question(p) -> dict:
+            created = p.created_at.astimezone(JST).strftime("%m/%d %H:%M")
+            if p.kind.value == "rule":
+                return {"id": p.proposal_id, "ask": f"読み取りルールを1つ追加してよいですか？（{p.title}）", "why": p.rationale,
+                        "what": f"{p.rule_text}（適用範囲: {p.rule_scope}）", "proposer": p.proposer, "created": created}
+            if p.kind.value == "policy":
+                lo, hi = ALLOWED_POLICY_KEYS.get(p.policy_key, ("?", "?"))
+                return {"id": p.proposal_id, "ask": f"ポリシー「{p.policy_key}」を {p.policy_from} から {p.policy_to} に変えてよいですか？",
+                        "why": p.rationale, "what": f"許可されている範囲: {lo} 〜 {hi}（範囲外はコードで自動却下）", "proposer": p.proposer, "created": created}
+            return {"id": p.proposal_id, "ask": f"効果のなかったルールを取り消してよいですか？（{p.title}）", "why": p.rationale,
+                    "what": "", "proposer": p.proposer, "created": created}
+
+        review_rate = round(n_review / n_fields, 4) if n_fields else None
+        seen_rate = round(n_seen / n_fields, 4) if n_fields else None
+        parts = []
+        if forms:
+            parts.append(f"{len(forms)} 枚（{n_fields} 項目）を処理し、要確認は {review_rate * 100:.1f}%、監査サンプルを含めて人が見たのは {seen_rate * 100:.1f}% でした。")
+            parts.append(f"人が直した項目は {sum(corrected.values())} 件" + (f"、うち自動確定の見逃しが監査で {auto_errors} 件見つかりました。" if auto_errors else "、自動確定の見逃しは監査で見つかっていません。"))
+        else:
+            parts.append("この期間に処理した帳票はありません。")
+        if promoted:
+            parts.append(f"信頼台帳で {len(promoted)} 件が昇格し、自動確定の範囲が広がりました。")
+        if demoted:
+            parts.append(f"修正を受けて {len(demoted)} 件の信頼を戻しました。")
+        if retracted:
+            parts.append(f"効果のなかったルール {retracted} 件を取り消しました。")
+        if pending:
+            parts.append(f"判断をお願いしたいことが {len(pending)} 件あります。")
+        else:
+            parts.append("今日、判断をお願いすることはありません。")
+        return {
+            "period_label": f"直近 {window_hours} 時間", "since": since.isoformat(), "headline": " ".join(parts),
+            "forms": len(forms), "fields": n_fields, "review_rate": review_rate, "human_sees_rate": seen_rate,
+            "corrections": sum(corrected.values()), "auto_errors_found": auto_errors,
+            "top_corrected": corrected.most_common(5), "promoted": promoted[:10], "demoted": demoted[:10],
+            "resolver_tried": tried, "resolver_accepted": accepted,
+            "router": (routers[-1] if routers else None), "retracted": retracted, "rejected_by_governance": gov_rejected,
+            "block_missing": sum(1 for a in audits if a.event == "block_missing"),
+            "review_seconds_median": (round(median(secs), 1) if secs else None), "review_forms": len(secs),
+            "usage": USAGE.snapshot(), "budget_mode": self.budget.mode()[0] if hasattr(self.budget, "mode") else "normal",
+            "questions": [question(p) for p in pending], "pending_forms": len(self.store.list_pending()),
+            "active_rules": len(self.store.list_rules()),
+        }
+
     def dashboard_data(self) -> dict:
         """ダッシュボード用: 日次系列（要確認率・自動確定の誤り率）、項目種別ごとの台帳レベル、確認時間の実測。"""
         from collections import defaultdict
