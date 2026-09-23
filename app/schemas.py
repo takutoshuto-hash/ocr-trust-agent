@@ -210,6 +210,7 @@ class TrainingRecord(BaseModel):
 class ProposalKind(str, Enum):
     RULE = "rule"        # 読み取りルール（抽出プロンプトに注入するヒント）
     POLICY = "policy"    # ポリシー値の変更（許可されたキー・範囲内のみ）
+    RETRACT = "retract"  # 効果の無かったルールの取り消し（振り返りが自分の提案を測って引っ込める）
 
 
 class Proposal(BaseModel):
@@ -223,6 +224,7 @@ class Proposal(BaseModel):
     policy_key: Optional[str] = None        # kind=policy 例 "hallucination.blank_ink_ratio"
     policy_from: Optional[Any] = None
     policy_to: Optional[Any] = None
+    retract_rule_id: Optional[str] = None   # kind=retract
     status: str = "pending"                 # pending | approved | rejected
     decided_by: Optional[str] = None
     decided_at: Optional[datetime] = None
@@ -236,6 +238,10 @@ class ApprovedRule(BaseModel):
     scope: str = "global"
     source_proposal: str = ""
     created_at: datetime = Field(default_factory=now_utc)
+    field_type: str = ""                    # 効果を測る対象の項目種別
+    confusion: str = ""                     # "from>to"（同じ・逆向きの提案の重複／矛盾を検出する）
+    baseline_rate: Optional[float] = None   # 提案時の修正率（効果測定の基準）
+    active: bool = True                     # 取り消されたら False（プロンプトに注入しない）
 
 
 # ---------- 監査ログ ----------

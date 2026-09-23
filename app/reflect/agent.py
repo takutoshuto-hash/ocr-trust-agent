@@ -31,11 +31,17 @@ class ReflectionAgent:
         self.planner = planner if (planner != "adk" or settings.use_gemini) else "rules"
 
     # ------------------------------------------------------------------ 提案
+    MAX_ACTIVE_RULES_PER_FIELD = 2
+
     def propose(self, analysis: dict) -> list[Proposal]:
         if analysis.get("window_records", 0) == 0:
             return []
         raw: list[dict]
         proposer = "reflection_rules"
+        self._rates = {row["key"]: row["rate"] for row in analysis.get("by_field_type", [])}
+        self._active_rules = self.store.list_rules()
+        analysis = dict(analysis, active_rules=[{"rule_id": r.rule_id, "field_type": r.field_type, "baseline_rate": r.baseline_rate,
+                                                 "text": r.text[:80]} for r in self._active_rules])
         if self.planner == "adk":
             try:
                 from app.judge._async import run_coro
@@ -47,6 +53,7 @@ class ReflectionAgent:
         else:
             raw = _propose_with_rules(analysis, self.policy)
 
+        raw = raw + self._retractions(analysis)          # 自分が出したルールの効果を測り、効かなかったものは取り消しを提案
         out: list[Proposal] = []
         existing = {(p.kind, p.rule_text, p.policy_key) for p in self.store.list_proposals(status="pending")}
         for d in raw:
@@ -63,10 +70,29 @@ class ReflectionAgent:
         kind = d.get("kind")
         base = dict(proposal_id=uuid.uuid4().hex[:10], title=str(d.get("title", ""))[:120],
                     rationale=str(d.get("rationale", ""))[:800], evidence=d.get("evidence", {}) or {}, proposer=proposer)
+        if kind == "retract" and d.get("rule_id"):
+            return Proposal(kind=ProposalKind.RETRACT, retract_rule_id=str(d["rule_id"]), **base)
         if kind == "rule" and d.get("rule_text"):
             scope = str(d.get("scope") or "global")
             if not (scope == "global" or (scope.startswith("format:") and "." not in scope)):
                 scope = "global"        # LLM が項目名などをスコープに入れてきたら global に正規化（注入されないルールを作らない）
+            ft, a, b = _confusion_of(d)
+            ev = dict(base["evidence"]); ev.update({"field_type": ft, "from": a, "to": b, "baseline_rate": getattr(self, "_rates", {}).get(ft)})
+            base["evidence"] = ev
+
+            def rejected_rule(reason: str):
+                kw = {**base, "title": "（自動却下）" + base["title"], "rationale": reason + " / 元の根拠: " + base["rationale"]}
+                return Proposal(kind=ProposalKind.RULE, rule_text=str(d["rule_text"])[:300], rule_scope=scope, status="rejected",
+                                decided_by="governance", **kw)
+
+            from app.judge.tools import VARIANT_KANJI
+            if a and b and VARIANT_KANJI.get(a, a) == VARIANT_KANJI.get(b, b):
+                return rejected_rule("異体字（髙↔高 など）はルールで扱わない。根拠からの復元と顧客照合で対処する")
+            active = self.store.list_rules()     # 直前の承認も見る（同じ夜に同じ混同を2件通さない）
+            if a and b and any(r.field_type == ft and r.confusion in (f"{a}>{b}", f"{b}>{a}") for r in active):
+                return rejected_rule("同じ混同（または逆向き）のルールが既に有効。矛盾するルールを積まない")
+            if ft and sum(1 for r in active if r.field_type == ft) >= self.MAX_ACTIVE_RULES_PER_FIELD:
+                return rejected_rule(f"この項目種別の有効ルールが上限（{self.MAX_ACTIVE_RULES_PER_FIELD}）。効かないルールの取り消しが先")
             return Proposal(kind=ProposalKind.RULE, rule_text=str(d["rule_text"])[:300], rule_scope=scope, **base)
         if kind == "policy":
             key, to = d.get("policy_key"), d.get("policy_to")
@@ -100,11 +126,57 @@ class ReflectionAgent:
         self.store.put_proposal(p)
         if approve:
             if p.kind == ProposalKind.RULE and p.rule_text:
-                self.store.put_rule(ApprovedRule(rule_id=uuid.uuid4().hex[:10], text=p.rule_text, scope=p.rule_scope, source_proposal=p.proposal_id))
+                ev = p.evidence or {}
+                br = ev.get("baseline_rate")
+                self.store.put_rule(ApprovedRule(rule_id=uuid.uuid4().hex[:10], text=p.rule_text, scope=p.rule_scope, source_proposal=p.proposal_id,
+                                                 field_type=str(ev.get("field_type") or ""),
+                                                 confusion=(f"{ev.get('from')}>{ev.get('to')}" if ev.get("from") and ev.get("to") else ""),
+                                                 baseline_rate=(float(br) if br is not None else None)))
+            elif p.kind == ProposalKind.RETRACT and p.retract_rule_id:
+                self.store.deactivate_rule(p.retract_rule_id)
             elif p.kind == ProposalKind.POLICY and p.policy_key:
                 self.store.put_policy_override(p.policy_key, p.policy_to)
                 _set_path(self.policy, p.policy_key, p.policy_to)   # 実行中のポリシーにも反映
         return p
+
+
+    # ------------------------------------------------------------------ 効果測定
+    def _retractions(self, analysis: dict) -> list[dict]:
+        """有効ルールのうち、提案時より対象項目の修正率が下がっていないものは取り消しを提案する。
+
+        評価できるのは「集計窓の開始より前に承認された」ルール（窓の全期間で効いていたもの）だけ。
+        """
+        since = analysis.get("since")
+        rates = getattr(self, "_rates", {})
+        out: list[dict] = []
+        for r in getattr(self, "_active_rules", []) or []:
+            if not r.field_type or r.baseline_rate is None or r.field_type not in rates:
+                continue
+            if since is not None and r.created_at >= since:
+                continue
+            now = float(rates[r.field_type])
+            if now >= float(r.baseline_rate) * 0.9:
+                out.append({"kind": "retract", "rule_id": r.rule_id,
+                            "title": f"効果なし: {r.field_type} のルールを取り消す",
+                            "rationale": f"承認時の修正率 {float(r.baseline_rate):.1%} → 今期 {now:.1%}（1割以上の改善なし）。ルール:「{r.text[:60]}」",
+                            "evidence": {"rule_id": r.rule_id, "field_type": r.field_type, "baseline_rate": r.baseline_rate, "rate": now}})
+        return out
+
+
+def _confusion_of(d: dict) -> tuple[str, str, str]:
+    """提案の根拠から (項目種別, from, to) を取り出す。evidence に無ければ題名／ルール文の「X」「Y」から推定。"""
+    import re as _re
+    ev = d.get("evidence") or {}
+    ft = str(ev.get("field_type") or ev.get("key") or "")
+    a, b = str(ev.get("from") or ""), str(ev.get("to") or "")
+    if not ft:
+        m = _re.search(r"(applicant|deliveries)\.[a-z_]+", (d.get("title") or "") + " " + (d.get("rule_text") or ""))
+        ft = m.group(0) if m else ""
+    if not (a and b):
+        found = _re.findall(r"「(.)」", (d.get("title") or "") + " " + (d.get("rule_text") or ""))
+        if len(found) >= 2:
+            a, b = found[0], found[1]
+    return ft, a, b
 
 
 # ---------------------------------------------------------------------- ルール版（オフライン）
@@ -136,6 +208,9 @@ _ADK_INSTRUCTION = (
     "kind='rule'（抽出モデルに渡す日本語の読み取りルール。rule_text は1〜2文で具体的に、scope は 'global' か 'format:<id>'）、"
     "kind='policy'（policy_key と policy_to。許可キー: " + ", ".join(ALLOWED_POLICY_KEYS) + "。範囲外は却下される）。"
     "根拠の無い提案・集計に現れない主張はしないこと。rationale には集計の数字を引用すること。"
+    "rule の提案には evidence として {field_type, from, to} を必ず付けること（from→to は confusions_top の混同）。"
+    "異体字（髙↔高、﨑↔崎、邊↔辺、齋↔斎 など）の置き換えルールは提案しないこと（システムが根拠と顧客照合で扱う）。"
+    "active_rules に同じ項目種別・同じ混同のルールが既にあれば重ねて提案しないこと。"
     "根拠の強さの基準: 読み取りルールは同じ混同（from→to）が3件以上、または項目種別の件数が20件以上で修正率が5%以上のときだけ提案する。"
     "1〜2件の偶発的な誤りからルールを作らないこと。提案が無い場合は空のリストで propose を呼ぶこと。"
 )

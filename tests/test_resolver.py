@@ -72,3 +72,57 @@ def test_pipeline_audits_resolution():
     fd = pipe.process(b"img", sender_id="S1", hint=truth)
     events = [e.event for e in pipe.store.list_audit(fd.form_id)]
     assert "judged" in events and "decided" in events
+
+
+def test_zone_secondary_requires_primary_agreement():
+    """2回目が欄切り出しのとき、欄再読み取りが2回目と一致しても（相関あり）採用せず、1回目と一致したときだけ採用する。"""
+    from app.resolve.actions import Candidate
+    judge = Judge()
+    r = Resolver(MockExtractor(), judge, {"enabled": True, "max_per_form": 6}, planner="rules")
+    ctx = FieldContext(path="deliveries[0].name", field_type="deliveries.name", value="田中 太郎", evidence="", secondary_value="田中 大郎",
+                       reasons=["二重読み取り不一致"], sibling={}, image=None, format_id="fax_v1", secondary_source="zones")
+    flat = {"deliveries[0].name": "田中 太郎", "deliveries[0].name_kana": ""}
+    ok, why = r._accept(ctx, Candidate(value="田中 大郎", source="reread_zone"), flat)
+    assert not ok and "独立でない" in why
+    ok, why = r._accept(ctx, Candidate(value="田中 太郎", source="reread_zone"), flat)
+    assert ok and "1回目" in why
+    ctx.secondary_source = "page"                       # 従来の全面×全面なら 2 回目との一致で採用
+    ok, _ = r._accept(ctx, Candidate(value="田中 大郎", source="reread_zone"), flat)
+    assert ok
+
+
+def test_restore_variant_from_history():
+    from app.resolve.actions import act_restore_from_history
+    ctx = FieldContext(path="applicant.name", field_type="applicant.name", value="高田 花子", evidence="", secondary_value="高田 花子",
+                       reasons=[], sibling={}, image=None, format_id="fax_v1", history_values=["髙田 花子"])
+    c = act_restore_from_history(ctx)
+    assert c is not None and c.value == "髙田 花子" and c.source == "restore_from_history"
+    ctx.history_values = ["山田 花子"]
+    assert act_restore_from_history(ctx) is None
+
+
+def test_pipeline_restores_variant_kanji_from_confirmed_history():
+    """常連の依頼主「髙田」を「高田」と読んでも、履歴照合が異体字差を検出し、行動するエージェントが確定値の字体に戻す。"""
+    import tempfile
+    from pathlib import Path
+    from app.config import settings
+    from app.learn import CorrectionRouter
+    from app.pipeline import Pipeline
+    from app.schemas import OrderForm, FieldStatus
+    from app.store import MemoryStore
+    from app.trust import Policy
+    store = MemoryStore()
+    router = CorrectionRouter(Path(tempfile.mkdtemp()), min_samples=10_000, target_error_rate=0.005)
+    pipe = Pipeline(store=store, extractor=MockExtractor(error_scale=0.0), policy=Policy.load(settings.policy_path), router=router, seed=1,
+                    budget_enabled=False)
+    base = {"applicant": {"name": "髙田 花子", "name_kana": "タカダ ハナコ", "zip": "870-0001", "address": "大分県大分市王子北町1-2-3",
+                          "phone": "097-555-1234", "organization": ""},
+            "deliveries": [{"name": "鈴木 花子", "name_kana": "スズキ ハナコ", "zip": "150-0001", "address": "東京都渋谷区神宮前1-1-1",
+                            "phone": "03-3000-1000", "product_code": "BMN-50", "qty": 2, "noshi_name": ""}]}
+    truth = OrderForm.model_validate(base)
+    fd = pipe.process(b"img-1", sender_id="S1", hint=truth)
+    pipe.confirm(fd.form_id, {p: truth.flatten()[p] for p in fd.review_paths})
+    wrong = OrderForm.model_validate({**base, "applicant": {**base["applicant"], "name": "高田 花子"}})   # 異体字が常用漢字に化けた読み
+    fd2 = pipe.process(b"img-2", sender_id="S1", hint=wrong)
+    d = fd2.decisions["applicant.name"]
+    assert d.value == "髙田 花子" and d.resolved_from == "高田 花子", (d.value, d.reasons)

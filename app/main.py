@@ -196,7 +196,9 @@ def _load_sim_curves() -> dict:
     import csv
     from app.config import ROOT
     out = {}
-    for name, path in (("mock", ROOT / "eval/out/curve_mock_handwriting.csv"), ("gemini", ROOT / "eval/out/curve_gemini.csv")):
+    for name, path in (("mock", ROOT / "eval/out/curve_mock_handwriting.csv"),
+                       ("gemini_baseline", ROOT / "eval/out/curve_gemini_200x14_vertex.csv"),
+                       ("gemini", ROOT / "eval/out/curve_gemini_200x14_improved.csv")):
         if path.exists():
             with path.open(encoding="utf-8") as f:
                 out[name] = [{k: (float(v) if v not in ("", "None", "True", "False") and k != "day" else v) for k, v in row.items()} for row in csv.DictReader(f)]

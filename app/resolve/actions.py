@@ -36,6 +36,8 @@ class FieldContext:
     image: Optional[bytes]
     format_id: str
     log: list[dict] = field(default_factory=list)
+    secondary_source: str = "page"      # 二重読み取りの 2 回目の入力: page（全面）| zones（欄切り出し）
+    history_values: list[str] = field(default_factory=list)   # 過去の確定値（同じ送り主／同じ顧客／常連のお届け先）
 
 
 def crop_zone(image: bytes, format_id: str, path: str, margin: float = 0.004) -> Optional[bytes]:
@@ -67,6 +69,18 @@ def act_reread_zone(ctx: FieldContext, extractor, *, premium: bool = False, hint
     src = "reread_premium" if premium else "reread_zone"
     return Candidate(value=str(value).strip(), source=src, evidence=evidence, independent=True,
                      detail=f"{'高精度モデル' if premium else '欄の切り出し'}で再読み取り → {value!r}")
+
+
+def act_restore_from_history(ctx: FieldContext) -> Optional[Candidate]:
+    """過去の確定値と異体字だけが違うとき（髙田→高田）、確定値の字体に戻す。人が一度直した字体を再利用する決定的な行動。"""
+    v = T._squash(ctx.value)
+    if not v:
+        return None
+    for p in ctx.history_values:
+        if p != ctx.value and T.fold_variants(T._squash(p)) == T.fold_variants(v) and T._squash(p) != v:
+            return Candidate(value=str(p), source="restore_from_history", independent=True,
+                             detail=f"過去の確定値の字体に復元 {ctx.value!r} → {p!r}")
+    return None
 
 
 def act_complete_address_from_zip(ctx: FieldContext) -> Optional[Candidate]:

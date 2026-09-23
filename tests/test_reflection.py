@@ -67,3 +67,47 @@ def test_pipeline_reflect_and_rules_injected():
     pipe.decide_proposal(pid, True, "human:test")
     assert any(e.event == "proposal_approved" for e in pipe.store.list_audit())
     assert len(pipe.store.list_rules(scope="format:fax_v1")) == 1
+
+
+def test_rule_governance_rejects_variant_duplicate_and_cap():
+    store = MemoryStore()
+    agent = ReflectionAgent(store, Policy.load(settings.policy_path).raw, planner="rules")
+    a = analyze([_rec("deliveries.zip", "870-0007", "870-0001")] * 4 + [_rec("deliveries.zip", "150-0001", "150-0001")] * 10, [])
+    props = agent.propose(a)
+    rule = next(p for p in props if p.kind == ProposalKind.RULE)
+    assert rule.evidence["field_type"] == "deliveries.zip" and rule.evidence["from"] == "7" and rule.evidence["baseline_rate"] is not None
+    agent.decide(rule.proposal_id, True, "human")
+    assert store.list_rules()[0].confusion == "7>1" and store.list_rules()[0].baseline_rate is not None
+    # 同じ混同の逆向き → 矛盾として自動却下
+    p = agent._to_proposal({"kind": "rule", "title": "x", "rationale": "y", "rule_text": "郵便番号で「1」は「7」", "evidence": {"field_type": "deliveries.zip", "from": "1", "to": "7"}}, "t")
+    assert p.status == "rejected" and "矛盾" in p.rationale
+    # 異体字 → 自動却下
+    p = agent._to_proposal({"kind": "rule", "title": "x", "rationale": "y", "rule_text": "氏名で「高」は「髙」に直す", "evidence": {"field_type": "deliveries.name", "from": "高", "to": "髙"}}, "t")
+    assert p.status == "rejected" and "異体字" in p.rationale
+    # 上限（2件）
+    for a_, b_ in (("3", "8"), ("0", "6")):
+        q = agent._to_proposal({"kind": "rule", "title": "x", "rationale": "y", "rule_text": f"郵便番号で「{a_}」は「{b_}」", "evidence": {"field_type": "deliveries.zip", "from": a_, "to": b_}}, "t")
+        store.put_proposal(q)
+        if q.status == "pending":
+            agent.decide(q.proposal_id, True, "human")
+    agent._active_rules = store.list_rules()
+    q = agent._to_proposal({"kind": "rule", "title": "x", "rationale": "y", "rule_text": "郵便番号で「4」は「9」", "evidence": {"field_type": "deliveries.zip", "from": "4", "to": "9"}}, "t")
+    assert q.status == "rejected" and "上限" in q.rationale
+
+
+def test_reflection_retracts_ineffective_rule():
+    from datetime import datetime, timedelta, timezone
+    from app.schemas import ApprovedRule
+    store = MemoryStore()
+    agent = ReflectionAgent(store, Policy.load(settings.policy_path).raw, planner="rules")
+    old = datetime.now(timezone.utc) - timedelta(days=3)
+    store.put_rule(ApprovedRule(rule_id="r1", text="効かないルール", field_type="deliveries.zip", confusion="7>1", baseline_rate=0.05, created_at=old))
+    store.put_rule(ApprovedRule(rule_id="r2", text="効いたルール", field_type="deliveries.name", confusion="大>太", baseline_rate=0.10, created_at=old))
+    recs = [_rec("deliveries.zip", "870-0007", "870-0001")] * 5 + [_rec("deliveries.zip", "150-0001", "150-0001")] * 95   # 5% のまま
+    recs += [_rec("deliveries.name", "x", "x")] * 98 + [_rec("deliveries.name", "田中 大郎", "田中 太郎")] * 2                 # 10% → 2%
+    a = analyze(recs, [], since=datetime.now(timezone.utc) - timedelta(days=1))
+    props = agent.propose(a)
+    retracts = [p for p in props if p.kind == ProposalKind.RETRACT]
+    assert [p.retract_rule_id for p in retracts] == ["r1"], [(p.kind, p.title) for p in props]
+    agent.decide(retracts[0].proposal_id, True, "human")
+    assert [r.rule_id for r in store.list_rules()] == ["r2"] and len(store.list_rules(include_inactive=True)) == 2

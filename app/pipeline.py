@@ -112,7 +112,7 @@ class Pipeline:
         # 行動するエージェント: 失敗・不一致の項目を人に回す前に修復を試みる（行動はすべて監査へ）
         resolved: dict[str, object] = {}
         if self.resolver.enabled:
-            updates, actions_log = self.resolver.resolve(ex1, ex2, verdicts, image=to_send, format_id=format_id, hint=hint)
+            updates, actions_log = self.resolver.resolve(ex1, ex2, verdicts, image=to_send, format_id=format_id, hint=hint, history=merged)
             if actions_log:
                 self._audit(form_id, "resolved", {"actions": actions_log, "updated": list(updates)})
             if updates:

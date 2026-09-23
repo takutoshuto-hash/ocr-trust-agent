@@ -126,10 +126,13 @@ class FirestoreStore:
     def put_rule(self, rule):
         self._c("rules").document(rule.rule_id).set(rule.model_dump(mode="json"))
 
-    def list_rules(self, scope=None):
+    def list_rules(self, scope=None, include_inactive=False):
         from app.schemas import ApprovedRule
         rs = [ApprovedRule.model_validate(d.to_dict()) for d in self._c("rules").limit(200).stream()]
-        return [r for r in rs if scope is None or r.scope == scope or r.scope == "global"]
+        return [r for r in rs if (include_inactive or r.active) and (scope is None or r.scope == scope or r.scope == "global")]
+
+    def deactivate_rule(self, rule_id):
+        self._c("rules").document(rule_id).set({"active": False}, merge=True)
 
     def put_policy_override(self, key, value):
         self._c("policy").document("overrides").set({key.replace(".", "__"): value}, merge=True)

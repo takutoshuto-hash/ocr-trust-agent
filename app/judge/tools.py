@@ -194,6 +194,10 @@ def check_history(value, past_values: list) -> CheckResult:
         return CheckResult(name="history", status=CheckStatus.UNKNOWN, detail="空欄")
     if any(_squash(p) == v for p in past_values):
         return CheckResult(name="history", status=CheckStatus.PASS, detail="過去の確定値と一致")
+    near = [p for p in past_values if fold_variants(_squash(p)) == fold_variants(v)]
+    if near:
+        # 異体字だけが違う（髙田→高田）: 宛名では別字なので不合格にし、行動するエージェントが確定値から復元する
+        return CheckResult(name="history", status=CheckStatus.FAIL, detail=f"過去の確定値と異体字だけが違う（確定値: {near[0]!r}）")
     return CheckResult(name="history", status=CheckStatus.UNKNOWN, detail=f"過去の確定値と不一致（例: {past_values[0]!r}）")
 
 
@@ -265,6 +269,11 @@ def check_variant_kanji(value: str, evidence: str) -> CheckResult:
     if restored:
         return CheckResult(name="variant_kanji", status=CheckStatus.FAIL, detail="異体字が常用漢字に置換された疑い: " + ", ".join(restored))
     return CheckResult(name="variant_kanji", status=CheckStatus.PASS)
+
+
+def fold_variants(s: str) -> str:
+    """異体字を常用漢字に畳んだ比較用文字列（髙田 と 高田 が同じになる）。"""
+    return "".join(VARIANT_KANJI.get(ch, ch) for ch in (s or ""))
 
 
 def _squash(s) -> str:

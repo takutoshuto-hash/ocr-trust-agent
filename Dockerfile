@@ -8,7 +8,7 @@ COPY app ./app
 COPY data/master ./data/master
 COPY data/master/formats ./data/master/formats
 COPY models ./models
-COPY eval/out/*.csv ./eval/out/
+COPY eval/out/curve_*.csv ./eval/out/
 
 RUN pip install --no-cache-dir . && mkdir -p /srv/models
 

@@ -28,6 +28,7 @@ def analyze(records: list[TrainingRecord], audits: list[AuditEvent], *, since: O
     by_fmt: dict[str, dict] = defaultdict(lambda: {"n": 0, "corrected": 0})
     by_sender: dict[str, dict] = defaultdict(lambda: {"n": 0, "corrected": 0})
     confusions: Counter = Counter()
+    variant_corr: Counter = Counter()
     length_diff: Counter = Counter()
     for r in seen:
         for bucket, key in ((by_ft, r.field_type), (by_fmt, r.format_id), (by_sender, r.sender_id)):
@@ -35,6 +36,9 @@ def analyze(records: list[TrainingRecord], audits: list[AuditEvent], *, since: O
             bucket[key]["corrected"] += int(r.corrected)
         if r.corrected and isinstance(r.extracted, str) and isinstance(r.final, str):
             for a, b in _char_substitutions(r.extracted, r.final):
+                if _fold(a) == _fold(b):
+                    variant_corr[r.field_type] += 1     # 異体字（髙↔高）はルールで直せない。根拠復元と顧客照合で扱う
+                    continue
                 confusions[(r.field_type, a, b)] += 1
             length_diff["missing" if len(r.final) > len(r.extracted) else "extra" if len(r.final) < len(r.extracted) else "same_len"] += 1
 
@@ -56,6 +60,7 @@ def analyze(records: list[TrainingRecord], audits: list[AuditEvent], *, since: O
         return sorted(rows, key=lambda x: -x["rate"])[:top]
 
     return {
+        "since": since,
         "window_records": len(seen),
         "overall_correction_rate": round(sum(r.corrected for r in seen) / len(seen), 4) if seen else None,
         "by_field_type": rate_table(by_ft, 1),
@@ -63,6 +68,7 @@ def analyze(records: list[TrainingRecord], audits: list[AuditEvent], *, since: O
         "by_sender_top": rate_table(by_sender),
         "confusions_top": [{"field_type": ft, "from": a, "to": b, "count": c} for (ft, a, b), c in confusions.most_common(top)],
         "length_diff": dict(length_diff),
+        "variant_kanji_corrections": dict(variant_corr),
         "auto_missed": {"count": len(auto_missed), "field_types": dict(Counter(r.field_type for r in auto_missed))},
         "resolver_actions": {k: {"tried": actions[k], "accepted": accepted[k]} for k in actions},
         "forms_judged": hallucination_flags,
@@ -83,3 +89,8 @@ def _char_substitutions(a: str, b: str) -> list[tuple[str, str]]:
 
 def default_since(days: int = 1) -> datetime:
     return datetime.now(timezone.utc) - timedelta(days=days)
+
+
+def _fold(ch: str) -> str:
+    from app.judge.tools import VARIANT_KANJI
+    return VARIANT_KANJI.get(ch, ch)

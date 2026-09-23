@@ -103,8 +103,13 @@ class MemoryStore:
     def put_rule(self, rule):
         self.rules.append(rule)
 
-    def list_rules(self, scope=None):
-        return [r for r in self.rules if scope is None or r.scope == scope or r.scope == "global"]
+    def list_rules(self, scope=None, include_inactive=False):
+        return [r for r in self.rules if (include_inactive or r.active) and (scope is None or r.scope == scope or r.scope == "global")]
+
+    def deactivate_rule(self, rule_id):
+        for r in self.rules:
+            if r.rule_id == rule_id:
+                r.active = False
 
     def put_policy_override(self, key, value):
         self.overrides[key] = value

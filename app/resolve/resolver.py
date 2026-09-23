@@ -34,12 +34,15 @@ class Resolver:
 
     # ------------------------------------------------------------------ 入口
     def resolve(self, primary: Extraction, secondary: Optional[Extraction], verdicts: dict[str, FieldVerdict], *,
-                image: Optional[bytes], format_id: str, hint=None) -> tuple[dict[str, str], list[dict]]:
+                image: Optional[bytes], format_id: str, hint=None, history: Optional[list] = None) -> tuple[dict[str, str], list[dict]]:
         """戻り値: ({path: 採用した新しい値}, 行動ログ)。verdicts は採用した項目について更新される。"""
         if not self.enabled:
             return {}, []
+        from app.judge.core import _history_index, _past_values
         flat = primary.form.flatten()
         flat2 = secondary.form.flatten() if secondary else {}
+        secondary_source = "zones" if (secondary and str(secondary.model).endswith(":zones")) else "page"
+        past = _history_index(history or [])
         updates: dict[str, str] = {}
         log: list[dict] = []
         budget = self.max_per_form
@@ -57,7 +60,8 @@ class Resolver:
                 secondary_value=(str(flat2[path]) if path in flat2 else None),
                 reasons=[c.detail or c.name for c in v.checks if c.status == CheckStatus.FAIL] + (["二重読み取り不一致"] if v.agreement is False else []),
                 sibling={k.rsplit(".", 1)[1]: str(flat.get(f"{prefix}.{k.rsplit('.', 1)[1]}", "")) for k in flat if k.startswith(prefix + ".")},
-                image=image, format_id=format_id,
+                image=image, format_id=format_id, secondary_source=secondary_source,
+                history_values=[str(x) for x in _past_values(past, path, v.field_type, flat)] if history else [],
             )
             plan = self._plan(ctx)
             accepted: Optional[Candidate] = None
@@ -109,6 +113,8 @@ class Resolver:
             return A.act_reread_zone(ctx, self.extractor, premium=True, hint=hint_value)
         if action == "complete_address_from_zip":
             return A.act_complete_address_from_zip(ctx)
+        if action == "restore_from_history":
+            return A.act_restore_from_history(ctx)
         if action == "nearest_product_code":
             return A.act_nearest_product_code(ctx)
         return None
@@ -130,8 +136,16 @@ class Resolver:
         norm = _norm
         if cand.source in ("complete_address_from_zip", "nearest_product_code"):
             return True, "決定的根拠（マスタ）＋再検証合格"
+        if cand.source == "restore_from_history":
+            return True, "決定的根拠（人が確定した字体）＋再検証合格"
         agree_secondary = ctx.secondary_value is not None and norm(cand.value) == norm(ctx.secondary_value)
         agree_primary = norm(cand.value) == norm(ctx.value)
+        if cand.source in ("reread_zone", "reread_premium") and ctx.secondary_source == "zones":
+            # 再読み取りは 2 回目と同じ入力（欄切り出し）なので、2 回目との一致は独立した根拠にならない。
+            # 1 回目（全面読み）と一致したときだけ採用する（欄切り出し同士の一致で誤りを通してしまった実測への対処）
+            if agree_primary:
+                return True, "独立した読み（1回目・全面）と一致＋再検証合格"
+            return False, "欄切り出し同士の一致は独立でない（人が確認）"
         if agree_secondary or agree_primary:
             return True, "独立した読みと一致（" + ("二重読み取り" if agree_secondary else "元の読み") + "）＋再検証合格"
         return False, "独立した読みと不一致（人が確認）"
@@ -141,6 +155,8 @@ class Resolver:
 def _plan_with_rules(ctx: FieldContext, allow_premium: bool) -> list[str]:
     ft = ctx.field_type
     plan: list[str] = []
+    if ctx.history_values:
+        plan.append("restore_from_history")     # 決定的・無料: 過去の確定値と異体字だけ違うなら字体を戻す
     if ft.endswith(".product_code"):
         plan += ["nearest_product_code", "reread_zone"]
     elif ft.endswith(".address"):
@@ -160,6 +176,7 @@ _ADK_INSTRUCTION = (
     "同じブロックの他項目）を見て、取るべき行動を順番に選び、choose_actions ツールで返してください。"
     "使える行動: reread_zone（欄だけ切り出して再読み取り）, reread_premium（高精度モデルで再読み取り。許可されている場合のみ）, "
     "complete_address_from_zip（郵便番号から住所の先頭を補完。住所または郵便番号の項目向け）, nearest_product_code（商品コードのマスタ近似一致）, "
+    "restore_from_history（過去に人が確定した値と異体字だけが違うとき、その字体に戻す。過去の確定値がある場合のみ）, "
     "escalate_to_human（人に回す。最後に必ず含める）。安い決定的な行動を先に、再読み取りは1回まで。値を自分で創作しないこと。"
 )
 
@@ -185,6 +202,7 @@ async def _plan_with_adk(ctx: FieldContext, allow_premium: bool) -> list[str]:
     session = await runner.session_service.create_session(app_name="ocr_trust", user_id="resolver")
     text = (f"項目: {ctx.path}（種別 {ctx.field_type}）\n値: {ctx.value!r}\n根拠: {ctx.evidence!r}\n"
             f"二重読み取り: {ctx.secondary_value!r}\n検証の失敗: {ctx.reasons}\n同ブロック: {ctx.sibling}\n"
+            f"過去の確定値: {ctx.history_values[:3]!r}\n"
             f"高精度モデル: {'許可' if allow_premium else '不許可'}")
     msg = types.Content(role="user", parts=[types.Part(text=text)])
     async for _ in runner.run_async(user_id="resolver", session_id=session.id, new_message=msg):
