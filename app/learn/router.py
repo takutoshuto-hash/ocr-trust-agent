@@ -35,6 +35,14 @@ class CorrectionRouter:
     def _load(self) -> None:
         if self.path.exists():
             d = joblib.load(self.path)
+            feats = d.get("features")
+            n_in = getattr(d["model"], "n_features_in_", None)
+            if (feats is not None and list(feats) != list(FEATURE_NAMES)) or (n_in is not None and n_in != len(FEATURE_NAMES)):
+                # 特徴量の定義が変わった後の古いモデル: 使わずに未学習扱い（台帳で判定）。次の再学習で作り直される
+                import logging
+                logging.getLogger("ocr_trust").warning("router model at %s has stale features (%s vs %s); ignoring", self.path, n_in, len(FEATURE_NAMES))
+                self.model, self.threshold, self.trained_on = None, None, 0
+                return
             self.model, self.threshold, self.trained_on = d["model"], d["threshold"], d["n"]
 
     def _save(self) -> None:
