@@ -157,8 +157,8 @@ class ReflectionAgent:
             now = float(rates[r.field_type])
             if now >= float(r.baseline_rate) * 0.9:
                 out.append({"kind": "retract", "rule_id": r.rule_id,
-                            "title": f"効果なし: {r.field_type} のルールを取り消す",
-                            "rationale": f"承認時の修正率 {float(r.baseline_rate):.1%} → 今期 {now:.1%}（1割以上の改善なし）。ルール:「{r.text[:60]}」",
+                            "title": f"{_ft_label(r.field_type)}のコツは効いていません",
+                            "rationale": f"覚えさせた時点で人が直した割合は {float(r.baseline_rate):.1%}、今は {now:.1%} で、1割以上は減っていません。内容:「{r.text[:60]}」",
                             "evidence": {"rule_id": r.rule_id, "field_type": r.field_type, "baseline_rate": r.baseline_rate, "rate": now}})
         return out
 
@@ -185,20 +185,21 @@ def _propose_with_rules(a: dict, policy: dict) -> list[dict]:
     for c in a.get("confusions_top", []):
         if c["count"] >= 3:
             out.append({"kind": "rule", "scope": "global",
-                        "title": f"{c['field_type']}: 「{c['from']}」を「{c['to']}」と読み違えやすい",
+                        "title": f"{_ft_label(c['field_type'])}で「{c['from']}」を「{c['to']}」と読み違えやすい",
                         "rule_text": f"{_ft_label(c['field_type'])}では手書きの「{c['from']}」が「{c['to']}」である場合が多い。形が似ていれば「{c['to']}」の可能性を優先して確認すること。",
-                        "rationale": f"直近の修正で {c['from']}→{c['to']} の置換が {c['count']} 件", "evidence": c})
+                        "rationale": f"昨日、人が「{c['from']}」を「{c['to']}」に直した項目が {c['count']} 件ありました", "evidence": c})
     am = a.get("auto_missed", {})
     if am.get("count", 0) >= 2:
         cur = float(policy.get("audit_sampling_rate", 0.02))
         out.append({"kind": "policy", "policy_key": "audit_sampling_rate", "policy_to": round(min(0.2, cur * 2), 3),
-                    "title": "監査サンプリング率を引き上げ", "rationale": f"自動確定の見逃しが監査で {am['count']} 件見つかった（{am.get('field_types')}）。見逃しの計測精度を上げる",
+                    "title": "念のための見直しを増やす",
+                    "rationale": f"自動で確定した中に間違いが {am['count']} 件見つかりました（" + "、".join(_ft_label(k) for k in (am.get("field_types") or {})) + "）。見直す割合を増やして、取りこぼしを早く見つけたい",
                     "evidence": am})
     for row in a.get("by_field_type", []):
         if row["n"] >= 30 and row["rate"] >= 0.08:
-            out.append({"kind": "rule", "scope": "global", "title": f"{row['key']} の修正率が高い（{row['rate']:.0%}）",
+            out.append({"kind": "rule", "scope": "global", "title": f"{_ft_label(row['key'])}は人が直すことが多い（{row['rate']:.0%}）",
                         "rule_text": f"{_ft_label(row['key'])}は誤読が多い。読みにくい場合は推測せず空文字にし、evidence に読めた部分だけを入れること。",
-                        "rationale": f"{row['n']} 件中 {row['corrected']} 件が修正された", "evidence": row})
+                        "rationale": f"{row['n']} 件のうち {row['corrected']} 件を人が直しました", "evidence": row})
     return out
 
 
@@ -209,6 +210,8 @@ _ADK_INSTRUCTION = (
     "kind='policy'（policy_key と policy_to。許可キー: " + ", ".join(ALLOWED_POLICY_KEYS) + "。範囲外は却下される）。"
     "根拠の無い提案・集計に現れない主張はしないこと。rationale には集計の数字を引用すること。"
     "rule の提案には evidence として {field_type, from, to} を必ず付けること（from→to は confusions_top の混同）。"
+    "title と rationale は現場の事務担当者が読む。専門用語（フィールド、モデル、閾値、サンプリング、confusions_top などの英字キー、"
+    "applicant.name のような項目コード）を使わず、『お届け先の氏名』のように日本語で書き、数字は『昨日 6 件』のように具体的に書くこと。"
     "異体字（髙↔高、﨑↔崎、邊↔辺、齋↔斎 など）の置き換えルールは提案しないこと（システムが根拠と顧客照合で扱う）。"
     "active_rules に同じ項目種別・同じ混同のルールが既にあれば重ねて提案しないこと。"
     "根拠の強さの基準: 読み取りルールは同じ混同（from→to）が3件以上、または項目種別の件数が20件以上で修正率が5%以上のときだけ提案する。"

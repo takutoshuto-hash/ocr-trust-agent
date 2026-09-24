@@ -348,9 +348,18 @@ class Pipeline:
         from datetime import timedelta, timezone
         from statistics import median
         from app.extract.usage import GLOBAL as USAGE
+        from app.labels import field_label, plain, policy_label, policy_unit
         from app.reflect.agent import ALLOWED_POLICY_KEYS
         JST = timezone(timedelta(hours=9))
         since = now_utc() - timedelta(hours=window_hours)
+
+        def ledger_label(ev: dict) -> str:
+            key = str(ev.get("key", ""))
+            ft, _, scope = key.partition("|")
+            kind = scope.split(":")[0]
+            who = {"global": "全体", "format": "この様式", "sender": "送り主"}.get(kind, scope)
+            tail = f"（{who} {scope.split(':', 1)[1]}）" if kind == "sender" and ":" in scope else f"（{who}）"
+            return field_label(ft) + tail
         forms = [f for f in self.store.list_forms(limit=10_000) if f.created_at >= since]
         recs = [r for r in self.store.list_training() if r.created_at >= since]
         audits = [a for a in self.store.list_audit(limit=20_000) if a.created_at >= since]
@@ -359,8 +368,8 @@ class Pipeline:
         n_seen = sum(sum(1 for d in f.decisions.values() if d.human_sees) for f in forms)
         corrected = Counter(r.field_type for r in recs if r.corrected and r.verified)
         auto_errors = sum(1 for r in recs if r.corrected and r.was_auto and r.verified)
-        promoted = [f"{a.detail.get('key', '')} → L{a.detail.get('to')}" for a in audits if a.event == "ledger_promoted"]
-        demoted = [f"{a.detail.get('key', '')} → L{a.detail.get('to')}" for a in audits if a.event == "ledger_demoted"]
+        promoted = [ledger_label(a.detail) for a in audits if a.event == "ledger_promoted"]
+        demoted = [ledger_label(a.detail) for a in audits if a.event == "ledger_demoted"]
         tried = accepted = 0
         for a in audits:
             if a.event == "resolved":
@@ -377,38 +386,45 @@ class Pipeline:
         def question(p) -> dict:
             created = p.created_at.astimezone(JST).strftime("%m/%d %H:%M")
             if p.kind.value == "rule":
-                return {"id": p.proposal_id, "ask": f"読み取りルールを1つ追加してよいですか？（{p.title}）", "why": p.rationale,
-                        "what": f"{p.rule_text}（適用範囲: {p.rule_scope}）", "proposer": p.proposer, "created": created}
+                return {"id": p.proposal_id, "ask": f"読み取りのコツを1つ覚えさせてよいですか？　{plain(p.title)}", "why": plain(p.rationale),
+                        "what": "覚えさせる内容: " + plain(p.rule_text or ""), "proposer": p.proposer, "created": created}
             if p.kind.value == "policy":
                 lo, hi = ALLOWED_POLICY_KEYS.get(p.policy_key, ("?", "?"))
-                return {"id": p.proposal_id, "ask": f"ポリシー「{p.policy_key}」を {p.policy_from} から {p.policy_to} に変えてよいですか？",
-                        "why": p.rationale, "what": f"許可されている範囲: {lo} 〜 {hi}（範囲外はコードで自動却下）", "proposer": p.proposer, "created": created}
-            return {"id": p.proposal_id, "ask": f"効果のなかったルールを取り消してよいですか？（{p.title}）", "why": p.rationale,
+                return {"id": p.proposal_id,
+                        "ask": f"「{policy_label(p.policy_key)}」を {p.policy_from} から {p.policy_to} に変えてよいですか？",
+                        "why": plain(p.rationale),
+                        "what": f"単位: {policy_unit(p.policy_key)}。変えられる範囲は {lo} 〜 {hi} と決まっていて、範囲外の提案は自動で受け付けません",
+                        "proposer": p.proposer, "created": created}
+            return {"id": p.proposal_id, "ask": f"効かなかった読み取りのコツを忘れさせてよいですか？　{plain(p.title)}", "why": plain(p.rationale),
                     "what": "", "proposer": p.proposer, "created": created}
 
         review_rate = round(n_review / n_fields, 4) if n_fields else None
         seen_rate = round(n_seen / n_fields, 4) if n_fields else None
         parts = []
         if forms:
-            parts.append(f"{len(forms)} 枚（{n_fields} 項目）を処理し、要確認は {review_rate * 100:.1f}%、監査サンプルを含めて人が見たのは {seen_rate * 100:.1f}% でした。")
-            parts.append(f"人が直した項目は {sum(corrected.values())} 件" + (f"、うち自動確定の見逃しが監査で {auto_errors} 件見つかりました。" if auto_errors else "、自動確定の見逃しは監査で見つかっていません。"))
+            parts.append(f"注文書 {len(forms)} 枚（{n_fields} 項目）を読み取り、人の確認が必要だったのは {review_rate * 100:.1f}%、"
+                         f"抜き取り確認も含めて人が見たのは {seen_rate * 100:.1f}% でした。")
+            if auto_errors:
+                parts.append(f"人が直した項目は {sum(corrected.values())} 件で、自動で確定した中に間違いが {auto_errors} 件ありました（抜き取り確認で発見）。")
+            else:
+                parts.append(f"人が直した項目は {sum(corrected.values())} 件で、自動で確定した中に間違いは見つかっていません。")
         else:
-            parts.append("この期間に処理した帳票はありません。")
+            parts.append("この時間帯に読み取った注文書はありません。")
         if promoted:
-            parts.append(f"信頼台帳で {len(promoted)} 件が昇格し、自動確定の範囲が広がりました。")
+            parts.append(f"実績が積み上がり、{len(promoted)} 件で自動確定できる範囲が広がりました。")
         if demoted:
-            parts.append(f"修正を受けて {len(demoted)} 件の信頼を戻しました。")
+            parts.append(f"間違いがあった {len(demoted)} 件は、しばらく人が確認するように戻しました。")
         if retracted:
-            parts.append(f"効果のなかったルール {retracted} 件を取り消しました。")
+            parts.append(f"効かなかった読み取りのコツ {retracted} 件を忘れさせました。")
         if pending:
             parts.append(f"判断をお願いしたいことが {len(pending)} 件あります。")
         else:
             parts.append("今日、判断をお願いすることはありません。")
         return {
-            "period_label": f"直近 {window_hours} 時間", "since": since.isoformat(), "headline": " ".join(parts),
+            "period_label": ("昨日から今朝まで" if window_hours == 24 else f"直近 {window_hours} 時間"), "since": since.isoformat(), "headline": " ".join(parts),
             "forms": len(forms), "fields": n_fields, "review_rate": review_rate, "human_sees_rate": seen_rate,
             "corrections": sum(corrected.values()), "auto_errors_found": auto_errors,
-            "top_corrected": corrected.most_common(5), "promoted": promoted[:10], "demoted": demoted[:10],
+            "top_corrected": [(field_label(ft), n) for ft, n in corrected.most_common(5)], "promoted": promoted[:10], "demoted": demoted[:10],
             "resolver_tried": tried, "resolver_accepted": accepted,
             "router": (routers[-1] if routers else None), "retracted": retracted, "rejected_by_governance": gov_rejected,
             "block_missing": sum(1 for a in audits if a.event == "block_missing"),
