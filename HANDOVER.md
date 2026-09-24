@@ -41,7 +41,7 @@
 - **ダッシュボードの直し方（9/24 決定、VS Code 側の Claude Code が作業）**: 上部の切り替えを「運用（本番）」と「検証結果（改善前／改善後）」に分ける。検証結果では本番用タイル（予算・費用・未処理の提案・台帳の表）を隠し、要確認率 51.0%→10.6%、自動確定の誤り率は **0.14%（正解と照合した 14 日合算）を主**にして抜き取り確認の値は小さく添える。運用表示の誤り率は抜き取り確認の値のみ。検証結果の下に `compare_runs.md` の 4 本を並べた「何が効いたか」の表を置く。専門用語は置き換える（監査サンプル→抜き取り確認、真値→実際の誤り、L1/L2→「2 回読んで一致すれば自動」「1 回の読みで自動」、Day 1→1日目、題名→「自動確定の育ち具合」）。`compare_runs.md` の列名「提案（承認/取消）」は実態の「承認数/提案数」に直す。見た目の配色・レイアウトは 10 月上旬。
   - 確認時間は矢印でつながず 2 つ別々に書く: 現行 52 秒/件（10 枚 18 件）、本作 7.2 秒/枚（要確認があった 9 枚の中央値。20 枚中 11 枚は確認不要）。単位が違うため。
   - 数字はテンプレートに直書きしない。0.14% は曲線 CSV から計算（`auto_error_rate` × 自動確定数の合算）。承認 47・自動却下 30・取り消し 34 の内訳はリポジトリに無いので、`compare_runs.py` が `eval/out/summary_v2.json` のような小さなファイルを出し、コミットして Dockerfile の COPY に加え、ダッシュボードが読む。
-  - 突き合わせ: 47+34=81 に対し CSV の承認合計は 83。差 2 件の正体を確かめてから同じ画面に出す。
+  - 突き合わせ: 47+34=81 に対し CSV の承認合計は 83。提案ログが使えなくなった（4 節）ので確かめられない。**ダッシュボードは内訳を出さず「承認 83 / 提案 113」で確定**。記事では「承認 47・ガバナンスで自動却下 30・効果なしで取り消し 34」の 3 つだけを書き、合計 113 との突き合わせ（差の 2 件）には触れない。
   - 運用表示の台帳の表にも「シミュレーション由来」の注記を入れる。
   - **実装済み（9/24、このリポジトリの Claude Code セッション）**: `app/verification.py`（曲線 CSV の集計。compare_runs.py と共通）、`/api/dashboard` が `verification`（4 本の要約・曲線・`summary_v2.json`・実手書き測定）を返す、`dashboard.html` を運用／検証結果の 2 表示に作り直し、`tests/test_dashboard.py`（発表の数字が同梱 CSV から再現できることを固定）。運用表示の注記は監査ログ `state_seeded` の有無で自動。Dockerfile と .gcloudignore に `summary_*.json` と `results_cond2_after.csv` を追加。
 - **Jev（TypeSafe AI の判断専用モデル）は不採用**（9/24 決定）。理由: 画像を読めないので独立二重読みの役は担えない。テキスト判定の席（ルーターに値の内容を見る特徴が無い）は実際の穴だが、そこは姓辞書照合など Google 内で完結する手を先に検討する。判断の主体を Gemini／ADK／自前ルーターから動かさない。
@@ -55,7 +55,10 @@
 - 本番の台帳・ルーターは **シミュレーション由来**（v2 の `router.joblib` を同梱）。発表で明記。
 - ローカル実行の環境変数: `GOOGLE_GENAI_USE_VERTEXAI=true GOOGLE_GENAI_USE_GCLOUD_TOKEN=1 GOOGLE_CLOUD_PROJECT=ocr-trust-agent GOOGLE_CLOUD_LOCATION=global`（gcloud のトークンを5分ごとに自動更新）。ADK は `make_adk_model()` で同じクライアントを使う（ADC 不要）。
 - セットアップ手順は README「別のパソコン（Mac / Linux）で続ける」。
-- 知識ベース（本人の第二の脳）は Windows 機の外付け E:\claude（`career/02_作業中/log.md`、`hackathon-gcp-vol5/00_concept.md`・`01_measurement.md`・`02_article_outline.md`・`03_video_script.md`）。Mac から読めない場合、この文書と `docs/` が代わり。
+- **開発機は Mac に移行（9/24）。Windows 機にはもう触れない。** 知識ベース（E:\claude の記事骨子・動画台本）と、git に入れていなかった実行成果物は使えない前提で進める:
+  - 使えないもの: `eval/out/state_gemini14d_v2/`（状態書き出し）、`eval/out/fieldlog_*.csv`（項目ログ）、`eval/out/*.proposals.jsonl`（提案ログ）、記事骨子 `02_article_outline.md`、動画台本 `03_video_script.md`。
+  - 代わり: この文書の 2 節・7 節と `docs/`、リポジトリ内の曲線 CSV・`compare_runs.md`・`summary_v2.json`。記事と台本は 7 節の筋から書き直す。
+  - できなくなったこと: 項目ログを使うオフライン集計（姓辞書で拾える誤りの割合など）と、提案内訳（承認 47・自動却下 30・取り消し 34）の再生成。内訳の数字は 2 節の値を記事で使い、ダッシュボードは CSV から出せる「承認 83 / 提案 113」を出す。
 
 ## 5. 主要な実行コマンド
 
@@ -75,7 +78,7 @@ bash scripts/deploy.sh                      # Cloud Run へ
 | 日程 | やること |
 |---|---|
 | 9/24 | 切り分けA（振り返りなし）完走 → `compare_runs.py` で最終表、`docs/architecture.svg` の数字を差し替え → PNG 再生成（`docs/render.html` をローカルで開き canvas → PNG） |
-| 9/24〜26 | 本人の実手書き 20〜30 枚（`data/measurement/handwriting/` に印刷用 PDF・一覧・手順あり）を評価。ダッシュボードは 9/24 に作り直し済み（下記）。残りは Windows 機で `python eval/compare_runs.py --proposals eval/out/curve_gemini_200x14_v2.csv.proposals.jsonl` を 1 回走らせて `eval/out/summary_v2.json` の提案内訳を実データに差し替え、47+34 と 83 の差を確認してコミット |
+| 9/24〜26 | 本人の実手書き 20〜30 枚（`data/measurement/handwriting/` に印刷用 PDF・一覧・手順あり）を評価。ダッシュボードは 9/24 に作り直し済み（3 節）。提案内訳の再生成は Windows 機のログが必要で、もう行わない（4 節） |
 | 9/27〜10/1 | 画面の仕上げ（現場向けの言葉・配色・動線）、Zenn 記事本文（骨子は E: の `02_article_outline.md`。要点はこの文書の 2 節） |
 | 10/2〜10/5 | 3分動画（山場 = 事故注入と復旧、エージェントが自分の提案を取り消す場面）、10/5 オフィスアワー |
 | 10/6〜12 | 講評反映・予備 |

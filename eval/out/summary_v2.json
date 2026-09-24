@@ -1,11 +1,11 @@
 {
- "_comment": "ダッシュボードの検証結果が読む要約。runs は eval/compare_runs.py が曲線 CSV から再計算する。proposals は --proposals <jsonl> を付けて再生成すると verified=true になる。",
+ "_comment": "ダッシュボードの検証結果が読む要約。runs は eval/compare_runs.py が曲線 CSV から再計算する。proposals の内訳は元の提案ログ（Windows 機のみ・現在は入手不可）から再生成できないため verified=false のまま。ダッシュボードは CSV の承認数/提案数を出す。",
  "proposals": {
   "approved": 47,
   "auto_rejected": 30,
   "retracted": 34,
   "verified": false,
-  "note": "HANDOVER.md（9/24）の値。発表用実行の proposals.jsonl から再生成して突き合わせるまで、ダッシュボードは CSV の承認数/提案数を出す"
+  "note": "HANDOVER.md（9/24）の値。元の提案ログが入手できないため未検証。記事で使う場合はこの 3 つの数字だけを使う（合計 111 と CSV の提案 113 の差は説明できない）"
  },
  "field_measurement": {
   "current_seconds_per_delivery": 52,

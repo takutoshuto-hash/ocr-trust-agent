@@ -23,7 +23,7 @@ Cloud Run（FastAPI）／Gemini API（構造化抽出・二重読み取り）／
 ## セットアップ
 
 ```bash
-python -m venv .venv && .venv/Scripts/activate      # Windows
+python3 -m venv .venv && source .venv/bin/activate    # Mac / Linux（Windows は .venv\Scripts\activate）
 pip install -e ".[dev]"
 cp .env.example .env                                  # GEMINI_API_KEY を入れると実画像を読む。空ならモック
 pytest
