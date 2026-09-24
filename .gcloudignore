@@ -7,7 +7,8 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 data/synthetic/out/
-data/measurement/
+data/measurement/*
+!data/measurement/results_cond2_after.csv
 data/fonts/
 eval/out/state_*/
 tests/

@@ -15,6 +15,7 @@ eval/out/*
 !eval/out/curve_*.csv
 !eval/out/double_read_*.csv
 !eval/out/compare_runs.md
+!eval/out/summary_*.json
 .DS_Store
 .env.review
 data/measurement/out/

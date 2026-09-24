@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>信頼の推移</title>
+<title>自動確定の育ち具合</title>
 <style>
 .viz-root{color-scheme:light;--surface-1:#fcfcfb;--page:#f9f9f7;--text-primary:#0b0b0b;--text-secondary:#52514e;--muted:#898781;--grid:#e1e0d9;--axis:#c3c2b7;--border:rgba(11,11,11,.10);
   --series-1:#2a78d6;--series-2:#eb6834;--series-3:#1baf7a;--good:#0ca30c;--critical:#d03b3b;--seq-250:#86b6ef;--seq-450:#2a78d6;--seq-650:#104281}
@@ -9,89 +9,149 @@
 body{margin:0;background:var(--page);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
 h1{font-size:20px;margin:0 0 4px}.sub{color:var(--text-secondary);font-size:13px;margin:0 0 14px}
-.filters{display:flex;gap:8px;align-items:center;margin:0 0 16px;flex-wrap:wrap}
+.filters{display:flex;gap:8px;align-items:center;margin:0 0 12px;flex-wrap:wrap}
 .filters button{border:1px solid var(--border);background:var(--surface-1);color:var(--text-primary);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px}
 .filters button[aria-pressed="true"]{font-weight:700;box-shadow:inset 0 0 0 2px var(--series-1)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.note{font-size:13px;color:var(--text-secondary);background:var(--surface-1);border:1px solid var(--border);border-left:4px solid var(--series-2);border-radius:6px;padding:8px 12px;margin:0 0 14px}
+.note:empty{display:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px}
 .tile{background:var(--surface-1);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
-.tile .l{font-size:12px;color:var(--text-secondary)}.tile .v{font-size:22px;font-weight:600;margin-top:2px}.tile .v.hero{font-size:48px;line-height:1.05}
-.tile .d{font-size:12px;color:var(--text-secondary)}.tile .d.good{color:#006300}@media (prefers-color-scheme: dark){.tile .d.good{color:#0ca30c}}
+.tile.wide{grid-column:span 2}
+.tile .l{font-size:12px;color:var(--text-secondary)}.tile .v{font-size:22px;font-weight:600;margin-top:2px}.tile .v.hero{font-size:40px;line-height:1.05;white-space:nowrap}
+.tile .v .arrow{font-size:.55em;font-weight:400;color:var(--text-secondary);margin:0 4px}
+.tile .v .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px;font-weight:400;color:var(--text-secondary)}.tile .v .row b{font-size:22px;color:var(--text-primary);white-space:nowrap}
+.tile .d{font-size:12px;color:var(--text-secondary);margin-top:2px}.tile .d.good{color:#006300}@media (prefers-color-scheme: dark){.tile .d.good{color:#0ca30c}}
 figure{background:var(--surface-1);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin:0 0 14px}
 figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 figcaption b{font-size:14px}figcaption small{color:var(--text-secondary)}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--text-secondary);margin:6px 0 2px;flex-wrap:wrap}
 .legend span::before{content:"";display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:6px;background:var(--c)}
-.legend span.rect::before{height:10px;border-radius:2px}
+.legend span.dash::before{background:repeating-linear-gradient(90deg,var(--c) 0 4px,transparent 4px 7px)}
 svg{width:100%;height:auto;display:block}
 .grid line{stroke:var(--grid);stroke-width:1}.axis text{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.axis line{stroke:var(--axis)}
-.line{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.line{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}.line.dash{stroke-dasharray:5 4}
 .dot{stroke:var(--surface-1);stroke-width:2}
 .endlabel{font-size:11px;fill:var(--text-primary)}
 .xhair{stroke:var(--axis);stroke-width:1;display:none}
 .tip{position:absolute;pointer-events:none;background:var(--surface-1);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;display:none;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .tip b{font-size:13px}.tip .k{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:6px}
 .tv{margin-top:6px;font-size:12px}.tv summary{cursor:pointer;color:var(--text-secondary)}
-table{border-collapse:collapse;width:100%;font-size:12px}td,th{padding:4px 6px;border-bottom:1px solid var(--grid);text-align:left}td.n{text-align:right;font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:12px}td,th{padding:4px 6px;border-bottom:1px solid var(--grid);text-align:left;vertical-align:top}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.hl td{font-weight:700}
 .bar{height:14px;border-radius:0 4px 4px 0}
 .empty{color:var(--text-secondary);font-size:13px;padding:12px 0}
+.foot{font-size:12px;color:var(--text-secondary);margin:6px 0 0}
 </style></head>
 <body class="viz-root"><div class="wrap">
-<h1>信頼の推移</h1>
-<p class="sub">要確認は日ごとに減り、自動確定の誤りは目標以下に保たれているか。台帳のレベルは項目種別ごとにどこまで育ったか。</p>
-<div class="filters" role="group" aria-label="データソース">
-  <button data-src="live" aria-pressed="true">本番データ</button>
-  <button data-src="mock" aria-pressed="false">シミュレーション（手書き合成・1日200枚）</button>
-  <button data-src="gemini_baseline" aria-pressed="false">Gemini 実読み・改善前（200枚×14日）</button>
-  <button data-src="gemini" aria-pressed="false">Gemini 実読み・改善後（200枚×14日）</button>
+<h1>自動確定の育ち具合</h1>
+<p class="sub">人の確認が要る項目は日ごとに減っているか。自動で確定した分の間違いは目標以下に収まっているか。</p>
+<div class="filters" role="group" aria-label="表示の切り替え">
+  <button data-view="live" aria-pressed="true">運用（本番）</button>
+  <button data-view="verify" aria-pressed="false">検証結果（改善前／改善後）</button>
 </div>
+<p class="note" id="note"></p>
 <div class="tiles" id="tiles"></div>
-<figure><figcaption><b>要確認率の推移</b><small>人が見る項目の割合（監査サンプルを除く）</small></figcaption>
-  <div class="legend" id="lg1" style="display:none"></div>
+<figure><figcaption><b>人の確認が要った項目の割合</b><small id="cap1"></small></figcaption>
+  <div class="legend" id="lg1"></div>
   <div id="c1" style="position:relative"></div></figure>
-<figure><figcaption><b>自動確定の誤り率: 実測と目標</b><small>実測＝人が確認した自動確定項目のうち修正されたもの</small></figcaption>
-  <div class="legend"><span style="--c:var(--series-1)">実測（監査サンプル）</span><span style="--c:var(--series-2)">目標（ポリシー）</span><span id="lg3" style="--c:var(--series-3);display:none">真値（シミュレーション）</span></div>
+<figure><figcaption><b>自動で確定した項目の間違い</b><small id="cap2"></small></figcaption>
+  <div class="legend" id="lg2"></div>
   <div id="c2" style="position:relative"></div></figure>
-<figure><figcaption><b>台帳の自律レベル（項目種別ごと）</b><small>L0＝人が確認 / L1＝検証合格＋二重読み取り一致で自動 / L2＝検証合格で自動</small></figcaption>
-  <div id="c3"></div></figure>
+<figure id="fig-compare" hidden><figcaption><b>何が効いたか</b><small>改善後から部品を 1 つずつ外した実行との比較（同じ条件・同じ日数）</small></figcaption>
+  <div id="c4"></div></figure>
+<figure id="fig-ledger" hidden><figcaption><b>自動で確定できる範囲（項目ごと）</b><small>実績が積み上がった項目から、人が確認 → 2回読んで一致すれば自動 → 1回の読みで自動、と広がる</small></figcaption>
+  <div id="c3"></div>
+  <p class="foot" id="ledger-foot"></p></figure>
 <script>
+// 画面の言葉は現場の事務担当者向け。内部用語はここで置き換える（項目名は app/labels.py と同じ）
+const T = {
+  fieldNames: {zip:'郵便番号',address:'住所',name:'氏名',name_kana:'フリガナ',phone:'電話番号',organization:'会社名',product_code:'商品番号',qty:'数量',noshi_name:'のし名入れ'},
+  who: ft => ft.startsWith('applicant') ? 'ご依頼主の' : 'お届け先の',
+  levels: ['人が確認', '2回読んで一致すれば自動', '1回の読みで自動'],
+  audited: '抜き取り確認で見つかった間違い',
+  truth: '実際の間違い（正解と照合）',
+  target: '目標',
+  before: '改善前', after: '改善後', seen: '人が見た割合（抜き取り確認を含む）',
+  day: d => d + '日目',
+  seededNote: '台帳と学習済みの判定は、シミュレーション運用（合成データ）の状態を投入したものです。実運用の実績ではありません。',
+  verifyNote: '正解付きの合成手書き（1日 200 枚 × 14 日）を実際の Gemini で処理した検証結果です。運用中の画面ではありません。',
+};
 const $ = s => document.querySelector(s);
 const fmtPct = v => v == null ? '–' : (v*100).toFixed(v < 0.01 ? 2 : 1) + '%';
-let DATA = null, SRC = 'live';
+const fmtN = v => v == null ? '–' : Number(v).toLocaleString('ja-JP');
+let DATA = null, VIEW = 'live';
 async function load(){ DATA = await (await fetch('/api/dashboard')).json(); render(); }
 document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
-  SRC = b.dataset.src; document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x === b)); render();
+  VIEW = b.dataset.view; document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x === b)); render();
 }));
-function series(){
-  if (SRC === 'live') return (DATA.daily || []).map(d => ({x: d.day, review: d.review_rate, audited: d.auto_error_audited, truth: null, forms: d.forms}));
-  const rows = (DATA.sim || {})[SRC] || [];
-  return rows.map(r => ({x: 'Day ' + r.day, review: r.review_rate, seen: (r.human_sees_rate === undefined || r.human_sees_rate === '') ? null : r.human_sees_rate, audited: (r.auto_error_rate_audited === 'None' || r.auto_error_rate_audited === '') ? null : r.auto_error_rate_audited, truth: r.auto_error_rate, forms: r.forms}));
-}
+function tile(t){ return `<div class="tile${t.wide?' wide':''}"><div class="l">${t.l}</div><div class="v${t.hero?' hero':''}">${t.v}</div>${t.d?`<div class="d${t.good?' good':''}">${t.d}</div>`:''}</div>`; }
 function render(){
-  const k = DATA.kpi, s = series();
+  $('#fig-compare').hidden = VIEW !== 'verify';
+  $('#fig-ledger').hidden = VIEW !== 'live';
+  (VIEW === 'live' ? renderLive : renderVerify)();
+}
+function renderLive(){
+  const k = DATA.kpi, s = (DATA.daily || []).map(d => ({x: d.day, review: d.review_rate, audited: d.auto_error_audited, forms: d.forms}));
   const last = s[s.length-1] || {}, first = s[0] || {};
-  const tiles = [
-    {l:'要確認率（最新）', v: fmtPct(last.review), hero:true, d: first.review != null && last.review != null ? `初日 ${fmtPct(first.review)} → ${fmtPct(last.review)}` : ''},
-    {l:'自動確定の誤り率（実測）', v: fmtPct(SRC==='live' ? k.auto_error_rate_audited : last.audited), d: `目標 ${fmtPct(k.target_error_rate)} 以下`, good: (SRC==='live' ? k.auto_error_rate_audited : last.audited) != null && (SRC==='live' ? k.auto_error_rate_audited : last.audited) <= k.target_error_rate},
-    {l:'処理した帳票', v: SRC==='live' ? k.forms : s.reduce((a,b)=>a+(b.forms||0),0)},
-    {l:'教師データ（項目）', v: k.training_records},
-    {l:'確認時間の中央値 / 帳票', v: k.review_seconds_median != null ? k.review_seconds_median + ' 秒' : '未計測', d: k.review_seconds_per_field_median != null ? `要確認1項目あたり ${k.review_seconds_per_field_median} 秒（${k.review_timed_forms}枚）` : '確認画面で計測されます'},
-    {l:'振り返りの提案（未処理）', v: k.pending_proposals},
-    {l:'Gemini 費用（起動後の実測トークン）', v: k.usage ? `¥${k.usage.cost_jpy}` : '–', d: k.usage ? `${k.usage.calls} 回 · 入力 ${k.usage.prompt} · 出力 ${k.usage.output} · 思考 ${k.usage.thoughts}` : ''},
-    {l:'予算（本日の Gemini 呼び出し）', v: k.budget ? `${k.budget.gemini_calls} / ${k.budget.max_gemini_calls}` : '–', d: k.budget ? ({normal:'通常', reduced:'縮退: 二重読み取り省略', exhausted:'停止: 自動確定なし'}[k.budget.mode] + ` · 自動確定 ${k.budget.auto_accepts}/${k.budget.max_auto_accepts}`) : ''},
-  ];
-  $('#tiles').innerHTML = tiles.map(t => `<div class="tile"><div class="l">${t.l}</div><div class="v${t.hero?' hero':''}">${t.v}</div>${t.d?`<div class="d${t.good?' good':''}">${t.d}</div>`:''}</div>`).join('');
-  $('#lg3').style.display = SRC === 'live' ? 'none' : '';
-  const ser1 = [{name:'要確認率', color:'var(--series-1)', values:s.map(p=>p.review)}];
-  if (SRC === 'gemini' && (DATA.sim||{}).gemini_baseline) ser1.push({name:'改善前', color:'var(--series-2)', values:(DATA.sim.gemini_baseline).map(r=>r.review_rate)});
-  if (SRC === 'gemini' && s[0] && s[0].seen != null) ser1.push({name:'人が見た割合（監査込み）', color:'var(--series-3)', values:s.map(p=>p.seen)});
-  const lg1 = $('#lg1'); lg1.innerHTML = ser1.map(q=>`<span style="--c:${q.color}">${q.name}</span>`).join(''); lg1.style.display = ser1.length > 1 ? '' : 'none';
-  lineChart($('#c1'), s.map(p=>p.x), ser1, {pct:true, label:true});
-  const ser2 = [{name:'実測（監査サンプル）', color:'var(--series-1)', values:s.map(p=>p.audited)}, {name:'目標', color:'var(--series-2)', values:s.map(()=>k.target_error_rate), flat:true}];
-  if (SRC !== 'live') ser2.push({name:'真値', color:'var(--series-3)', values:s.map(p=>p.truth)});
-  const errVals = s.flatMap(p=>[p.audited||0, p.truth||0]);
+  $('#note').textContent = DATA.seeded_from_simulation ? T.seededNote : '';
+  const aud = k.auto_error_rate_audited;
+  $('#tiles').innerHTML = [
+    {l:'人の確認が要った項目（最新の日）', v: fmtPct(last.review), hero:true, d: first.review != null && last.review != null ? `初日 ${fmtPct(first.review)} → ${fmtPct(last.review)}` : '帳票を処理すると表示されます'},
+    {l:T.audited, v: fmtPct(aud), d: `${T.target} ${fmtPct(k.target_error_rate)} 以下`, good: aud != null && aud <= k.target_error_rate},
+    {l:'処理した注文書', v: fmtN(k.forms) + ' 枚', d: `${fmtN(k.fields)} 項目`},
+    {l:'学習に使った確定済みの項目', v: fmtN(k.training_records)},
+    {l:'1枚の確認にかかった時間（中央値）', v: k.review_seconds_median != null ? k.review_seconds_median + ' 秒' : '未計測', d: k.review_seconds_per_field_median != null ? `要確認 1 項目あたり ${k.review_seconds_per_field_median} 秒（${k.review_timed_forms} 枚）` : '確認画面で計測されます'},
+    {l:'振り返りの提案（未処理）', v: fmtN(k.pending_proposals)},
+    {l:'AI の利用料（起動後の合計）', v: k.usage ? `約 ${fmtN(Math.round(k.usage.cost_jpy))} 円` : '–', d: k.usage ? `読み取り ${fmtN(k.usage.calls)} 回` : ''},
+    {l:'本日の読み取り回数と上限', v: k.budget ? `${fmtN(k.budget.gemini_calls)} / ${fmtN(k.budget.max_gemini_calls)}` : '–', d: k.budget ? ({normal:'通常どおり', reduced:'節約中: 2回目の読み取りを省略', exhausted:'上限到達: 自動確定を止めて全件を人へ'}[k.budget.mode] + ` · 自動確定 ${fmtN(k.budget.auto_accepts)} / ${fmtN(k.budget.max_auto_accepts)}`) : ''},
+  ].map(tile).join('');
+  $('#cap1').textContent = '抜き取り確認は含まない';
+  const ser1 = [{name:'人の確認が要った項目', color:'var(--series-1)', values:s.map(p=>p.review)}];
+  legend($('#lg1'), []);
+  lineChart($('#c1'), s.map(p=>p.x), ser1, {pct:true});
+  $('#cap2').textContent = '自動で確定した項目のうち、抜き取り確認で人が直したものの割合';
+  const ser2 = [{name:T.audited, color:'var(--series-1)', values:s.map(p=>p.audited)}, {name:T.target, color:'var(--series-2)', values:s.map(()=>k.target_error_rate), flat:true}];
+  legend($('#lg2'), ser2);
+  const errVals = s.map(p=>p.audited||0);
   lineChart($('#c2'), s.map(p=>p.x), ser2, {pct:true, ymax: Math.max(k.target_error_rate*2.5, (errVals.length ? Math.max(...errVals) : 0)*1.2)});
   ledgerTable($('#c3'), DATA.ledger_levels || []);
+  $('#ledger-foot').textContent = DATA.seeded_from_simulation ? T.seededNote : '';
 }
+function renderVerify(){
+  const V = DATA.verification || {runs:[], curves:{}, summary:{}};
+  const run = key => V.runs.find(r => r.key === key) || {};
+  const base = run('baseline'), imp = run('improved');
+  const cur = (V.curves.improved || []), curBase = (V.curves.baseline || []);
+  const k = DATA.kpi, S = V.summary || {}, M = V.measurement_after || {}, P = S.proposals || {}, F = S.field_measurement || {};
+  $('#note').textContent = T.verifyNote;
+  const propTile = P.verified
+    ? {l:'振り返りの提案（14日）', v:`<div class="row"><span>承認</span><b>${fmtN(P.approved)}</b></div><div class="row"><span>自動却下</span><b>${fmtN(P.auto_rejected)}</b></div><div class="row"><span>取り消し</span><b>${fmtN(P.retracted)}</b></div>`, d:'取り消し＝効果を測って、自分の提案を引っ込めた数'}
+    : {l:'振り返りの提案（14日）', v:`${fmtN(imp.approved)} / ${fmtN(imp.proposals)}`, d:'承認された数 / 提案された数'};
+  $('#tiles').innerHTML = [
+    {l:'人の確認が要った項目（14日目）', hero:true, wide:true, v:`${fmtPct(base.review_rate_last)}<span class="arrow">→</span>${fmtPct(imp.review_rate_last)}`, d:`${T.before} → ${T.after}。8日目以降の平均は ${fmtPct(base.review_rate_late_avg)} → ${fmtPct(imp.review_rate_late_avg)}`},
+    {l:'自動で確定した項目の間違い', v: fmtPct(imp.true_error_rate), d:`正解と照合した 14 日の合算。${T.target} ${fmtPct(k.target_error_rate)} 以下。抜き取り確認では ${fmtPct(imp.audited_error_rate_last)}（14日目）`, good: imp.true_error_rate != null && imp.true_error_rate <= k.target_error_rate},
+    propTile,
+    {l:'1件・1枚の確認にかかった時間', v:`<div class="row"><span>現行の手入力</span><b>${fmtN(F.current_seconds_per_delivery)} 秒<small>/件</small></b></div><div class="row"><span>本作</span><b>${M.seconds_per_form_median != null ? M.seconds_per_form_median : '–'} 秒<small>/枚</small></b></div>`,
+     d: M.forms ? `本作は要確認があった ${M.timed_forms} 枚の中央値。${M.forms} 枚中 ${M.no_review_forms} 枚は確認不要。台帳はシミュレーション由来` : ''},
+    {l:'処理した注文書', v: fmtN(imp.forms) + ' 枚', d:`${imp.days} 日 · ${fmtN(imp.fields)} 項目 · 実際の Gemini で読み取り`},
+  ].map(tile).join('');
+  const xs = cur.map(r => T.day(r.day));
+  $('#cap1').textContent = '抜き取り確認は含まない';
+  const ser1 = [{name:T.after, color:'var(--series-1)', values:cur.map(r=>r.review_rate)}];
+  if (curBase.length) ser1.unshift({name:T.before, color:'var(--series-2)', values:cur.map((_,i)=> curBase[i] ? curBase[i].review_rate : null)});
+  if (cur.some(r => r.human_sees_rate != null)) ser1.push({name:T.seen, color:'var(--series-3)', values:cur.map(r=>r.human_sees_rate)});
+  legend($('#lg1'), ser1);
+  lineChart($('#c1'), xs, ser1, {pct:true});
+  $('#cap2').textContent = '改善後。正解と照合した実際の間違いと、抜き取り確認で見つかった間違い';
+  const ser2 = [{name:T.truth, color:'var(--series-1)', values:cur.map(r=>r.auto_error_rate)},
+                {name:T.audited, color:'var(--series-3)', dash:true, values:cur.map(r=>r.auto_error_rate_audited)},
+                {name:T.target, color:'var(--series-2)', values:cur.map(()=>k.target_error_rate), flat:true}];
+  legend($('#lg2'), ser2);
+  const errVals = cur.flatMap(r=>[r.auto_error_rate||0, r.auto_error_rate_audited||0]);
+  lineChart($('#c2'), xs, ser2, {pct:true, ymax: Math.max(k.target_error_rate*2.5, (errVals.length ? Math.max(...errVals) : 0)*1.2)});
+  compareTable($('#c4'), V.runs);
+}
+function legend(el, sers){ el.innerHTML = sers.map(q=>`<span class="${q.dash?'dash':''}" style="--c:${q.color}">${q.name}</span>`).join(''); el.style.display = sers.length > 1 ? '' : 'none'; }
 function lineChart(el, xs, sers, opt){
   el.innerHTML = '';
   if (!xs.length) { el.innerHTML = '<div class="empty">データがまだありません。帳票を処理すると日ごとの推移が表示されます。</div>'; return; }
@@ -109,14 +169,14 @@ function lineChart(el, xs, sers, opt){
   svg += xs.map((t,i)=> i%step===0 || i===xs.length-1 ? `<text x="${x(i)}" y="${H-8}" text-anchor="middle">${t}</text>` : '').join('') + '</g>';
   sers.forEach(s => {
     const pts = s.values.map((v,i)=> v==null?null:[x(i),y(Math.min(v,ymax))]).filter(Boolean);
-    if (pts.length > 1) svg += `<path class="line" style="stroke:${s.color}" d="${pts.map((p,i)=>(i?'L':'M')+p[0]+','+p[1]).join(' ')}"/>`;
+    if (pts.length > 1) svg += `<path class="line${s.dash?' dash':''}" style="stroke:${s.color}" d="${pts.map((p,i)=>(i?'L':'M')+p[0]+','+p[1]).join(' ')}"/>`;
     if (!s.flat) svg += pts.map(p=>`<circle class="dot" cx="${p[0]}" cy="${p[1]}" r="4" style="fill:${s.color}"/>`).join('');
     const lastIdx = s.values.map((v,i)=>v==null?-1:i).filter(i=>i>=0).pop();
     if (lastIdx != null && lastIdx >= 0) svg += `<text class="endlabel" x="${x(lastIdx)+8}" y="${y(Math.min(s.values[lastIdx],ymax))+4}">${opt.pct?fmtPct(s.values[lastIdx]):s.values[lastIdx]}</text>`;
   });
   svg += `<line class="xhair" id="xh" x1="0" x2="0" y1="${m.t}" y2="${y(0)}"/><rect x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="transparent" id="hit"/></svg>`;
   svg += `<div class="tip" role="status"></div>`;
-  svg += `<details class="tv"><summary>表で見る</summary><table><tr><th>x</th>${sers.map(s=>`<th>${s.name}</th>`).join('')}</tr>${xs.map((t,i)=>`<tr><td>${t}</td>${sers.map(s=>`<td class="n">${opt.pct?fmtPct(s.values[i]):s.values[i]}</td>`).join('')}</tr>`).join('')}</table></details>`;
+  svg += `<details class="tv"><summary>表で見る</summary><table><tr><th>日</th>${sers.map(s=>`<th class="n">${s.name}</th>`).join('')}</tr>${xs.map((t,i)=>`<tr><td>${t}</td>${sers.map(s=>`<td class="n">${opt.pct?fmtPct(s.values[i]):s.values[i]}</td>`).join('')}</tr>`).join('')}</table></details>`;
   el.innerHTML = svg;
   const hit = el.querySelector('#hit'), xh = el.querySelector('#xh'), tip = el.querySelector('.tip'), svgEl = el.querySelector('svg');
   hit.addEventListener('pointermove', ev => {
@@ -129,14 +189,20 @@ function lineChart(el, xs, sers, opt){
   });
   hit.addEventListener('pointerleave', () => { xh.style.display = 'none'; tip.style.display = 'none'; });
 }
+function compareTable(el, runs){
+  if (!runs || !runs.length) { el.innerHTML = '<div class="empty">比較する実行がありません。</div>'; return; }
+  const cell = (v, f) => `<td class="n">${v == null ? '–' : f(v)}</td>`;
+  el.innerHTML = `<table><tr><th>実行</th><th class="n">日数</th><th class="n">最終日に人の確認が要った割合</th><th class="n">8日目以降の平均</th><th class="n">${T.truth}</th><th class="n">承認された提案 / 提案数</th></tr>` +
+    runs.map(r => `<tr class="${r.key==='improved'?'hl':''}"><td>${r.name}</td>${cell(r.days, fmtN)}${cell(r.review_rate_last, fmtPct)}${cell(r.review_rate_late_avg, fmtPct)}${cell(r.true_error_rate, fmtPct)}<td class="n">${r.days ? `${fmtN(r.approved)} / ${fmtN(r.proposals)}` : '–'}</td></tr>`).join('') + '</table>' +
+    `<p class="foot">「2回目を全面読みに戻す」は 9 日目で停止。振り返りは確認の割合には効かず、実際の間違いを減らした（抜き取り確認の増加とルールの整理）。</p>`;
+}
 function ledgerTable(el, rows){
-  if (!rows.length) { el.innerHTML = '<div class="empty">台帳にまだ実績がありません。</div>'; return; }
-  const jp = {zip:'郵便番号',address:'住所',name:'氏名',name_kana:'フリガナ',phone:'電話',organization:'会社名',product_code:'商品番号',qty:'数量',noshi_name:'のし名入れ'};
-  const lab = ft => (ft.startsWith('applicant')?'依頼主・':'届け先・') + (jp[ft.split('.').pop()]||ft);
+  if (!rows.length) { el.innerHTML = '<div class="empty">まだ実績がありません。確定が積み上がると、項目ごとに自動で確定できる範囲が広がります。</div>'; return; }
+  const lab = ft => T.who(ft) + (T.fieldNames[ft.split('.').pop()]||ft);
   const maxn = Math.max(...rows.map(r=>r.n), 1);
-  el.innerHTML = `<table><tr><th>項目種別</th><th>最高レベル</th><th>実績件数（検証合格分）</th><th>L1</th><th>L2</th></tr>` + rows.map(r => {
-    const top = r.L2 ? 'L2' : r.L1 ? 'L1' : 'L0'; const col = top==='L2'?'var(--seq-650)':top==='L1'?'var(--seq-450)':'var(--seq-250)';
-    return `<tr><td>${lab(r.field_type)}</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${col};margin-right:6px;vertical-align:middle"></span>${top}</td><td><div class="bar" style="width:${Math.max(4, r.n/maxn*100)}%;background:${col}" title="${r.n}"></div><small>${r.n}</small></td><td class="n">${r.L1}</td><td class="n">${r.L2}</td></tr>`; }).join('') + '</table>';
+  el.innerHTML = `<table><tr><th>項目</th><th>いまの状態</th><th>実績の件数</th><th class="n">${T.levels[1]}<br><small>送り主・様式の数</small></th><th class="n">${T.levels[2]}<br><small>送り主・様式の数</small></th></tr>` + rows.map(r => {
+    const lv = r.L2 ? 2 : r.L1 ? 1 : 0; const col = lv===2?'var(--seq-650)':lv===1?'var(--seq-450)':'var(--seq-250)';
+    return `<tr><td>${lab(r.field_type)}</td><td><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${col};margin-right:6px;vertical-align:middle"></span>${T.levels[lv]}</td><td><div class="bar" style="width:${Math.max(4, r.n/maxn*100)}%;background:${col}" title="${r.n}"></div><small>${fmtN(r.n)}</small></td><td class="n">${fmtN(r.L1)}</td><td class="n">${fmtN(r.L2)}</td></tr>`; }).join('') + '</table>';
 }
 load();
 </script>

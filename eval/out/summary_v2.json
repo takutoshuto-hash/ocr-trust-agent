@@ -1,0 +1,15 @@
+{
+ "_comment": "ダッシュボードの検証結果が読む要約。runs は eval/compare_runs.py が曲線 CSV から再計算する。proposals は --proposals <jsonl> を付けて再生成すると verified=true になる。",
+ "proposals": {
+  "approved": 47,
+  "auto_rejected": 30,
+  "retracted": 34,
+  "verified": false,
+  "note": "HANDOVER.md（9/24）の値。発表用実行の proposals.jsonl から再生成して突き合わせるまで、ダッシュボードは CSV の承認数/提案数を出す"
+ },
+ "field_measurement": {
+  "current_seconds_per_delivery": 52,
+  "current_note": "現行の手入力: 10 枚 18 件を 15 分 30 秒（本人 1 名の実測）",
+  "after_note": "本作: 合成 20 枚を本番の確認画面で処理。要確認があった帳票の中央値（data/measurement/results_cond2_after.csv から計算）。台帳はシミュレーション由来"
+ }
+}

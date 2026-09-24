@@ -43,6 +43,7 @@
   - 数字はテンプレートに直書きしない。0.14% は曲線 CSV から計算（`auto_error_rate` × 自動確定数の合算）。承認 47・自動却下 30・取り消し 34 の内訳はリポジトリに無いので、`compare_runs.py` が `eval/out/summary_v2.json` のような小さなファイルを出し、コミットして Dockerfile の COPY に加え、ダッシュボードが読む。
   - 突き合わせ: 47+34=81 に対し CSV の承認合計は 83。差 2 件の正体を確かめてから同じ画面に出す。
   - 運用表示の台帳の表にも「シミュレーション由来」の注記を入れる。
+  - **実装済み（9/24、このリポジトリの Claude Code セッション）**: `app/verification.py`（曲線 CSV の集計。compare_runs.py と共通）、`/api/dashboard` が `verification`（4 本の要約・曲線・`summary_v2.json`・実手書き測定）を返す、`dashboard.html` を運用／検証結果の 2 表示に作り直し、`tests/test_dashboard.py`（発表の数字が同梱 CSV から再現できることを固定）。運用表示の注記は監査ログ `state_seeded` の有無で自動。Dockerfile と .gcloudignore に `summary_*.json` と `results_cond2_after.csv` を追加。
 - **Jev（TypeSafe AI の判断専用モデル）は不採用**（9/24 決定）。理由: 画像を読めないので独立二重読みの役は担えない。テキスト判定の席（ルーターに値の内容を見る特徴が無い）は実際の穴だが、そこは姓辞書照合など Google 内で完結する手を先に検討する。判断の主体を Gemini／ADK／自前ルーターから動かさない。
 - 本人が使う Chrome は用途別（転職・Zenn・GitHub・GCP は Takuto アカウント takutoshuto@gmail.com）。
 - 応答は日本語。決めごとは「まず話し合って決めてから記録」。
@@ -74,7 +75,7 @@ bash scripts/deploy.sh                      # Cloud Run へ
 | 日程 | やること |
 |---|---|
 | 9/24 | 切り分けA（振り返りなし）完走 → `compare_runs.py` で最終表、`docs/architecture.svg` の数字を差し替え → PNG 再生成（`docs/render.html` をローカルで開き canvas → PNG） |
-| 9/24〜26 | 本人の実手書き 20〜30 枚（`data/measurement/handwriting/` に印刷用 PDF・一覧・手順あり）を評価。ダッシュボード最終化 |
+| 9/24〜26 | 本人の実手書き 20〜30 枚（`data/measurement/handwriting/` に印刷用 PDF・一覧・手順あり）を評価。ダッシュボードは 9/24 に作り直し済み（下記）。残りは Windows 機で `python eval/compare_runs.py --proposals eval/out/curve_gemini_200x14_v2.csv.proposals.jsonl` を 1 回走らせて `eval/out/summary_v2.json` の提案内訳を実データに差し替え、47+34 と 83 の差を確認してコミット |
 | 9/27〜10/1 | 画面の仕上げ（現場向けの言葉・配色・動線）、Zenn 記事本文（骨子は E: の `02_article_outline.md`。要点はこの文書の 2 節） |
 | 10/2〜10/5 | 3分動画（山場 = 事故注入と復旧、エージェントが自分の提案を取り消す場面）、10/5 オフィスアワー |
 | 10/6〜12 | 講評反映・予備 |

@@ -472,6 +472,8 @@ class Pipeline:
                     "review_timed_forms": len(secs)},
             "daily": series,
             "ledger_levels": [{"field_type": ft, **v} for ft, v in sorted(levels.items())],
+            # scripts/seed_state.py で台帳・モデルを投入した本番（合成データ由来）。画面に注記を出す
+            "seeded_from_simulation": any(e.event == "state_seeded" for e in self.store.list_audit("-", limit=5)),
         }
 
     def _audit(self, form_id: str, event: str, detail: dict, actor: str = "agent") -> None:

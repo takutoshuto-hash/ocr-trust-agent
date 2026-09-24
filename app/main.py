@@ -196,24 +196,12 @@ def rules():
 
 # ---- ダッシュボード ----
 @app.get("/api/dashboard")
-def dashboard_api(source: str = "live"):
-    """source=live: 本番データ / sim: 同梱のシミュレーション曲線（デモ用）"""
+def dashboard_api():
+    """運用（本番ストア）の指標と、検証結果（同梱のシミュレーション曲線・要約）をまとめて返す。"""
+    from app.verification import verification_data
     data = pipeline.dashboard_data()
-    data["sim"] = _load_sim_curves()
+    data["verification"] = verification_data()
     return data
-
-
-def _load_sim_curves() -> dict:
-    import csv
-    from app.config import ROOT
-    out = {}
-    for name, path in (("mock", ROOT / "eval/out/curve_mock_handwriting.csv"),
-                       ("gemini_baseline", ROOT / "eval/out/curve_gemini_200x14_vertex.csv"),
-                       ("gemini", ROOT / "eval/out/curve_gemini_200x14_v2.csv")):
-        if path.exists():
-            with path.open(encoding="utf-8") as f:
-                out[name] = [{k: (float(v) if v not in ("", "None", "True", "False") and k != "day" else v) for k, v in row.items()} for row in csv.DictReader(f)]
-    return out
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
