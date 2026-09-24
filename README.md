@@ -29,6 +29,24 @@ cp .env.example .env                                  # GEMINI_API_KEY を入れ
 pytest
 ```
 
+## 別のパソコン（Mac / Linux）で続ける
+
+開発に必要なものはすべてこのリポジトリと Google Cloud 側にあり、Windows に縛られる要素はありません。
+
+```bash
+git clone https://github.com/takutoshuto-hash/ocr-trust-agent && cd ocr-trust-agent
+python3.13 -m venv .venv && source .venv/bin/activate && pip install -e .
+bash scripts/fetch_fonts.sh                     # 手書き風フォント（OFL）を data/fonts/ に取得
+brew install --cask google-cloud-sdk            # 未導入なら
+gcloud auth login && gcloud config set project ocr-trust-agent
+export GOOGLE_GENAI_USE_VERTEXAI=true GOOGLE_GENAI_USE_GCLOUD_TOKEN=1 GOOGLE_CLOUD_PROJECT=ocr-trust-agent GOOGLE_CLOUD_LOCATION=global
+pytest -q                                       # 47 本
+```
+
+- 確認画面の認証情報 `.env.review` は git に入れていない。Secret Manager から取り出す: `gcloud secrets versions access latest --secret=REVIEW_PASSWORD`
+- 学習済みルーター `models/router.joblib` と実測曲線 `eval/out/curve_*.csv` はリポジトリに含めてある（項目ログ・運用状態の書き出しは大きいので含めない）
+- デプロイは `bash scripts/deploy.sh`（gcloud が使えればどの OS からでも同じ）
+
 ## 動かす
 
 ```bash

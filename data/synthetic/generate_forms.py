@@ -38,13 +38,30 @@ def load_master():
     return zips, products
 
 
+SYSTEM_JP_FONTS = [Path(p) for p in [
+    "C:/Windows/Fonts/msgothic.ttc", "C:/Windows/Fonts/YuGothM.ttc", "C:/Windows/Fonts/meiryo.ttc", "C:/Windows/Fonts/msmincho.ttc",
+    "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc", "/System/Library/Fonts/Hiragino Sans GB.ttc", "/Library/Fonts/Arial Unicode.ttf",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+]]
+
+
+def _label_font(size: int):
+    """帳票の印字ラベル用フォント（OS の標準日本語フォント。無ければ Pillow の既定）。"""
+    for p in SYSTEM_JP_FONTS:
+        if p.exists():
+            try:
+                return ImageFont.truetype(str(p), size)
+            except OSError:
+                continue
+    return ImageFont.load_default()
+
+
 def fonts() -> list[ImageFont.FreeTypeFont]:
     """data/fonts/ の手書き風フォント（Yomogi / Zen Kurenaido / Klee One / Hachi Maru Pop 等、OFL）。
     無ければ Windows の標準フォントに退避（印字風になる）。"""
     cands = list((ROOT / "data/fonts").glob("*.tt[fc]")) + list((ROOT / "data/fonts").glob("*.otf"))
     if not cands:
-        for name in ["msgothic.ttc", "YuGothM.ttc", "meiryo.ttc", "msmincho.ttc"]:
-            p = Path("C:/Windows/Fonts") / name
+        for p in SYSTEM_JP_FONTS:          # Windows / macOS / Linux の標準日本語フォントに退避（印字風になる）
             if p.exists():
                 cands.append(p)
     out = []
@@ -170,7 +187,7 @@ def render(truth: dict, fnts, rng) -> Image.Image:
     W, H = 1240, 1754
     img = Image.new("RGB", (W, H), (255, 255, 255))
     d = ImageDraw.Draw(img)
-    label = ImageFont.truetype(str(Path("C:/Windows/Fonts/msgothic.ttc")), 22) if Path("C:/Windows/Fonts/msgothic.ttc").exists() else ImageFont.load_default()
+    label = _label_font(22)
     d.text((80, 60), "ギフト注文書（FAX）", font=label, fill=(0, 0, 0))
     d.text((80, 100), "ご依頼主", font=label, fill=(0, 0, 0))
     # 1枚の帳票は同じ人が書く → フォント（筆跡）は1枚で1種類。大きさは人によって違う
