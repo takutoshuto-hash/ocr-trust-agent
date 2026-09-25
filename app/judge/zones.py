@@ -92,3 +92,55 @@ def mask_zones(image: bytes, zones: list[tuple[float, float, float, float]]) -> 
     out = io.BytesIO()
     img.save(out, format="PNG")
     return out.getvalue()
+
+
+def load_frame(format_id: str):
+    path = settings.master_dir / "formats" / f"{format_id}.json"
+    if not path.exists():
+        return None, None
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return data.get("frame"), data.get("page")
+
+
+def detect_frame(img: Image.Image, dark: int = 170):
+    """欄の枠の外周（左, 上, 右, 下）を画素で探す。縦枠 = 高さの 5 割以上が暗い列、横線 = 幅の 6 割以上が暗い行。見つからなければ None。"""
+    import numpy as np
+    a = np.asarray(img, dtype=np.uint8) < dark
+    H, W = a.shape
+    col, row = a.sum(axis=0), a.sum(axis=1)
+    # 縦枠は数 px 幅で揺れる（スキャンの傾き）ので、隣接 3 列の合計で見る。欄のブロックの間に見出しの空きがあるので 5 割で足りる
+    col3 = col.copy(); col3[1:] += col[:-1]; col3[:-1] += col[1:]
+    vx = [x for x in range(W) if col3[x] > H * 0.5]
+    hy = [y for y in range(H) if row[y] > W * 0.6]
+    if len(vx) < 2 or len(hy) < 2:
+        return None
+    return (min(vx), min(hy), max(vx), max(hy))
+
+
+def register_to_template(image: bytes, format_id: str) -> bytes:
+    """スキャン・FAX 画像を様式の枠に合わせる（平行移動と拡大縮小）。枠が見つからない、または倍率が 15% 以上ずれる場合は元のまま返す。
+
+    実物のスキャンは用紙の枠が数十 px ずれるので、ゾーン（欄の位置）を当てる前に必ず通す。合成帳票は枠が一致するのでほぼ恒等。"""
+    frame, page = load_frame(format_id)
+    if not frame or not page:
+        return image
+    img = open_image(image)
+    if img is None:
+        return image
+    found = detect_frame(img)
+    if found is None:
+        return image
+    W, H = int(page[0]), int(page[1])
+    tx1, ty1, tx2, ty2 = frame[0] * W, frame[1] * H, frame[2] * W, frame[3] * H
+    sx1, sy1, sx2, sy2 = found
+    if sx2 - sx1 < 10 or sy2 - sy1 < 10:
+        return image
+    kx, ky = (tx2 - tx1) / (sx2 - sx1), (ty2 - ty1) / (sy2 - sy1)     # スキャン → 様式 の倍率
+    if not (0.85 <= kx <= 1.15 and 0.85 <= ky <= 1.15):
+        return image
+    # PIL の affine は 出力座標 → 入力座標 の行列: x_in = a*x_out + b*y_out + c
+    a, c = 1 / kx, sx1 - tx1 / kx
+    e, f = 1 / ky, sy1 - ty1 / ky
+    out = img.transform((W, H), Image.AFFINE, (a, 0, c, 0, e, f), resample=Image.BILINEAR, fillcolor=255)
+    buf = io.BytesIO(); out.save(buf, format="PNG")
+    return buf.getvalue()

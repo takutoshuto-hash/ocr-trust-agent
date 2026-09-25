@@ -26,6 +26,7 @@ flowchart LR
 
 | 層 | 場所 | 役割 |
 |---|---|---|
+| 位置合わせ | `app/judge/zones.py` `register_to_template` | 受付時に用紙の枠（縦横の長い線）を検出し、様式 JSON の `frame` に合わせて平行移動・拡大縮小する。複合機・FAX・印刷は上下左右に数十 px ずれるのが普通で、欄の位置（ゾーン）はこの後で当てる。枠が見つからない／倍率が 15% 以上ずれる場合は元のまま |
 | 抽出 | `app/extract/` | Gemini responseSchema で項目ごとに value/confidence/evidence。variant で別プロンプト（二重読み取り）。過去確定例を few-shot 注入 |
 | ジャッジ | `app/judge/` | 履歴ゼロでも動く決定的検証（郵便番号↔住所、商品マスタ、電話桁、カナ、数量）＋二重読み取り一致。**どの項目にどの検証を掛けるかは `data/master/checks.yaml` の宣言**（関数は `tools.py` の `CHECKS` に名前で登録）。ADK エージェントは要確認理由の説明係 |
 | 台帳 | `app/trust/` | 項目種別 × {送り主, 様式, 全体} の3階層。承認 streak で L0→L1→L2 昇格、修正で即降格。`policy.yaml` が上限 |
@@ -102,7 +103,7 @@ profile: secure   # 高機密向け: Gemma を VPC 内 / オンプレで実行�
 
 | ファイル | 中身 | 例（介護の利用票） |
 |---|---|---|
-| `data/master/formats/<様式>.json` | 欄の位置（相対座標）とページサイズ。切り出し再読み取り・空欄検知・確認画面の赤枠に使う | 利用者名・介護度・事業所番号の欄 |
+| `data/master/formats/<様式>.json` | 欄の位置（相対座標。x1 は印字ラベルの直後）、ページサイズ、位置合わせに使う枠 `frame`。切り出し再読み取り・空欄検知・確認画面の赤枠に使う | 利用者名・介護度・事業所番号の欄 |
 | `data/master/*.csv` | 照合に使う一覧（郵便番号・市外局番・姓の読み・商品） | 事業所番号一覧、サービスコード表 |
 | `data/master/checks.yaml` | 項目種別ごとの検証の並び（単独の形式検証と、同じブロック内の欄どうしの相互検証） | `"*.care_level": [care_level]`、`"*.office_no": [office_no_format, {office_exists: [office_no]}]` |
 

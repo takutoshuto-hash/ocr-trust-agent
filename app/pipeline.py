@@ -72,6 +72,9 @@ class Pipeline:
                 hint: Optional[OrderForm] = None, double_read: bool = True) -> FormDecision:
         form_id = uuid.uuid4().hex[:12]
         examples = self.store.recent_confirmed(sender_id, format_id)
+        # 位置合わせ: スキャン・FAX は用紙の枠が数十 px ずれる。欄の位置（ゾーン）を当てる前に様式の枠へ合わせる（合成帳票はほぼ恒等）
+        from app.judge.zones import register_to_template
+        image = register_to_template(image, format_id)
 
         # 予算縮退の段階を判定（normal → reduced: 二重読み取り・再読み取り省略 → exhausted: 自動確定停止）
         mode, changed = self.budget.mode()
