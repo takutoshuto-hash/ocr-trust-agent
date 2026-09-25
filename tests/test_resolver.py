@@ -40,6 +40,13 @@ def test_complete_address_from_zip_fixes_prefix():
     assert c and c.value.startswith("東京都渋谷区神宮前") and c.value.endswith("1-1-1")
 
 
+def test_complete_address_refuses_when_zip_disagrees_with_the_whole_address():
+    """読み違えた郵便番号（870-0001 → 810-0001）で住所を書き換えない。住所側に同じ町域・市区町村が無ければ補完しない。"""
+    ctx = FieldContext(path="deliveries[0].address", field_type="deliveries.address", value="大分県大分市王子北町2-19-17", evidence="",
+                       secondary_value=None, reasons=[], sibling={"zip": "810-0001"}, image=None, format_id="fax_v1")
+    assert act_complete_address_from_zip(ctx) is None
+
+
 def test_resolver_repairs_product_code_and_address():
     bad = dict(BASE, **{"deliveries[0].product_code": "BMN-58", "deliveries[0].address": "東京都渋合区神宮前1-1-1"})
     ex1, ex2 = _ex(bad), _ex(bad)

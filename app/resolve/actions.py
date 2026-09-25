@@ -97,6 +97,11 @@ def act_complete_address_from_zip(ctx: FieldContext) -> Optional[Candidate]:
     head = pref + city
     if addr.startswith(head):
         return None
+    # 住所の側に同じ町域か市区町村が書かれているときだけ補完する（先頭が欠けた・崩れた住所を直す用途）。
+    # 無ければ郵便番号の方が読み違いかもしれず、補完すると郵便番号の誤りが住所に伝染し、書き換えた住所に対して
+    # 郵便番号が検証合格して自動確定してしまう（台本のリハーサルで実際に起きた）。
+    if not any(m and m in addr for m in (town, city)):
+        return None
     # 元の住所から「都道府県〜市区町村」に相当する先頭部分を捨て、番地以降を残す
     rest = addr
     for marker in (town, city, pref):
