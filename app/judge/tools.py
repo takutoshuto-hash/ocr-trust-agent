@@ -53,8 +53,11 @@ def check_zip_address(zip_code: str, address: str) -> CheckResult:
     """郵便番号から引いた都道府県・市区町村が住所に含まれるか。"""
     table = _zip_table()
     key = (zip_code or "").replace("-", "")
+    if not key:
+        return CheckResult(name="zip_address", status=CheckStatus.UNKNOWN, detail="空欄")
     if key not in table:
-        return CheckResult(name="zip_address", status=CheckStatus.UNKNOWN, detail="郵便番号がマスタに無い")
+        # 一覧に無い番号は読み違いの疑い（本番の全国一覧でも同じ。判定不能にすると学習した判定が自動確定しうるので失敗にする）
+        return CheckResult(name="zip_address", status=CheckStatus.FAIL, detail="郵便番号が一覧に無い（読み違いの疑い）")
     pref, city, town = table[key]
     a = (address or "").replace(" ", "").replace("　", "")
     if not (pref in a and city in a):

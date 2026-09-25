@@ -11,7 +11,8 @@ def _ex(flat: dict) -> Extraction:
 def test_zip_address_pass_and_fail():
     assert T.check_zip_address("870-0001", "大分県大分市王子北町1-2-3").status == CheckStatus.PASS
     assert T.check_zip_address("870-0001", "福岡県福岡市中央区天神1-1").status == CheckStatus.FAIL
-    assert T.check_zip_address("999-9999", "どこか").status == CheckStatus.UNKNOWN
+    assert T.check_zip_address("999-9999", "どこか").status == CheckStatus.FAIL        # 一覧に無い番号は読み違いの疑い（自動確定させない）
+    assert T.check_zip_address("", "どこか").status == CheckStatus.UNKNOWN
 
 
 def test_product_and_phone():

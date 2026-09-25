@@ -89,6 +89,8 @@ def plain_check(check) -> str:
     """CheckResult（FAIL）を現場の一文に。"""
     head = CHECK_FAIL.get(check.name, "読み取りの検証で引っかかりました")
     detail = (check.detail or "").strip()
+    if check.name == "zip_address" and "一覧に無い" in detail:
+        return "郵便番号が一覧にありません（読み違いの疑い）"
     if check.name in _DETAIL_WORTH_SHOWING and detail:
         for pat, rep in _DETAIL_JARGON:
             detail = pat.sub(rep, detail)

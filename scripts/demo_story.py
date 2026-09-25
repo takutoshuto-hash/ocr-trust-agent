@@ -197,21 +197,23 @@ def flatten(truth: dict) -> dict:
 
 def run_day(client, source: FormSource, n_forms: int, *, leave_pending: int = 0, log=print) -> dict:
     """1 日ぶんの帳票を流し、要確認は人（台本）が正解に直して確定する。leave_pending 枚は確認画面用に残す。"""
-    fields = review = zip_wrong = 0
+    fields = review = zip_wrong = zip_wrong_auto = 0
     left: list[tuple[str, dict]] = []
     for k in range(n_forms):
         image, sender, truth = source.next()
         r = client.submit(image, sender, truth)
         flat = flatten(truth)
         fields += len(r["decisions"]); review += len(r["review_paths"])
-        zip_wrong += sum(1 for p, d in r["decisions"].items() if p.endswith(".zip") and str(d.get("value")) != str(flat.get(p)))
+        wrong = [p for p, d in r["decisions"].items() if p.endswith(".zip") and str(d.get("value")) != str(flat.get(p))]
+        zip_wrong += len(wrong)
+        zip_wrong_auto += sum(1 for p in wrong if p not in r["review_paths"])   # 読み違いが人に回らず自動確定した数（0 であるべき）
         corr = {p: flat[p] for p in r["review_paths"]}
         if k >= n_forms - leave_pending:
             left.append((r["form_id"], corr))
         else:
             client.confirm(r["form_id"], corr)
     return {"forms": n_forms, "fields": fields, "review": review, "review_rate": round(review / fields, 3) if fields else None,
-            "zip_wrong": zip_wrong, "left": left}
+            "zip_wrong": zip_wrong, "zip_wrong_auto": zip_wrong_auto, "left": left}
 
 
 def confirm_left(client, left: list[tuple[str, dict]]) -> int:
@@ -263,7 +265,7 @@ def storyboard(client, source: FormSource, *, seed_days: int = 2, per_day: int =
     client.set_defect(DEFECT)
     day1_start = datetime.now(timezone.utc)
     day1 = run_day(client, source, accident_forms, leave_pending=(0 if auto else leave_pending), log=log)
-    log(f"   郵便番号の読み違い {day1['zip_wrong']} 件。住所と合わないので検証で止まり、人の確認に回った（確認 {day1['review_rate']:.0%}）")
+    log(f"   郵便番号の読み違い {day1['zip_wrong']} 件。一覧に無い番号なので検証で止まり、人の確認に回った（確認 {day1['review_rate']:.0%}。自動確定された読み違い {day1['zip_wrong_auto']} 件）")
     result["accident_day1"] = {k: v for k, v in day1.items() if k != "left"}
     pause(f"確認画面 /review で、赤枠の郵便番号を直して確定する場面を撮る（{len(day1['left'])} 枚残してある）。撮り終えたら Enter")
     confirm_left(client, day1["left"])

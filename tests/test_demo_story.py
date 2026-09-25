@@ -55,6 +55,7 @@ def test_storyboard_ends_the_same_way():
     assert res["seed_last_review_rate"] < 0.6
     # 事故: 郵便番号の読み違いが多発し、人の確認に回った（自動確定はしない）
     assert res["accident_day1"]["zip_wrong"] >= 10
+    assert res["accident_day1"]["zip_wrong_auto"] == 0 and res["accident_day2"]["zip_wrong_auto"] == 0   # 読み違いは 1 件も自動確定しない
     # 夜 1: 「7」を「1」と読み違えるコツが提案され、承認されてルールになった
     assert res["night1_target_pending"] == 1 and len(res["rules_after_night1"]) >= 1
     # 夜 2: 同じコツの再提案はガバナンスが自動却下し、効いていないコツの取り消しを提案 → 承認で無効化
