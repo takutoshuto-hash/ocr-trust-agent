@@ -34,7 +34,13 @@ class CorrectionRouter:
 
     def _load(self) -> None:
         if self.path.exists():
-            d = joblib.load(self.path)
+            try:
+                d = joblib.load(self.path)
+            except Exception as e:      # ライブラリの版違いなどで読めない: 未学習で始める（台帳で判定）。次の再学習で作り直される
+                import logging
+                logging.getLogger("ocr_trust").warning("router model at %s could not be loaded (%s: %s); starting untrained", self.path, type(e).__name__, e)
+                self.model, self.threshold, self.trained_on = None, None, 0
+                return
             feats = d.get("features")
             n_in = getattr(d["model"], "n_features_in_", None)
             if (feats is not None and list(feats) != list(FEATURE_NAMES)) or (n_in is not None and n_in != len(FEATURE_NAMES)):

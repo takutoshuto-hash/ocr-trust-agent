@@ -45,7 +45,7 @@ class Pipeline:
         self.reflection = ReflectionAgent(self.store, self.policy.raw, planner=str(rf.get("planner", "rules")) if self.extractor.name == "gemini" else "rules")
         rc = self.policy.router
         self.router = router or CorrectionRouter(
-            settings.model_dir,
+            _model_dir_for(settings.store_backend, settings.model_dir),
             min_samples=int(rc.get("min_training_samples", 200)),
             target_error_rate=float(rc.get("target_error_rate", 0.005)),
         )
@@ -481,6 +481,23 @@ class Pipeline:
 
     def _audit(self, form_id: str, event: str, detail: dict, actor: str = "agent") -> None:
         self.store.add_audit(AuditEvent(form_id=form_id, event=event, actor=actor, detail=detail))
+
+
+def _model_dir_for(store_backend: str, model_dir) -> "Path":
+    """再学習したモデルの保存先。Firestore（本番）はリポジトリの models/ をそのまま使う。
+    メモリ保存（ローカル開発・デモ・台本）は状態が再起動で消えるので、同梱の models/router.joblib を一時フォルダに写して
+    そこで学習する（台本を回すたびに同梱の発表用モデルが上書きされないように）。"""
+    from pathlib import Path
+    model_dir = Path(model_dir)
+    if store_backend == "firestore":
+        return model_dir
+    import shutil
+    import tempfile
+    tmp = Path(tempfile.mkdtemp(prefix="ocr-trust-models-"))
+    src = model_dir / "router.joblib"
+    if src.exists():
+        shutil.copy(src, tmp / "router.joblib")
+    return tmp
 
 
 class BudgetGuard:
