@@ -90,7 +90,7 @@ bash scripts/deploy.sh                      # Cloud Run へ
 |---|---|
 | 9/24 | 切り分けA（振り返りなし）完走 → `compare_runs.py` で最終表、`docs/architecture.svg` の数字を差し替え → PNG 再生成（`docs/render.html` をローカルで開き canvas → PNG） |
 | 9/24〜26 | 本人の実手書き 20〜30 枚（`data/measurement/handwriting/` に印刷用 PDF・一覧・手順あり）を評価。ダッシュボードは 9/24 に作り直し済み（3 節）。提案内訳の再生成は Windows 機のログが必要で、もう行わない（4 節） |
-| 9/27〜10/1 | 画面の仕上げ（現場向けの言葉・配色・動線）、Zenn 記事本文（骨子は E: の `02_article_outline.md`。要点はこの文書の 2 節） |
+| 9/27〜10/1 | 画面の見た目の仕上げ（配色・動線。言葉は済み）、プロジェクト紹介の説明文と記事の推敲（下書きは `docs/SUBMISSION.md`（ダッシュボードに貼る用）と `docs/ARTICLE.md`（Zenn 記事、任意）。9/25 作成。実手書きの結果と費用の節を追記する） |
 | 9/29 | オフィスアワー（草稿と動画の筋を持ち込む） |
 | 10/2〜10/5 | 3分動画（山場 = 事故注入と復旧、エージェントが自分の提案を取り消す場面。台本と撮り方は `docs/DEMO.md`、再生は `python scripts/demo_story.py run`。9/25 に作成・テストで結末を固定済み）（YouTube に公開して URL を登録） |
 | 10/6〜12 | 講評反映・予備 |
