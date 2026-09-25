@@ -202,7 +202,7 @@ def _propose_with_rules(a: dict, policy: dict) -> list[dict]:
     for row in a.get("by_field_type", []):
         if row["n"] >= 30 and row["rate"] >= 0.08:
             out.append({"kind": "rule", "scope": "global", "title": f"{_ft_label(row['key'])}は人が直すことが多い（{row['rate']:.0%}）",
-                        "rule_text": f"{_ft_label(row['key'])}は誤読が多い。読みにくい場合は推測せず空文字にし、evidence に読めた部分だけを入れること。",
+                        "rule_text": f"{_ft_label(row['key'])}は読み違いが多い。読みにくい場合は推測せず空欄にし、読めた部分だけを根拠として残すこと。",
                         "rationale": f"{row['n']} 件のうち {row['corrected']} 件を人が直しました", "evidence": row})
     return out
 

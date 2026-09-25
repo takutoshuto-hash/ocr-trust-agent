@@ -122,5 +122,5 @@ def plain_decision(*, status: str, audit: bool, forced_new_sender: bool, sender_
     if agreement is False:
         return ""
     if router_trained:
-        return "自動で確定するには、まだこの項目の実績が足りません"
+        return "自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）"
     return f"自動で確定するには、まだこの項目の実績が足りません（実績 {ledger_n} 件）"
