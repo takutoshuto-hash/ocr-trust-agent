@@ -3,6 +3,8 @@ name = "ocr-trust-agent"
 version = "0.1.0"
 description = "信頼が育つOCR受注エージェント: 抽出 → ジャッジ → 自律レベル判定 → 人の修正を学習"
 requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Takuto Shuto"}]
 dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",

@@ -101,7 +101,7 @@ eval/         評価・日次シミュレーション
 
 ## ライセンス
 
-このリポジトリのコードのライセンスは `LICENSE` を参照。依存する OSS（FastAPI、Pydantic、scikit-learn、Pillow、google-genai、google-adk など）は各パッケージのライセンスに従う（`pip show <package>` で確認できる）。合成帳票の手書き風フォント（Yomogi / Zen Kurenaido / Klee One / Hachi Maru Pop）は Google Fonts の SIL Open Font License 1.1 で、`scripts/fetch_fonts.sh` で取得し git には含めない。
+このリポジトリのコードは MIT ライセンス（`LICENSE`、Copyright (c) 2026 Takuto Shuto）。依存する OSS（FastAPI、Pydantic、scikit-learn、Pillow、google-genai、google-adk など）は各パッケージのライセンスに従う（`pip show <package>` で確認できる）。合成帳票の手書き風フォント（Yomogi / Zen Kurenaido / Klee One / Hachi Maru Pop）は Google Fonts の SIL Open Font License 1.1 で、`scripts/fetch_fonts.sh` で取得し git には含めない。
 
 ## 個人情報の扱い
 
