@@ -12,6 +12,7 @@
 - **新規記入者にも効く**: 履歴ゼロで動く決定的検証（郵便番号↔住所、商品マスタ、電話桁…）と二重読み取りの一致が主エンジン。送り主ごとの few-shot はリピーターへの加点
 - **ガバナンス**: `policy.yaml` で「住所は絶対に L2 にしない」「新規送り主は氏名・住所を必ず人が見る」「1日の予算」を宣言。全判断を監査ログに残し、後から再現できる
 - **ハルシネーションを止める**: 欄のインク量と値の整合（空欄なのに値が返った＝創作）、根拠文字列との整合、二重読み取りの一致。自己申告の自信度には頼らない
+- **他業種へは 3 ファイルで**: 様式 JSON（欄の位置）・マスタ CSV（照合の一覧）・`checks.yaml`（項目ごとの検証の並び）を差し替える。台帳・学習・振り返り・画面は項目種別を名前でしか見ない。詳細は [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - **機密とコストは運用プロファイルで切替**: `lean`（現場向け: Flash・機密欄マスク・保持期限）／`secure`（高機密向け: VPC 内 / オンプレの Gemma、画像を外に出さない）。抽出器だけが差し替わる
 
 ## 構成（Google Cloud）
@@ -64,6 +65,9 @@ python eval/simulate_days.py --days 14 --per-day 300
 
 # API + 確認画面
 uvicorn app.main:app --reload    # http://127.0.0.1:8000/review
+
+# 動画の山場（事故 → 提案 → 効果測定で取り消し → 復旧）を毎回同じに再生。台本は docs/DEMO.md
+python scripts/demo_story.py run --auto     # リハーサル（止まらない）／ run で場面ごとに止まる
 ```
 
 ## デプロイ
@@ -90,7 +94,7 @@ app/
   store/      Memory / Firestore
   pipeline.py 受付→判定→確定→学習
   main.py     FastAPI（/forms, /review, /metrics, /audit, /ledger）
-data/master/  商品マスタ・郵便番号（サンプル）
+data/master/  商品マスタ・郵便番号（サンプル）・checks.yaml（項目ごとの検証の組み合わせ）・formats/（様式の欄位置）
 data/synthetic/ 合成帳票ジェネレータ
 eval/         評価・日次シミュレーション
 ```

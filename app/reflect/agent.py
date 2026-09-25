@@ -38,7 +38,11 @@ class ReflectionAgent:
             return []
         raw: list[dict]
         proposer = "reflection_rules"
-        self._rates = {row["key"]: row["rate"] for row in analysis.get("by_field_type", [])}
+        # 効果測定に使う修正率。processed（既定）= 処理した件数あたり。seen = 人が見た件数あたり（v2 の 14 日実行までの測り方。
+        # 判定が慎重になって人に回る件数が増えると薄まり、効いていないルールを効いたと誤認する欠陥があった → 9/25 に既定を変更）
+        measure = str((self.policy.get("reflection") or {}).get("effect_measure", "processed"))
+        self._rates = {row["key"]: (row.get("rate_processed", row["rate"]) if measure == "processed" else row["rate"])
+                       for row in analysis.get("by_field_type", [])}
         self._active_rules = self.store.list_rules()
         analysis = dict(analysis, active_rules=[{"rule_id": r.rule_id, "field_type": r.field_type, "baseline_rate": r.baseline_rate,
                                                  "text": r.text[:80]} for r in self._active_rules])
@@ -158,7 +162,7 @@ class ReflectionAgent:
             if now >= float(r.baseline_rate) * 0.9:
                 out.append({"kind": "retract", "rule_id": r.rule_id,
                             "title": f"{_ft_label(r.field_type)}のコツは効いていません",
-                            "rationale": f"覚えさせた時点で人が直した割合は {float(r.baseline_rate):.1%}、今は {now:.1%} で、1割以上は減っていません。内容:「{r.text[:60]}」",
+                            "rationale": f"覚えさせた時点で直しが必要だった割合は {float(r.baseline_rate):.1%}（処理した件数あたり）、今は {now:.1%} で、1割以上は減っていません。内容:「{r.text[:60]}」",
                             "evidence": {"rule_id": r.rule_id, "field_type": r.field_type, "baseline_rate": r.baseline_rate, "rate": now}})
         return out
 

@@ -1,0 +1,33 @@
+# 検証の組み合わせ（業種依存の 3 ファイルのひとつ。あとの 2 つは様式 JSON（formats/*.json）とマスタ CSV）
+#
+# 項目種別（applicant.zip のような形。* はご依頼主・お届け先の両方）ごとに、どの検証をどの順で掛けるかを宣言する。
+#   - 文字列          : その項目の値だけを見る検証（例: zip_format）
+#   - {検証名: [欄名]} : 同じブロック内の他の欄も見る相互検証。欄名は zip / address / phone / name / name_kana … の末尾の名前
+# 検証名は app/judge/tools.py の CHECKS に登録された決定的な関数。ここに無い項目種別は任意項目として検証しない。
+#
+# 他業種では、このファイルと様式 JSON とマスタ CSV を差し替える。例:
+#   介護: "*.care_level": [{one_of: [care_level]}]   保険: "*.policy_no": [policy_no_format]   など、検証関数を tools.py に足して名前で結ぶ
+checks:
+  "*.zip":          [zip_format, {zip_address: [zip, address]}]
+  "*.address":      [nonempty, {zip_address: [zip, address]}]
+  "*.phone":        [phone_format, {phone_area: [phone, zip]}]
+  "*.name_kana":    [kana_format, {name_reading: [name, name_kana]}]
+  "*.product_code": [product_exists]
+  "*.qty":          [qty_range]
+  "*.name":         [nonempty, {name_reading: [name, name_kana]}]
+
+# 送り主の履歴と照合する項目（同じ送り主の過去の確定と比べる。依頼主とお届け先の両方）
+history:
+  - "*.name"
+  - "*.name_kana"
+  - "*.zip"
+  - "*.address"
+  - "*.phone"
+  - "*.organization"
+
+# 異体字（髙↔高 など）を根拠から復元・検査する項目
+variant_kanji:
+  - "*.name"
+  - "*.organization"
+  - "*.address"
+  - "*.noshi_name"

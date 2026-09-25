@@ -10,17 +10,63 @@ LLM を使わない決定的な部分。ADK エージェント（agent.py）は�
 """
 from __future__ import annotations
 
+import fnmatch
+from pathlib import Path
 from typing import Optional
 
+import yaml
+
+from app.config import settings
 from app.schemas import CheckStatus, Extraction, FieldVerdict, field_type_of
 from . import tools as T
 from .zones import ink_ratio, load_zones, open_image
 
 
+class CheckBindings:
+    """data/master/checks.yaml の中身。項目種別のパターン（*.zip など）→ [(検証名, 引数の欄名 or None)]。"""
+
+    def __init__(self, raw: dict):
+        self.rules: list[tuple[str, list[tuple[str, Optional[list[str]]]]]] = []
+        for pattern, specs in (raw.get("checks") or {}).items():
+            items: list[tuple[str, Optional[list[str]]]] = []
+            for spec in specs or []:
+                if isinstance(spec, str):
+                    items.append((spec, None))
+                elif isinstance(spec, dict) and len(spec) == 1:
+                    (name, args), = spec.items()
+                    items.append((str(name), [str(a) for a in (args or [])]))
+            self.rules.append((str(pattern), items))
+        self.history = [str(p) for p in raw.get("history") or []]
+        self.variant_kanji = [str(p) for p in raw.get("variant_kanji") or []]
+
+    def checks_for(self, field_type: str) -> list[tuple[str, Optional[list[str]]]]:
+        for pattern, items in self.rules:
+            if fnmatch.fnmatch(field_type, pattern):
+                return items
+        return []
+
+    def wants_history(self, field_type: str) -> bool:
+        return any(fnmatch.fnmatch(field_type, p) for p in self.history)
+
+    def wants_variant_kanji(self, field_type: str) -> bool:
+        return any(fnmatch.fnmatch(field_type, p) for p in self.variant_kanji)
+
+    def field_types(self) -> list[str]:
+        return [p for p, _ in self.rules]
+
+
+def load_check_bindings(path: Path) -> CheckBindings:
+    if not Path(path).exists():
+        raise FileNotFoundError(f"検証の宣言ファイルがありません: {path}")
+    return CheckBindings(yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {})
+
+
 class Judge:
-    def __init__(self, blank_ink_ratio: float = 0.013, evidence_max_distance: float = 0.5):
+    def __init__(self, blank_ink_ratio: float = 0.013, evidence_max_distance: float = 0.5, checks_path: Optional[Path] = None):
         self.blank_ink_ratio = blank_ink_ratio
         self.evidence_max_distance = evidence_max_distance
+        # 検証の組み合わせは宣言ファイル（業種依存の 3 ファイルのひとつ）。項目種別のパターン → 検証の並び
+        self.bindings = load_check_bindings(checks_path or settings.master_dir / "checks.yaml")
 
     def judge(self, primary: Extraction, secondary: Optional[Extraction] = None, *,
               image: Optional[bytes] = None, format_id: Optional[str] = None,
@@ -37,7 +83,7 @@ class Judge:
             ft = field_type_of(path)
             v = FieldVerdict(path=path, field_type=ft)
             v.checks = self._checks_for(ft, path, value, flat)
-            if history and not isinstance(value, int) and ft.rsplit(".", 1)[-1] in ("name", "name_kana", "zip", "address", "phone", "organization"):
+            if history and not isinstance(value, int) and self.bindings.wants_history(ft):
                 v.checks.append(T.check_history(value, _past_values(past, path, ft, flat)))
             # ハルシネーション対策（空欄検知）
             #   - 整数項目（数量）は「未記入なら 1」がプロンプト上の既定値なので対象外
@@ -47,7 +93,7 @@ class Judge:
             fv = primary.fields.get(path)
             if fv is not None and fv.evidence and primary.model != "mock" and not isinstance(value, int):
                 v.checks.append(T.check_evidence(str(value), fv.evidence, self.evidence_max_distance))
-                if path.rsplit(".", 1)[-1] in ("name", "organization", "address", "noshi_name"):
+                if self.bindings.wants_variant_kanji(ft):
                     v.checks.append(T.check_variant_kanji(str(value), fv.evidence))   # 復元済みなら PASS、残っていれば FAIL
             if flat2 is not None:
                 v.agreement = _norm(flat2.get(path)) == _norm(value)
@@ -76,37 +122,23 @@ class Judge:
 
     # --- 項目種別ごとの検証セット ---
     def _checks_for(self, ft: str, path: str, value, flat: dict) -> list:
+        """宣言ファイルの並びどおりに検証を掛ける。相互検証の引数は同じブロック（依頼主／お届け先 n）の欄から取る。"""
         prefix = path.rsplit(".", 1)[0]
-        if ft.endswith(".zip"):
-            return [T.check_zip_format(value), T.check_zip_address(value, flat.get(f"{prefix}.address", ""))]
-        if ft.endswith(".address"):
-            return [T.check_nonempty(value), T.check_zip_address(flat.get(f"{prefix}.zip", ""), value)]
-        if ft.endswith(".phone"):
-            return [T.check_phone_format(value), T.check_phone_area(value, flat.get(f"{prefix}.zip", ""))]
-        if ft.endswith(".name_kana"):
-            return [T.check_kana(value), T.check_name_reading(flat.get(f"{prefix}.name", ""), value)]
-        if ft.endswith(".product_code"):
-            return [T.check_product_code(value)]
-        if ft.endswith(".qty"):
-            return [T.check_qty(value)]
-        if ft.endswith(".name"):
-            return [T.check_nonempty(value), T.check_name_reading(value, flat.get(f"{prefix}.name_kana", ""))]
-        return []   # organization / noshi_name: 任意項目
+        out = []
+        for name, args in self.bindings.checks_for(ft):
+            fn = T.CHECKS.get(name)
+            if fn is None:
+                continue
+            if args is None:
+                out.append(fn(value))
+            else:
+                out.append(fn(*[value if a == ft.rsplit(".", 1)[-1] else flat.get(f"{prefix}.{a}", "") for a in args]))
+        return out
 
     def _explain(self, v: FieldVerdict) -> str:
-        parts = []
-        for c in v.checks:
-            if c.status == CheckStatus.FAIL:
-                parts.append(f"{c.name}: {c.detail}")
-            elif c.status == CheckStatus.UNKNOWN and c.name == "blank_zone" and "読み落とし" in c.detail:
-                parts.append(f"{c.name}: {c.detail}")
-            elif c.status == CheckStatus.UNKNOWN:
-                parts.append(f"{c.name}: 判定不能（{c.detail}）")
-        if v.agreement is False:
-            parts.append("二重読み取りが不一致")
-        if not parts:
-            return "検証すべて合格" + ("・二重読み取り一致" if v.agreement else "")
-        return "; ".join(parts)
+        """人向けの一文（確認画面の赤字）。検証の名前や内部値は出さない。検証の詳細は checks に残る。"""
+        from app.labels import plain_verdict
+        return plain_verdict(v)
 
 
 def _history_index(history: list) -> dict:

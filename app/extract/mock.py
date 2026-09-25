@@ -63,6 +63,24 @@ class MockExtractor:
 
     def __init__(self, error_scale: float = 1.0):
         self.error_scale = error_scale
+        # 事故注入（デモ・テスト用）: 項目種別ごとの系統的な読み違い。ルールや few-shot では消えない
+        # （FAX の劣化で「7」の横棒がかすれて「1」に見える、など物理的な原因を模倣する）
+        # [{"field_type": "deliveries.zip", "from": "7", "to": "1", "rate": 1.0}]
+        self.defects: list[dict] = []
+
+    def set_defect(self, field_type: str, frm: str, to: str, rate: float = 1.0) -> None:
+        self.defects = [d for d in self.defects if d["field_type"] != field_type]
+        self.defects.append({"field_type": field_type, "from": frm, "to": to, "rate": float(rate)})
+
+    def clear_defects(self) -> None:
+        self.defects = []
+
+    def _apply_defects(self, field_type: str, truth: str, value: str, rng: random.Random) -> str:
+        """真値に from が含まれていれば、確率 rate で from→to に置き換える（1回目・2回目・欄の再読み取りすべてに同じ癖）。"""
+        for d in self.defects:
+            if d["field_type"] == field_type and d["from"] in truth and rng.random() < d["rate"]:
+                value = value.replace(d["from"], d["to"])
+        return value
 
     def extract_field(self, crop: bytes, field_type: str, *, premium: bool = False, hint=None):
         """欄だけの再読み取りを模倣: 誤り率は通常の 1/2（高精度モデルなら 1/5）。hint は正解値。"""
@@ -73,6 +91,7 @@ class MockExtractor:
         p = BASE_ERROR_RATE.get(field_type, 0.05) * self.error_scale * (0.2 if premium else 0.5)
         v = str(hint)
         nv = v if rng.random() >= p else _perturb(v, rng)
+        nv = self._apply_defects(field_type, v, nv, random.Random(seed ^ 0x5EED))
         return nv, nv
 
     def extract(self, image: bytes, *, mime_type="image/png", examples=None, variant=0, hint: Optional[OrderForm] = None, rules=None, format_id=None) -> Extraction:
@@ -102,6 +121,10 @@ class MockExtractor:
                 conf = 0.95 if nv == v else rng.uniform(0.5, 0.9)
             else:
                 nv = v if rng.random() >= p else _perturb(str(v), rng)
+                if self.defects:
+                    # 画像ごとに決まる乱数（variant に依らない）: 同じ紙の同じ欄なら 1 回目も 2 回目も同じ読み違いになる
+                    drng = random.Random(int(hashlib.sha256(image[:4096] + path.encode()).hexdigest(), 16) % (2**32))
+                    nv = self._apply_defects(ft, str(v), nv, drng)
                 conf = rng.uniform(0.85, 0.99) if nv == v else rng.uniform(0.4, 0.9)
             out[path] = nv
             fields[path] = FieldValue(path=path, value=nv, confidence=round(conf, 3), evidence=str(nv))

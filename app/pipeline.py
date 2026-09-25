@@ -217,8 +217,11 @@ class Pipeline:
             audit = True
             reasons.append("監査サンプリング対象（自動確定だが人も確認）")
 
+        from app.labels import plain_decision
+        why = plain_decision(status=status.value, audit=audit, forced_new_sender=bool(forced), sender_n=stats["sender"].n,
+                             router_trained=router_auto is not None, ledger_n=stat.n, judge_ok=judge_ok, agreement=verdict.agreement)
         d = FieldDecision(path=fv.path, field_type=ft, value=fv.value, status=status, level=level,
-                          audit=audit, judge_ok=judge_ok, p_correction=p, reasons=reasons)
+                          audit=audit, judge_ok=judge_ok, p_correction=p, reasons=reasons, why=why)
         d._features = feats   # 確定時に教師データへ（pydantic の private 属性）
         return d
 

@@ -27,6 +27,7 @@ def analyze(records: list[TrainingRecord], audits: list[AuditEvent], *, since: O
     by_ft: dict[str, dict] = defaultdict(lambda: {"n": 0, "corrected": 0})
     by_fmt: dict[str, dict] = defaultdict(lambda: {"n": 0, "corrected": 0})
     by_sender: dict[str, dict] = defaultdict(lambda: {"n": 0, "corrected": 0})
+    processed: Counter = Counter(r.field_type for r in records)   # 人が見たかに関係なく処理した件数（効果測定の分母）
     confusions: Counter = Counter()
     variant_corr: Counter = Counter()
     length_diff: Counter = Counter()
@@ -54,16 +55,25 @@ def analyze(records: list[TrainingRecord], audits: list[AuditEvent], *, since: O
     hallucination_flags = sum(1 for a in audits if a.event == "judged" for _ in [0])  # placeholder count of judged forms
     blank_fails = sum(1 for a in audits if a.event == "decided" and any("ハルシネーション" in str(r) for r in a.detail.get("review", [])))
 
-    def rate_table(bucket: dict, min_n: int = 5) -> list[dict]:
-        rows = [{"key": k, "n": v["n"], "corrected": v["corrected"], "rate": round(v["corrected"] / v["n"], 4)}
-                for k, v in bucket.items() if v["n"] >= min_n]
+    def rate_table(bucket: dict, min_n: int = 5, with_processed: bool = False) -> list[dict]:
+        rows = []
+        for k, v in bucket.items():
+            if v["n"] < min_n:
+                continue
+            row = {"key": k, "n": v["n"], "corrected": v["corrected"], "rate": round(v["corrected"] / v["n"], 4)}
+            if with_processed:
+                # rate は「人が見た件数」あたり（現場の体感）。rate_processed は「処理した件数」あたりで、
+                # 判定が慎重になって人に回る件数が増えても薄まらない（読み取りルールの効果測定はこちらを使う）
+                row["n_processed"] = int(processed.get(k, v["n"]))
+                row["rate_processed"] = round(v["corrected"] / max(1, row["n_processed"]), 4)
+            rows.append(row)
         return sorted(rows, key=lambda x: -x["rate"])[:top]
 
     return {
         "since": since,
         "window_records": len(seen),
         "overall_correction_rate": round(sum(r.corrected for r in seen) / len(seen), 4) if seen else None,
-        "by_field_type": rate_table(by_ft, 1),
+        "by_field_type": rate_table(by_ft, 1, with_processed=True),
         "by_format": rate_table(by_fmt),
         "by_sender_top": rate_table(by_sender),
         "confusions_top": [{"field_type": ft, "from": a, "to": b, "count": c} for (ft, a, b), c in confusions.most_common(top)],

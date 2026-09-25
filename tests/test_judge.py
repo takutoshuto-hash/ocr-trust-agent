@@ -31,5 +31,5 @@ def test_judge_agreement_and_reason():
     other = dict(base, **{"deliveries[0].name": "鈴本 花子"})
     v = Judge().judge(_ex(base), _ex(other))
     assert v["applicant.zip"].all_pass and v["applicant.zip"].agreement is True
-    assert v["deliveries[0].name"].agreement is False and "不一致" in v["deliveries[0].name"].reason
+    assert v["deliveries[0].name"].agreement is False and "2 回読んで結果が違いました" in v["deliveries[0].name"].reason
     assert not v["deliveries[0].product_code"].any_fail

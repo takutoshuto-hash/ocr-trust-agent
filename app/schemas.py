@@ -146,7 +146,8 @@ class FieldDecision(BaseModel):
     judge_ok: bool = False                 # 検証に FAIL が無かった
     resolved_from: Optional[Any] = None    # 行動するエージェントが修復した場合の元の値
     p_correction: Optional[float] = None   # 学習ルーターの予測（未学習なら None）
-    reasons: list[str] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)   # 内部向け（監査・分析）。台帳・ルーター・ポリシーの判断をそのまま残す
+    why: str = ""                          # 現場向け。なぜ人が見るのか（検証の失敗以外）。app/labels.plain_decision
 
     @property
     def human_sees(self) -> bool:

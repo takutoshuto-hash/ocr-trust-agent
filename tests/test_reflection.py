@@ -111,3 +111,33 @@ def test_reflection_retracts_ineffective_rule():
     assert [p.retract_rule_id for p in retracts] == ["r1"], [(p.kind, p.title) for p in props]
     agent.decide(retracts[0].proposal_id, True, "human")
     assert [r.rule_id for r in store.list_rules()] == ["r2"] and len(store.list_rules(include_inactive=True)) == 2
+
+
+def test_effect_measure_is_not_diluted_when_more_items_are_routed_to_humans():
+    """デモで見つけた欠陥: 翌日に判定が慎重になって人が見る郵便番号が 22→48 件に増えると、読み違いが 14→17 件に増えていても
+    「人が見た件数あたり」の率は 64%→35% に下がり、効いていないルールを効いたと誤認した。処理した件数あたりなら 14%→17% で取り消しになる。"""
+    from datetime import datetime, timedelta, timezone
+    from app.schemas import ApprovedRule, TrainingRecord
+
+    def recs(seen_wrong, seen_ok, auto_ok):
+        out = [_rec("deliveries.zip", "110-0001", "170-0007")] * seen_wrong + [_rec("deliveries.zip", "150-0001", "150-0001")] * seen_ok
+        out += [TrainingRecord(form_id="f", path="deliveries.zip", field_type="deliveries.zip", sender_id="S1", format_id="fax_v1",
+                               extracted="150-0001", final="150-0001", corrected=False, was_auto=True, verified=False, features={})] * auto_ok
+        return out
+
+    day1 = analyze(recs(14, 8, 78), [])             # 処理 100 件、人が見た 22 件、直し 14 件
+    row = next(r for r in day1["by_field_type"] if r["key"] == "deliveries.zip")
+    assert row["rate"] == 0.6364 and row["n_processed"] == 100 and row["rate_processed"] == 0.14
+    store = MemoryStore()
+    agent = ReflectionAgent(store, Policy.load(settings.policy_path).raw, planner="rules")
+    old = datetime.now(timezone.utc) - timedelta(days=2)
+    store.put_rule(ApprovedRule(rule_id="r1", text="1 は 7", field_type="deliveries.zip", confusion="1>7", baseline_rate=0.14, created_at=old))
+    day2 = analyze(recs(17, 31, 52), [], since=datetime.now(timezone.utc) - timedelta(days=1))   # 処理 100 件、人が見た 48 件、直し 17 件
+    props = agent.propose(day2)
+    assert any(p.kind == ProposalKind.RETRACT for p in props)
+    # 旧来の測り方（人が見た件数あたり）では 64%→35% に「下がった」ように見え、取り消されない
+    raw = Policy.load(settings.policy_path).raw
+    raw.setdefault("reflection", {})["effect_measure"] = "seen"
+    store2 = MemoryStore()
+    store2.put_rule(ApprovedRule(rule_id="r1", text="1 は 7", field_type="deliveries.zip", confusion="1>7", baseline_rate=0.6364, created_at=old))
+    assert not any(p.kind == ProposalKind.RETRACT for p in ReflectionAgent(store2, raw, planner="rules").propose(day2))

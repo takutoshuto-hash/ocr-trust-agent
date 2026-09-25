@@ -33,6 +33,10 @@ actions:
 reflection:
   planner: adk               # adk | rules
   window_days: 1
+  # 覚えさせた読み取りルールの効果測定に使う修正率の分母
+  #   processed（既定）: 処理した件数あたり。人に回る件数が増減しても薄まらない
+  #   seen            : 人が見た件数あたり（v2 の 14 日実行までの測り方。判定が慎重になると薄まり、効かないルールを効いたと誤認した）
+  effect_measure: processed
   # 提案してよいポリシーキーと範囲は app/reflect/agent.py の ALLOWED_POLICY_KEYS（コードで固定＝エージェントは変更できない）
 
 # 自律レベルの昇格条件（項目種別 × キー階層ごとに評価）

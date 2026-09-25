@@ -10,9 +10,9 @@ body{font-family:system-ui,sans-serif;margin:24px;color:#222}
 <div class="kpi">
   <div>帳票<b>{{ metrics.forms }}</b></div>
   <div>要確認率<b>{{ '%.1f%%' % (metrics.review_rate*100) if metrics.review_rate is not none else '-' }}</b></div>
-  <div>自動確定の誤り率（監査実測）<b>{{ '%.2f%%' % (metrics.auto_error_rate_audited*100) if metrics.auto_error_rate_audited is not none else '-' }}</b></div>
-  <div>教師データ<b>{{ metrics.training_records }}</b></div>
-  <div>ルーター学習件数<b>{{ metrics.router.trained_on }}</b></div>
+  <div>自動で確定した分の間違い（抜き取り確認で見つかった割合）<b>{{ '%.2f%%' % (metrics.auto_error_rate_audited*100) if metrics.auto_error_rate_audited is not none else '-' }}</b></div>
+  <div>学習に使った確定済みの項目<b>{{ metrics.training_records }}</b></div>
+  <div>判定の学習に使った件数<b>{{ metrics.router.trained_on }}</b></div>
   <div style="{% if metrics.budget.mode != 'normal' %}border-color:#d9a400;background:#fffbe6{% endif %}">予算（本日）<b style="font-size:16px">{{ metrics.budget.gemini_calls }} / {{ metrics.budget.max_gemini_calls }} 回</b><small>{{ {'normal':'通常','reduced':'縮退: 二重読み取り省略','exhausted':'停止: 自動確定なし'}[metrics.budget.mode] }}</small></div>
 </div>
 <table><tr><th>ID</th><th>送り主</th><th>様式</th><th>要確認項目</th><th></th></tr>

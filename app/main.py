@@ -13,6 +13,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from jinja2 import Environment, PackageLoader, select_autoescape
 
+from app.labels import plain, plain_verdict
 from app.pipeline import Pipeline
 from app.schemas import FieldStatus, OrderForm
 
@@ -136,7 +137,14 @@ def _group_fields(fd) -> list[dict]:
             m = re.fullmatch(r"deliveries\[(\d+)\]\.(\w+)", path)
             key, title, field = f"d{m.group(1)}", f"お届け先 {int(m.group(1)) + 1}", m.group(2)
         g = groups.setdefault(key, {"title": title, "fields": [], "review": 0})
-        g["fields"].append({"path": path, "label": _JP.get(field, field), "d": d, "v": fd.verdicts[path]})
+        v = fd.verdicts[path]
+        # 赤字の理由: 検証の失敗（現場の言葉）→ それ以外の理由（実績不足・初めての送り主・抜き取り）。古い保存データも描画時に置き換える
+        reason = plain_verdict(v)
+        why = getattr(d, "why", "") or ""
+        if not why and not reason:
+            why = plain(v.reason) if v.reason and "合格" not in v.reason else "自動で確定するには、まだこの項目の実績が足りません"
+        g["fields"].append({"path": path, "label": _JP.get(field, field), "d": d, "v": v,
+                            "reason": "。".join(x for x in (reason, why) if x)})
         g["review"] += int(d.human_sees)
     return list(groups.values())
 
@@ -167,8 +175,38 @@ def retrain():
 
 
 @app.post("/admin/reflect")
-def reflect(days: int = 1):
-    return pipeline.reflect(days=days)
+def reflect(days: int = 1, since: Optional[str] = None):
+    """夜間の振り返り。since（ISO 8601）を渡すとその時刻以降の修正ログだけを集計する（デモ・シミュレーションの「1日」）。"""
+    from datetime import datetime
+    dt = None
+    if since:
+        try:
+            dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+        except ValueError:
+            raise HTTPException(400, "since は ISO 8601 で")
+        if dt.tzinfo is None:
+            from datetime import timezone
+            dt = dt.replace(tzinfo=timezone.utc)
+    return pipeline.reflect(days=days, since=dt)
+
+
+@app.post("/admin/mock/defect")
+async def mock_defect(request: Request):
+    """モック抽出器にだけある事故注入（デモ用）。{"field_type","from","to","rate"} で系統的な読み違いを入れ、{"clear":true} で解除。
+    Gemini 抽出器のときは 404（本番では存在しない操作）。"""
+    inner = getattr(pipeline.extractor, "_inner", pipeline.extractor)
+    if getattr(inner, "name", "") != "mock" or not hasattr(inner, "set_defect"):
+        raise HTTPException(404, "事故注入はモック抽出器のときだけ使えます")
+    body = await request.json()
+    if body.get("clear"):
+        inner.clear_defects()
+    else:
+        try:
+            inner.set_defect(str(body["field_type"]), str(body["from"]), str(body["to"]), float(body.get("rate", 1.0)))
+        except (KeyError, ValueError) as e:
+            raise HTTPException(400, f"field_type / from / to が必要です: {e}")
+    pipeline._audit("-", "mock_defect", {"defects": list(inner.defects)}, actor="human:demo")
+    return {"defects": inner.defects}
 
 
 @app.get("/proposals")

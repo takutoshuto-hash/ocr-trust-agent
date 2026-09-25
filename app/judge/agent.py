@@ -37,21 +37,34 @@ def _build_agent():
     )
 
 
+def _path_label(path: str) -> str:
+    """'deliveries[1].zip' → 'お届け先 2 の郵便番号'"""
+    import re
+    from app.labels import FIELD_NAMES
+    m = re.fullmatch(r"deliveries\[(\d+)\]\.(\w+)", path)
+    if m:
+        return f"お届け先 {int(m.group(1)) + 1} の{FIELD_NAMES.get(m.group(2), m.group(2))}"
+    return "ご依頼主の" + FIELD_NAMES.get(path.rsplit(".", 1)[-1], path)
+
+
 def _summary_text(fd: FormDecision) -> str:
+    """要確認項目の一覧（現場の言葉）。確認画面の上部にそのまま出し、Gemini があれば ADK エージェントの材料にもなる。"""
+    from app.labels import plain_verdict
     lines = []
     for path, d in fd.decisions.items():
         if not d.human_sees:
             continue
         v = fd.verdicts[path]
-        lines.append(f"- {path} = {d.value!r} / 理由: {'; '.join(d.reasons)} / 検証: {v.reason}")
-    return "\n".join(lines) or "（要確認項目なし）"
+        why = "。".join(x for x in (plain_verdict(v), getattr(d, "why", "") or "") if x) or "原本と見比べてください"
+        lines.append(f"・{_path_label(path)}「{d.value}」: {why}")
+    return "\n".join(lines) or "（確認が要る項目はありません）"
 
 
 def explain_review(fd: FormDecision) -> str:
     if not fd.needs_review:
-        return "要確認項目はありません。"
+        return "確認が要る項目はありません。"
     if not settings.use_gemini:
-        return "【オフライン】\n" + _summary_text(fd)
+        return "確認のポイント\n" + _summary_text(fd)
     from ._async import run_coro
     return run_coro(_explain_async(fd))
 

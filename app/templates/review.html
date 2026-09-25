@@ -37,17 +37,17 @@ button{font-size:16px;padding:10px 18px}.hint{color:#666;font-size:12px}
       <div class="group"><h3>{{ g.title }}{% if g.review %}<small>要確認 {{ g.review }}</small>{% else %}<small style="color:#2a7">自動確定</small>{% endif %}</h3>
         {% for x in g.fields if x.d.human_sees %}
         <div class="row {{ 'review' if x.d.status == FieldStatus.REVIEW else 'audit' }}" data-path="{{ x.path }}">
-          <label>{{ x.label }}<small>{{ '抜き取り確認' if x.d.audit else 'L' ~ x.d.level.value }}{% if x.d.resolved_from is not none %} · 修復済{% endif %}</small></label>
+          <label>{{ x.label }}<small>{{ '念のための抜き取り確認' if x.d.audit else '原本と見比べてください' }}{% if x.d.resolved_from is not none %} · 読み直し済み{% endif %}</small></label>
           <input name="field:{{ x.path }}" value="{{ x.d.value }}" data-review="1" autocomplete="off">
           <div class="crop"><canvas data-path="{{ x.path }}"></canvas></div>
-          <div class="reason">{{ x.v.reason }}{% if x.d.resolved_from is not none %} ／ エージェントが {{ x.d.resolved_from }} → {{ x.d.value }} に修復{% endif %}</div>
+          <div class="reason">{{ x.reason }}{% if x.d.resolved_from is not none %}。読み直して「{{ x.d.resolved_from }}」を「{{ x.d.value }}」に直してあります{% endif %}</div>
         </div>
         {% endfor %}
         {% set autos = g.fields|rejectattr('d.human_sees')|list %}
         {% if autos %}
         <details class="done"><summary>自動確定 {{ autos|length }} 項目を表示</summary>
           {% for x in autos %}
-          <div class="row auto" data-path="{{ x.path }}"><label>{{ x.label }}<small>L{{ x.d.level.value }}</small></label><input name="field:{{ x.path }}" value="{{ x.d.value }}" tabindex="-1"></div>
+          <div class="row auto" data-path="{{ x.path }}"><label>{{ x.label }}<small>自動で確定</small></label><input name="field:{{ x.path }}" value="{{ x.d.value }}" tabindex="-1"></div>
           {% endfor %}
         </details>
         {% endif %}

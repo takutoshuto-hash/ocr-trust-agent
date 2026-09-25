@@ -291,3 +291,17 @@ def _lev(a: str, b: str) -> int:
             cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
         prev = cur
     return prev[-1]
+
+
+# 宣言ファイル（data/master/checks.yaml）から名前で引く決定的な検証。引数の並びは checks.yaml の欄名の並びと同じ
+CHECKS = {
+    "zip_format": check_zip_format,
+    "zip_address": check_zip_address,
+    "phone_format": check_phone_format,
+    "phone_area": check_phone_area,
+    "name_reading": check_name_reading,
+    "kana_format": check_kana,
+    "product_exists": check_product_code,
+    "qty_range": check_qty,
+    "nonempty": check_nonempty,
+}
