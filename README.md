@@ -17,7 +17,7 @@
 
 ## 構成（Google Cloud）
 
-Cloud Run（FastAPI）／Gemini API（構造化抽出・二重読み取り）／Agent Development Kit（説明エージェント）／Firestore（台帳・教師データ・監査）／Cloud Storage（画像）／Nano Banana（合成帳票の生成・予定）
+Cloud Run（FastAPI）／Vertex AI 経由の Gemini 2.5 Flash（構造化抽出・欄ごとの独立二重読み）／Agent Development Kit（修復の行動計画・振り返りの提案・要確認理由の説明）／Firestore（台帳・確定済み項目・監査）／Cloud Storage（画像）／Secret Manager・Cloud Scheduler（認証情報、夜間の再学習と振り返り）
 
 詳細: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
@@ -98,6 +98,10 @@ data/master/  商品マスタ・郵便番号（サンプル）・checks.yaml（�
 data/synthetic/ 合成帳票ジェネレータ
 eval/         評価・日次シミュレーション
 ```
+
+## ライセンス
+
+このリポジトリのコードのライセンスは `LICENSE` を参照。依存する OSS（FastAPI、Pydantic、scikit-learn、Pillow、google-genai、google-adk など）は各パッケージのライセンスに従う（`pip show <package>` で確認できる）。合成帳票の手書き風フォント（Yomogi / Zen Kurenaido / Klee One / Hachi Maru Pop）は Google Fonts の SIL Open Font License 1.1 で、`scripts/fetch_fonts.sh` で取得し git には含めない。
 
 ## 個人情報の扱い
 
