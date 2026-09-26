@@ -27,6 +27,16 @@ def load_zones(format_id: str) -> dict[str, tuple[float, float, float, float]]:
     return {k: tuple(v) for k, v in data.get("zones", {}).items()}
 
 
+@lru_cache(maxsize=16)
+def load_record_key(format_id: str) -> str:
+    """様式が宣言する record_key: 送り主IDをまたぐ顧客照合の照合キーにする項目パス。
+    fax_v1 は "applicant.phone"。他業種へは、この 1 行を別の項目に差し替えるだけで移る。"""
+    path = settings.master_dir / "formats" / f"{format_id}.json"
+    if not path.exists():
+        return ""
+    return json.loads(path.read_text(encoding="utf-8")).get("record_key", "")
+
+
 def open_image(image: bytes) -> Optional[Image.Image]:
     try:
         return Image.open(io.BytesIO(image)).convert("L")

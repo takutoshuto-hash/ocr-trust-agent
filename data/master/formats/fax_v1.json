@@ -1,5 +1,6 @@
 {
  "format_id": "fax_v1",
+ "record_key": "applicant.phone",
  "page": [
   1240,
   1754

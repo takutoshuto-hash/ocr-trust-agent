@@ -106,9 +106,10 @@ class Pipeline:
                                            "few_shot": len(examples), "rules": len(rules)})
 
         history = self.store.sender_history(sender_id, limit=10)   # 同じ送り主の過去の確定帳票（履歴照合）
-        # 顧客照合: 読み取った依頼主の電話番号で、送り主IDをまたいで過去の確定帳票を引く（別のFAX・別の様式から来ても同じ顧客）
-        phone_key = _phone_key(ex1.form.applicant.phone)
-        customer = [f for f in self.store.customer_history(phone_key, limit=10)] if phone_key else []
+        # 顧客照合: 様式が宣言した record_key（fax_v1 は依頼主の電話番号）で、送り主IDをまたいで過去の確定帳票を引く
+        # （別のFAX・別の様式から来ても同じ顧客）。他業種へはこのキー宣言 1 行の差し替えで移る。
+        customer_key = _record_key(ex1.form, format_id)
+        customer = [f for f in self.store.customer_history(customer_key, limit=10)] if customer_key else []
         seen_ids = {id(f) for f in history}
         merged = history + [f for f in customer if id(f) not in seen_ids and f.model_dump() not in [h.model_dump() for h in history]]
         verdicts = self.judge.judge(ex1, ex2, image=image, format_id=format_id, history=merged)
@@ -270,7 +271,7 @@ class Pipeline:
 
         fd.final = OrderForm.from_flat(final_flat)
         fd.status = "confirmed"
-        fd.applicant_phone_key = _phone_key(fd.final.applicant.phone)
+        fd.applicant_phone_key = _record_key(fd.final, fd.format_id)   # 顧客照合キー（record_key の確定値）
         if fd.review_opened_at is not None:
             fd.review_seconds = round((now_utc() - fd.review_opened_at).total_seconds(), 1)
         self.store.put_form(fd, b"")
@@ -588,3 +589,13 @@ def _phone_key(phone) -> str:
     """電話番号を数字だけにした照合キー（10〜11桁でなければ空: 誤読・空欄は照合しない）。"""
     digits = "".join(ch for ch in str(phone or "") if ch.isdigit())
     return digits if len(digits) in (10, 11) else ""
+
+
+def _record_key(form, format_id: str) -> str:
+    """様式が宣言した record_key の項目の確定/読み取り値を、顧客照合キーに正規化する。
+    fax_v1 の record_key は applicant.phone なので電話番号の正規化を使う（決め打ちを廃止し、様式宣言から引く）。"""
+    from app.judge.zones import load_record_key
+    key_path = load_record_key(format_id)
+    if not key_path:
+        return ""
+    return _phone_key(form.flatten().get(key_path))

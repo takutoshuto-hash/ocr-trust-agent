@@ -93,6 +93,20 @@ def test_customer_history_matches_across_senders():
         assert any(c.name == "history" and c.status == CheckStatus.PASS for c in fd2.verdicts[p].checks), p
 
 
+def test_record_key_declared_by_format(monkeypatch):
+    """顧客照合キーは様式ファイルの record_key 宣言から引く（電話番号の決め打ちではない）。
+    宣言を別の項目に差し替えれば、その欄で顧客照合する（他業種への移行はこの 1 行）。"""
+    import app.judge.zones as Z
+    from app.pipeline import _record_key
+
+    Z.load_record_key.cache_clear()
+    form = OrderForm.from_flat(BASE)
+    assert Z.load_record_key("fax_v1") == "applicant.phone"          # fax_v1 の宣言
+    assert _record_key(form, "fax_v1") == "0975551234"               # 依頼主の電話番号で照合
+    monkeypatch.setattr(Z, "load_record_key", lambda fid: "deliveries[0].phone")
+    assert _record_key(form, "fax_v1") == "0330001000"               # 宣言を差し替えるとお届け先の電話で照合
+
+
 def test_history_near_miss_is_a_misread_signal():
     """常連の宛先の確定値と 1〜2 文字だけ違う値（4-21-20 → 4-2-20）は「不一致」ではなく読み違いの疑いで不合格にする。
     実手書きの 2 周目で、二重読みが一致した読み違いがこの形で自動確定された。大きく違う値は転居・別人として判定不能のまま。"""
