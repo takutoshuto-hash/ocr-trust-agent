@@ -103,7 +103,7 @@ def test_pdf_scan_is_rendered_to_an_image():
 
 
 def test_real_handwritten_scans_register_and_ink_matches_truth():
-    """本人の複合機スキャン 12 枚（ずれ・傾き 8°・上下逆さ・左端の欠け・薄い縦枠・黒い縁を含む）。全部が様式の枠に戻り、
+    """本人の複合機スキャン（ずれ・傾き 8°・上下逆さ・左端の欠け・薄い縦枠・黒い縁・欄の中央に書いた値を含む）。全部が様式の枠に戻り、
     記入欄にはインクがあり、空欄にはインクが無いと判定される（空欄検知が実物で成り立つ）。"""
     import glob
     import json
@@ -113,7 +113,7 @@ def test_real_handwritten_scans_register_and_ink_matches_truth():
     W, H = page
     want = (frame[0] * W, frame[1] * H, frame[2] * W, frame[3] * H)
     pdfs = sorted(glob.glob("data/measurement/handwriting/hw_*.pdf"))
-    assert len(pdfs) >= 12
+    assert len(pdfs) >= 17
     for pdf in pdfs:
         raw = open(pdf, "rb").read()
         img = open_image(register_to_template(raw, "fax_v1"))

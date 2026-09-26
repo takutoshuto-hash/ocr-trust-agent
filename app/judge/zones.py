@@ -39,7 +39,8 @@ def ink_ratio(img: Image.Image, zone: tuple[float, float, float, float], inset: 
     """ゾーン内の「文字らしい」暗画素率。
 
     - 枠線（横）や FAX の縦筋（縦）は「長い run」として除外してから数える（傾いた帳票でも空欄を誤らない）
-    - 記入は左寄せが普通なので、欄の左端から window_px だけを見る（短い値を空欄と誤らない）
+    - 短い値を空欄と誤らないよう、欄全体ではなく幅 window_px の窓で測る。窓は欄の左端から右端まで滑らせ、
+      いちばん濃い窓の値を返す（左寄せでも中央寄せでも同じ。実手書きで欄の中央に書かれた例があった）
     - 上下は inset_y だけ内側を見る（隣の行の文字の裾が傾きで入り込むのを避ける）
     - dark=170: 薄いペン・細い書体がぼかしで灰色になっても拾う
     """
@@ -47,7 +48,6 @@ def ink_ratio(img: Image.Image, zone: tuple[float, float, float, float], inset: 
 
     W, H = img.size
     x1, y1, x2, y2 = int(zone[0] * W) + inset, int(zone[1] * H) + inset_y, int(zone[2] * W) - inset, int(zone[3] * H) - inset_y
-    x2 = min(x2, x1 + window_px)
     if x2 <= x1 or y2 <= y1:
         return 0.0
     a = np.asarray(img.crop((x1, y1, x2, y2)), dtype=np.uint8) < dark
@@ -58,7 +58,11 @@ def ink_ratio(img: Image.Image, zone: tuple[float, float, float, float], inset: 
     # 見つかった線は膨張分ごと元画像から消す。文字の横画は 30px フォントで 30px 前後なので残る。
     a = _remove_lines(a, max_run=max_run, axis=1)   # 横線（枠）
     a = _remove_lines(a, max_run=max_run, axis=0)   # 縦筋（FAX ノイズ）
-    return float(a.mean())
+    w = min(window_px, a.shape[1])
+    col = a.sum(axis=0, dtype=np.int64)
+    cs = np.concatenate(([0], np.cumsum(col)))
+    best = int((cs[w:] - cs[:-w]).max())              # いちばん濃い窓の暗画素数
+    return best / float(w * a.shape[0])
 
 
 def _remove_lines(a, max_run: int, axis: int):
