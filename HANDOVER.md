@@ -95,7 +95,7 @@ python eval/run_eval.py --dir data/measurement/handwriting/scans                
 bash scripts/deploy.sh                      # Cloud Run へ
 ```
 
-## 6. 残りの予定（9/24 時点）
+## 6. 残りの予定（9/24 時点。**9/26 以降の手順は `docs/PLAN.md`** が正）
 
 | 日程 | やること |
 |---|---|
