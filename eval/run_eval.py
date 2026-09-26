@@ -39,6 +39,7 @@ def main():
     ap.add_argument("--limit", type=int, default=100)
     ap.add_argument("--mock", action="store_true", help="GEMINI_API_KEY があってもモック抽出器を使う")
     ap.add_argument("--report", default=None, help="項目ごとの結果を CSV に書く（file, path, truth, value, status, correct, reason）")
+    ap.add_argument("--rounds", type=int, default=1, help="2 以上なら、各周の後に正解で確定して同じ帳票をもう一度読む（履歴照合・台帳が効き始めるかを見る）")
     a = ap.parse_args()
 
     extractor = None
@@ -56,6 +57,31 @@ def main():
     if not pairs:
         raise SystemExit(f"{d} に画像（pdf/png/jpg）と同名の正解 json が見つかりません")
     from app.judge.zones import registration_report
+    for rnd in range(1, a.rounds + 1):
+        if a.rounds > 1:
+            print(f"\n=== {rnd} 周目 ===")
+            per_ft = defaultdict(lambda: {"n": 0, "correct": 0, "review": 0, "auto_wrong": 0}); tot_rows_before = len(rows)
+        _run_round(pipe, pairs, per_ft, hal, rows, failed, registration_report, confirm=(rnd < a.rounds), tag=(f"r{rnd}" if a.rounds > 1 else ""))
+        if a.rounds > 1:
+            _print_table(per_ft)
+        if rnd < a.rounds:
+            pipe.retrain()
+    if a.rounds == 1:
+        _print_table(per_ft)
+    if hal["blank_truth"]:
+        print(f"\nハルシネーション: 空欄 {hal['blank_truth']} 件中、値を創作 {hal['invented']} 件"
+              f"（創作率 {hal['invented']/hal['blank_truth']:.3f}）、うち空欄検知で捕捉 {hal['invented_caught']} 件"
+              f"（検知率 {(hal['invented_caught']/hal['invented'] if hal['invented'] else 1):.3f}）")
+    if failed:
+        print(f"\n読めなかった帳票 {len(failed)} 枚: {', '.join(failed)}（混雑なら時間をおいて再実行）")
+    if a.report and rows:
+        Path(a.report).parent.mkdir(parents=True, exist_ok=True)
+        with open(a.report, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
+        print(f"\nwrote {a.report}")
+
+
+def _run_round(pipe, pairs, per_ft, hal, rows, failed, registration_report, *, confirm: bool, tag: str):
     for img_path, jf in pairs:
         meta = json.loads(jf.read_text(encoding="utf-8"))
         truth = OrderForm.model_validate(meta["truth"])
@@ -88,10 +114,14 @@ def main():
                     hal["invented"] += 1
                     hal["invented_caught"] += any(c.name == "blank_zone" and c.status.value == "fail"
                                                   for c in fd.verdicts[path].checks)   # 空欄検知そのものの検知率
-            rows.append({"file": img_path.name, "path": path, "truth": tv, "value": dcs.value, "status": dcs.status.value,
+            rows.append({"round": tag, "file": img_path.name, "path": path, "truth": tv, "value": dcs.value, "status": dcs.status.value,
                          "audit": dcs.audit, "correct": int(ok), "resolved_from": dcs.resolved_from,
                          "reason": fd.verdicts[path].reason, "why": getattr(dcs, "why", "")})
+        if confirm:                                   # 人が正解どおりに直して確定（次の周の履歴・台帳・学習になる）
+            pipe.confirm(fd.form_id, {p: tflat[p] for p in fd.review_paths})
 
+
+def _print_table(per_ft):
     print(f"\n{'field_type':28} {'n':>5} {'acc':>7} {'review':>7} {'auto_err':>9}")
     tot = {"n": 0, "correct": 0, "review": 0, "auto_wrong": 0}
     for ft, s in sorted(per_ft.items()):
@@ -101,17 +131,6 @@ def main():
         print(f"{ft:28} {s['n']:5d} {s['correct']/s['n']:7.3f} {s['review']/s['n']:7.3f} {(s['auto_wrong']/auto_n if auto_n else 0):9.4f}")
     auto_n = tot["n"] - tot["review"]
     print(f"{'ALL':28} {tot['n']:5d} {tot['correct']/tot['n']:7.3f} {tot['review']/tot['n']:7.3f} {(tot['auto_wrong']/auto_n if auto_n else 0):9.4f}")
-    if hal["blank_truth"]:
-        print(f"\nハルシネーション: 空欄 {hal['blank_truth']} 件中、値を創作 {hal['invented']} 件"
-              f"（創作率 {hal['invented']/hal['blank_truth']:.3f}）、うち空欄検知で捕捉 {hal['invented_caught']} 件"
-              f"（検知率 {(hal['invented_caught']/hal['invented'] if hal['invented'] else 1):.3f}）")
-    if failed:
-        print(f"\n読めなかった帳票 {len(failed)} 枚: {', '.join(failed)}（混雑なら時間をおいて再実行）")
-    if a.report and rows:
-        Path(a.report).parent.mkdir(parents=True, exist_ok=True)
-        with open(a.report, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
-        print(f"\nwrote {a.report}")
 
 
 def _norm(x):
