@@ -108,10 +108,36 @@ def _sum3(v):
 
 
 def _long_rows(a, frac: float = 0.6) -> list[int]:
-    """幅の frac 以上が暗い行（横線）。傾きで線が 2〜3 行に散っても拾えるよう、隣接 3 行の合計で見る。"""
+    """幅の frac 以上が暗い行（横線）。傾きで線が 2〜3 行に散っても拾えるよう、隣接 3 行の合計で見る。
+    画像の上下 1% と左右 1% はスキャナの黒い縁が入ることがあるので数えない。"""
     H, W = a.shape
-    r3 = _sum3(a.sum(axis=1))
-    return [y for y in range(H) if r3[y] > W * frac]
+    mx, my = max(2, W // 100), max(2, H // 100)
+    r3 = _sum3(a[:, mx:W - mx].sum(axis=1))
+    return [y for y in range(my, H - my) if r3[y] > (W - 2 * mx) * frac]
+
+
+def _row_extents(a, rows: list[int]) -> Optional[tuple[int, int, bool, bool]]:
+    """横線それぞれの左端・右端（いちばん長い暗い run）を測り、中央値を返す。端が画像の縁に達していれば「切れている」印を付ける。"""
+    import numpy as np
+    H, W = a.shape
+    mx = max(2, W // 100)
+    lefts, rights = [], []
+    for y in rows:
+        band = a[max(0, y - 1): y + 2].any(axis=0)
+        band[:mx] = False; band[W - mx:] = False
+        xs = np.flatnonzero(band)
+        if len(xs) < W * 0.3:
+            continue
+        # 5px 以内の途切れは同じ run とみなして最長の run を取る
+        breaks = np.flatnonzero(np.diff(xs) > 5)
+        starts = np.concatenate(([0], breaks + 1)); ends = np.concatenate((breaks, [len(xs) - 1]))
+        k = int(np.argmax(xs[ends] - xs[starts]))
+        lefts.append(int(xs[starts[k]])); rights.append(int(xs[ends[k]]))
+    if len(lefts) < 2:
+        return None
+    lefts.sort(); rights.sort()
+    l, r = lefts[len(lefts) // 2], rights[len(rights) // 2]
+    return l, r, l <= mx + 2, r >= W - mx - 3
 
 
 def _long_cols(a, frac: float = 0.5) -> list[int]:
@@ -133,15 +159,23 @@ def _dedupe_lines(ys: list[int]) -> list[int]:
 
 
 def detect_frame(img: Image.Image, dark: int = 170):
-    """欄の枠の外周（左, 上, 右, 下）を画素で探す。縦枠 = 高さの 5 割以上が暗い列、横線 = 幅の 6 割以上が暗い行。見つからなければ None。"""
+    """欄の枠の外周（左, 上, 右, 下）。上下は横線の最初と最後、左右は横線の両端の中央値（縦の枠線は薄くて拾えないことがある）。
+    見つからなければ None。"""
+    ex = detect_frame_ex(img, dark)
+    return None if ex is None else ex["frame"]
+
+
+def detect_frame_ex(img: Image.Image, dark: int = 170) -> Optional[dict]:
     import numpy as np
     a = np.asarray(img, dtype=np.uint8) < dark
-    H, W = a.shape
-    vx = _long_cols(a)
-    hy = _long_rows(a)
-    if len(vx) < 2 or len(hy) < 2:
+    rows = _dedupe_lines(_long_rows(a))
+    if len(rows) < 2:
         return None
-    return (min(vx), min(hy), max(vx), max(hy))
+    ext = _row_extents(a, rows)
+    if ext is None:
+        return None
+    l, r, left_cut, right_cut = ext
+    return {"frame": (l, rows[0], r, rows[-1]), "rows": rows, "left_cut": left_cut, "right_cut": right_cut}
 
 
 def to_image_bytes(data: bytes, dpi: int = 150) -> bytes:
@@ -180,7 +214,7 @@ def _upside_down(img: Image.Image, blocks: list[int], dark: int = 170) -> Option
     return None
 
 
-def _skew_angle(img: Image.Image, dark: int = 170, max_deg: float = 6.0) -> float:
+def _skew_angle(img: Image.Image, dark: int = 170, max_deg: float = 10.0) -> float:
     """傾き（度）。縮小した 2 値画像を少しずつ回し、横線がいちばん揃う（行ごとの暗画素数の分散が最大になる）角度を探す。
     戻り値をそのまま Image.rotate に渡せば水平になる。"""
     import numpy as np
@@ -204,10 +238,11 @@ def _skew_angle(img: Image.Image, dark: int = 170, max_deg: float = 6.0) -> floa
 
 
 def register_to_template(image: bytes, format_id: str) -> bytes:
-    """スキャン・FAX 画像を様式の枠に合わせる。順に、PDF なら画像化 → 横向きなら縦に → 上下逆さなら回転 → 傾き補正 → 平行移動と拡大縮小。
-    枠が見つからない、または倍率が 15% 以上ずれる場合は元のまま返す。
+    """スキャン・FAX 画像を様式の枠に合わせる。順に、PDF なら画像化 → 横向きなら縦に → 傾き補正（横線がいちばん揃う角度、±10°）
+    → 上下逆さなら 180° 回転（横線の並びを様式の blocks と比べる）→ 横線の並びと両端から枠を求め、平行移動と拡大縮小。
+    倍率は横線の間隔から（下端や片側が紙からはみ出していても効く）。枠が見つからない／倍率が 15% 以上ずれる場合は元のまま返す。
 
-    実物のスキャンは用紙の枠が数十 px ずれ、傾き、上下逆さも起きる。ゾーン（欄の位置）を当てる前に必ず通す。合成帳票はほぼ恒等。"""
+    実物のスキャンは用紙の枠が数十 px ずれ、傾き、上下逆さ、片側の欠けも起きる。ゾーン（欄の位置）を当てる前に必ず通す。"""
     image = to_image_bytes(image)
     frame, page = load_frame(format_id)
     if not frame or not page:
@@ -216,29 +251,37 @@ def register_to_template(image: bytes, format_id: str) -> bytes:
     if img is None:
         return image
     W, H = int(page[0]), int(page[1])
+    changed = False
     if img.width > img.height and H > W:                     # 横向きに置かれた
-        img = img.rotate(90, expand=True, fillcolor=255)
+        img = img.rotate(90, expand=True, fillcolor=255); changed = True
+    angle = _skew_angle(img)
+    if 0.3 <= abs(angle) <= 10.0:
+        img = img.rotate(angle, expand=False, fillcolor=255, resample=Image.BILINEAR); changed = True
     blocks = _load_blocks(format_id)
     if blocks and _upside_down(img, blocks) is True:
-        img = img.rotate(180, expand=False, fillcolor=255)
-    angle = _skew_angle(img)
-    if 0.3 <= abs(angle) <= 6.0:
-        img = img.rotate(angle, expand=False, fillcolor=255, resample=Image.BILINEAR)
-    found = detect_frame(img)
-    if found is None:
-        return _png(img) if img.size != open_image(image).size or abs(angle) >= 0.3 else image
+        img = img.rotate(180, expand=False, fillcolor=255); changed = True
+    ex = detect_frame_ex(img)
+    if ex is None:
+        return _png(img) if changed else image
     tx1, ty1, tx2, ty2 = frame[0] * W, frame[1] * H, frame[2] * W, frame[3] * H
-    sx1, sy1, sx2, sy2 = found
-    if sx2 - sx1 < 10 or sy2 - sy1 < 10:
-        return image
+    sx1, sy1, sx2, sy2 = ex["frame"]
     ky = _pitch_scale(img, format_id, H)                              # 行の間隔から（下端が紙からはみ出していても効く）
-    kx = (tx2 - tx1) / (sx2 - sx1)
     if ky is None:
+        if sy2 - sy1 < 10:
+            return _png(img) if changed else image
         ky = (ty2 - ty1) / (sy2 - sy1)
-    if abs(kx - ky) > 0.06:                                            # 片方の枠が切れている等: 行の間隔の倍率に揃える
+    if ex["left_cut"] and ex["right_cut"]:
         kx = ky
+    elif ex["left_cut"]:                                              # 左が切れている: 右端を基準に置く
+        kx = ky; sx1 = sx2 - (tx2 - tx1) / kx
+    elif ex["right_cut"]:
+        kx = ky; sx2 = sx1 + (tx2 - tx1) / kx
+    else:
+        kx = (tx2 - tx1) / (sx2 - sx1)
+        if abs(kx - ky) > 0.06:                                        # 横線の端が欠けている等: 行の間隔の倍率に揃える
+            kx = ky
     if not (0.85 <= kx <= 1.15 and 0.85 <= ky <= 1.15):
-        return image
+        return _png(img) if changed else image
     # PIL の affine は 出力座標 → 入力座標 の行列: x_in = a*x_out + b*y_out + c
     a, c = 1 / kx, sx1 - tx1 / kx
     e, f = 1 / ky, sy1 - ty1 / ky
@@ -267,7 +310,7 @@ def registration_report(image: bytes, format_id: str) -> dict:
         return {"ok": False, "reason": "画像として開けない"}
     blocks = _load_blocks(format_id)
     return {"ok": True, "size": img.size, "landscape": img.width > img.height,
-            "upside_down": _upside_down(img, blocks) if blocks else None, "skew_deg": round(_skew_angle(img), 2),
+            "upside_down": (_upside_down(img.rotate(_skew_angle(img), expand=False, fillcolor=255), blocks) if blocks else None), "skew_deg": round(_skew_angle(img), 2),
             "frame_before": detect_frame(img), "frame_after": detect_frame(open_image(register_to_template(image, format_id)))}
 
 

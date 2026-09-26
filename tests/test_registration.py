@@ -100,3 +100,34 @@ def test_pdf_scan_is_rendered_to_an_image():
     assert out is not None and abs(out.width / out.height - img.width / img.height) < 0.01
     assert _frame_ok(pdf)                      # PDF のまま位置合わせに渡せる
     assert to_image_bytes(_png(img)) == _png(img)   # 画像はそのまま
+
+
+def test_real_handwritten_scans_register_and_ink_matches_truth():
+    """本人の複合機スキャン 12 枚（ずれ・傾き 8°・上下逆さ・左端の欠け・薄い縦枠・黒い縁を含む）。全部が様式の枠に戻り、
+    記入欄にはインクがあり、空欄にはインクが無いと判定される（空欄検知が実物で成り立つ）。"""
+    import glob
+    import json
+    from app.schemas import OrderForm
+    zones = load_zones("fax_v1")
+    frame, page = load_frame("fax_v1")
+    W, H = page
+    want = (frame[0] * W, frame[1] * H, frame[2] * W, frame[3] * H)
+    pdfs = sorted(glob.glob("data/measurement/handwriting/hw_*.pdf"))
+    assert len(pdfs) >= 12
+    for pdf in pdfs:
+        raw = open(pdf, "rb").read()
+        img = open_image(register_to_template(raw, "fax_v1"))
+        got = detect_frame(img)
+        assert got is not None and all(abs(g - w) <= 12 for g, w in zip(got, want)), (pdf, got)
+        flat = OrderForm.model_validate(json.load(open(pdf[:-4] + ".json", encoding="utf-8"))["truth"]).flatten()
+        for path, z in zones.items():
+            v = flat.get(path)
+            r = ink_ratio(img, z)
+            if v is None:                                   # 使っていないお届け先ブロック
+                assert r < 0.013, (pdf, path, r)
+            elif isinstance(v, int) or len(str(v).strip()) == 1:
+                continue                                    # 数量・1 文字は空欄検知の対象外（設計どおり）
+            elif str(v).strip():
+                assert r >= 0.0208, (pdf, path, r)
+            else:
+                assert r < 0.013, (pdf, path, r)
