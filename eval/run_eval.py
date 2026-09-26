@@ -39,6 +39,8 @@ def main():
     ap.add_argument("--limit", type=int, default=100)
     ap.add_argument("--mock", action="store_true", help="GEMINI_API_KEY があってもモック抽出器を使う")
     ap.add_argument("--report", default=None, help="項目ごとの結果を CSV に書く（file, path, truth, value, status, correct, reason）")
+    ap.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
+                    help="ポリシー値をこの評価だけ上書きする（例: --set min_samples_for_sender=3）。既定の policy.yaml は変えない")
     ap.add_argument("--rounds", type=int, default=1, help="2 以上なら、各周の後に正解で確定して同じ帳票をもう一度読む（履歴照合・台帳が効き始めるかを見る）")
     a = ap.parse_args()
 
@@ -47,6 +49,16 @@ def main():
         from app.extract.mock import MockExtractor
         extractor = MockExtractor()
     pipe = Pipeline(store=MemoryStore(), extractor=extractor, explain=False)
+    for item in a.set:
+        key, _, val = item.partition("=")
+        from app.reflect.agent import _set_path
+        try:
+            v = float(val) if "." in val else int(val)
+        except ValueError:
+            v = val
+        _set_path(pipe.policy.raw, key.strip(), v)
+        pipe._apply_policy_live(key.strip(), v)
+        print(f"policy override: {key.strip()} = {v}")
     print(f"extractor = {pipe.extractor.name}")
     per_ft = defaultdict(lambda: {"n": 0, "correct": 0, "review": 0, "auto_wrong": 0})
     hal = {"blank_truth": 0, "invented": 0, "invented_caught": 0}   # 空欄の正解数 / 創作された数 / うち検知された数

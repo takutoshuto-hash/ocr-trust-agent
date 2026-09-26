@@ -10,5 +10,6 @@
 4. ファイル名は `hw_01.pdf`（複合機のスキャン PDF のまま。png / jpg も可）のように用紙番号に合わせ、`scans/` フォルダに入れる。
    置き方は気にしなくてよい（上下逆さ・横向き・傾き・ずれは受付時に位置合わせする）。
    評価: `python eval/run_eval.py --dir data/measurement/handwriting/scans --truth-dir data/measurement/handwriting --report eval/out/handwriting_eval.csv`（実 Gemini。gcloud の設定が要る。`--mock` でオフラインの動作確認）。
+   常連の基準を実験だけ下げるには `--set min_samples_for_sender=3`、確定してから同じ帳票を読み直すには `--rounds 2`（履歴照合・台帳が効き始めるかを見る）。
 
 ※ 内容はすべてダミー（合成データ由来）。実在の顧客情報は使わない。
