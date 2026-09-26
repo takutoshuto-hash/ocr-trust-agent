@@ -192,5 +192,12 @@
   0.9354838709677419,
   0.9680729760547321
  ],
- "_note": "zones: [x1, y1, x2, y2] 相対座標。x1 は印字ラベルの右端+6px（実物の手書きはラベル直後から始まる）。frame は枠の外周で、app/judge/zones.register_to_template がスキャンをこの枠に合わせる"
+ "_note": "zones: [x1, y1, x2, y2] 相対座標。x1 は印字ラベルの右端+6px（実物の手書きはラベル直後から始まる）。frame は枠の外周で、app/judge/zones.register_to_template がスキャンをこの枠に合わせる。blocks は上から各ブロックの行数（上下逆さの検出）",
+ "blocks": [
+  6,
+  8,
+  8,
+  8
+ ],
+ "row_pitch": 0.026225769669327253
 }

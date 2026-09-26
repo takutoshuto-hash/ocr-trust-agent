@@ -7,7 +7,8 @@
 3. 取り込み: **自社の FAX に送って受信した紙をスキャン**するのがいちばん本物に近い。無理なら複合機で 200dpi グレースケールのスキャン。
    1 枚目（2026-09-26）の複合機スキャン（300dpi カラー、枠が左に 34px ずれ）で確認済み。ずれは受付時に枠で位置合わせするので、置き方や余白を気にしなくてよい。文字はラベルのすぐ右から普段どおりに書く。
    スマホ写真は台形歪みで欄の位置がずれるので避ける（使うならスキャンアプリで台形補正）。
-4. ファイル名は `hw_01.png`（または .jpg）のように用紙番号に合わせ、`scans/` フォルダに入れる。
-   `hw_NN.json` が正解データなので、評価はそのまま `eval/run_eval.py --dir data/measurement/handwriting/scans` で回せる（json を同じフォルダにコピー）。
+4. ファイル名は `hw_01.pdf`（複合機のスキャン PDF のまま。png / jpg も可）のように用紙番号に合わせ、`scans/` フォルダに入れる。
+   置き方は気にしなくてよい（上下逆さ・横向き・傾き・ずれは受付時に位置合わせする）。
+   評価: `python eval/run_eval.py --dir data/measurement/handwriting/scans --truth-dir data/measurement/handwriting --report eval/out/handwriting_eval.csv`（実 Gemini。gcloud の設定が要る。`--mock` でオフラインの動作確認）。
 
 ※ 内容はすべてダミー（合成データ由来）。実在の顧客情報は使わない。

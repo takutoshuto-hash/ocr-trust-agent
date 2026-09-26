@@ -26,7 +26,7 @@ flowchart LR
 
 | 層 | 場所 | 役割 |
 |---|---|---|
-| 位置合わせ | `app/judge/zones.py` `register_to_template` | 受付時に用紙の枠（縦横の長い線）を検出し、様式 JSON の `frame` に合わせて平行移動・拡大縮小する。複合機・FAX・印刷は上下左右に数十 px ずれるのが普通で、欄の位置（ゾーン）はこの後で当てる。枠が見つからない／倍率が 15% 以上ずれる場合は元のまま |
+| 位置合わせ | `app/judge/zones.py` `register_to_template` | 受付時に、PDF なら画像化 → 横向きなら縦に → 上下逆さなら 180° 回転（横線の並びを様式の `blocks` と比べる）→ 傾き補正（横線がいちばん揃う角度を探す、±6°）→ 用紙の枠を検出して様式の `frame` に平行移動・拡大縮小（倍率は横線の間隔 `row_pitch` から）。複合機・FAX・印刷は必ずずれるので、欄の位置（ゾーン）はこの後で当てる。枠が見つからない／倍率が 15% 以上ずれる場合は元のまま |
 | 抽出 | `app/extract/` | Gemini responseSchema で項目ごとに value/confidence/evidence。variant で別プロンプト（二重読み取り）。過去確定例を few-shot 注入 |
 | ジャッジ | `app/judge/` | 履歴ゼロでも動く決定的検証（郵便番号↔住所、商品マスタ、電話桁、カナ、数量）＋二重読み取り一致。**どの項目にどの検証を掛けるかは `data/master/checks.yaml` の宣言**（関数は `tools.py` の `CHECKS` に名前で登録）。ADK エージェントは要確認理由の説明係 |
 | 台帳 | `app/trust/` | 項目種別 × {送り主, 様式, 全体} の3階層。承認 streak で L0→L1→L2 昇格、修正で即降格。`policy.yaml` が上限 |

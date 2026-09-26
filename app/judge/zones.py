@@ -102,45 +102,186 @@ def load_frame(format_id: str):
     return data.get("frame"), data.get("page")
 
 
+def _sum3(v):
+    w = v.copy(); w[1:] += v[:-1]; w[:-1] += v[1:]
+    return w
+
+
+def _long_rows(a, frac: float = 0.6) -> list[int]:
+    """幅の frac 以上が暗い行（横線）。傾きで線が 2〜3 行に散っても拾えるよう、隣接 3 行の合計で見る。"""
+    H, W = a.shape
+    r3 = _sum3(a.sum(axis=1))
+    return [y for y in range(H) if r3[y] > W * frac]
+
+
+def _long_cols(a, frac: float = 0.5) -> list[int]:
+    """高さの frac 以上が暗い列（縦枠）。ブロックの間に見出しの空きがあるので 5 割で足りる。"""
+    H, W = a.shape
+    c3 = _sum3(a.sum(axis=0))
+    return [x for x in range(W) if c3[x] > H * frac]
+
+
+def _dedupe_lines(ys: list[int]) -> list[int]:
+    """連続する y（同じ線の太さ分）を 1 本にまとめ、中央の y を返す。"""
+    out: list[list[int]] = []
+    for y in ys:
+        if out and y - out[-1][-1] <= 3:
+            out[-1].append(y)
+        else:
+            out.append([y])
+    return [(g[0] + g[-1]) // 2 for g in out]
+
+
 def detect_frame(img: Image.Image, dark: int = 170):
     """欄の枠の外周（左, 上, 右, 下）を画素で探す。縦枠 = 高さの 5 割以上が暗い列、横線 = 幅の 6 割以上が暗い行。見つからなければ None。"""
     import numpy as np
     a = np.asarray(img, dtype=np.uint8) < dark
     H, W = a.shape
-    col, row = a.sum(axis=0), a.sum(axis=1)
-    # 縦枠は数 px 幅で揺れる（スキャンの傾き）ので、隣接 3 列の合計で見る。欄のブロックの間に見出しの空きがあるので 5 割で足りる
-    col3 = col.copy(); col3[1:] += col[:-1]; col3[:-1] += col[1:]
-    vx = [x for x in range(W) if col3[x] > H * 0.5]
-    hy = [y for y in range(H) if row[y] > W * 0.6]
+    vx = _long_cols(a)
+    hy = _long_rows(a)
     if len(vx) < 2 or len(hy) < 2:
         return None
     return (min(vx), min(hy), max(vx), max(hy))
 
 
-def register_to_template(image: bytes, format_id: str) -> bytes:
-    """スキャン・FAX 画像を様式の枠に合わせる（平行移動と拡大縮小）。枠が見つからない、または倍率が 15% 以上ずれる場合は元のまま返す。
+def to_image_bytes(data: bytes, dpi: int = 150) -> bytes:
+    """PDF（複合機のスキャン）なら 1 ページ目を画像にして返す。画像ならそのまま。"""
+    if data[:5] == b"%PDF-":
+        import pypdfium2 as pdfium
+        pdf = pdfium.PdfDocument(data)
+        if len(pdf) == 0:
+            return data
+        img = pdf[0].render(scale=dpi / 72).to_pil().convert("L")
+        buf = io.BytesIO(); img.save(buf, format="PNG")
+        return buf.getvalue()
+    return data
 
-    実物のスキャンは用紙の枠が数十 px ずれるので、ゾーン（欄の位置）を当てる前に必ず通す。合成帳票は枠が一致するのでほぼ恒等。"""
+
+def _upside_down(img: Image.Image, blocks: list[int], dark: int = 170) -> Optional[bool]:
+    """横線の並びを上から数え、様式のブロック行数（上から）と比べる。逆順に合えば上下逆さ。判定できなければ None。"""
+    import numpy as np
+    a = np.asarray(img, dtype=np.uint8) < dark
+    H, W = a.shape
+    ys = _dedupe_lines(_long_rows(a))
+    if len(ys) < 4:
+        return None
+    gaps = [b - a_ for a_, b in zip(ys, ys[1:])]
+    pitch = sorted(gaps)[len(gaps) // 2]
+    groups: list[list[int]] = [[ys[0]]]
+    for prev, y in zip(ys, ys[1:]):
+        (groups[-1].append(y) if y - prev <= pitch * 1.2 else groups.append([y]))
+    counts = [len(g) - 1 for g in groups if len(g) >= 2]     # 線の数 − 1 = 行数
+    if len(counts) < 2:
+        return None
+    if counts[0] == blocks[0] and counts[-1] == blocks[-1]:
+        return False
+    if counts[0] == blocks[-1] and counts[-1] == blocks[0] and blocks[0] != blocks[-1]:
+        return True
+    return None
+
+
+def _skew_angle(img: Image.Image, dark: int = 170, max_deg: float = 6.0) -> float:
+    """傾き（度）。縮小した 2 値画像を少しずつ回し、横線がいちばん揃う（行ごとの暗画素数の分散が最大になる）角度を探す。
+    戻り値をそのまま Image.rotate に渡せば水平になる。"""
+    import numpy as np
+    w = 400
+    small = img.resize((w, max(1, int(img.height * w / img.width))), Image.BILINEAR)
+    base = Image.fromarray(((np.asarray(small, dtype=np.uint8) < dark) * 255).astype("uint8"))
+    def score(angle: float) -> float:
+        r = np.asarray(base.rotate(angle, expand=False, fillcolor=0), dtype=np.float64) / 255.0
+        p = r.sum(axis=1)
+        return float(((p - p.mean()) ** 2).sum())
+    best, best_s = 0.0, score(0.0)
+    for a in np.arange(-max_deg, max_deg + 0.001, 0.5):
+        sc = score(float(a))
+        if sc > best_s:
+            best, best_s = float(a), sc
+    for a in np.arange(best - 0.5, best + 0.501, 0.1):
+        sc = score(float(a))
+        if sc > best_s:
+            best, best_s = float(a), sc
+    return round(best, 2)
+
+
+def register_to_template(image: bytes, format_id: str) -> bytes:
+    """スキャン・FAX 画像を様式の枠に合わせる。順に、PDF なら画像化 → 横向きなら縦に → 上下逆さなら回転 → 傾き補正 → 平行移動と拡大縮小。
+    枠が見つからない、または倍率が 15% 以上ずれる場合は元のまま返す。
+
+    実物のスキャンは用紙の枠が数十 px ずれ、傾き、上下逆さも起きる。ゾーン（欄の位置）を当てる前に必ず通す。合成帳票はほぼ恒等。"""
+    image = to_image_bytes(image)
     frame, page = load_frame(format_id)
     if not frame or not page:
         return image
     img = open_image(image)
     if img is None:
         return image
+    W, H = int(page[0]), int(page[1])
+    if img.width > img.height and H > W:                     # 横向きに置かれた
+        img = img.rotate(90, expand=True, fillcolor=255)
+    blocks = _load_blocks(format_id)
+    if blocks and _upside_down(img, blocks) is True:
+        img = img.rotate(180, expand=False, fillcolor=255)
+    angle = _skew_angle(img)
+    if 0.3 <= abs(angle) <= 6.0:
+        img = img.rotate(angle, expand=False, fillcolor=255, resample=Image.BILINEAR)
     found = detect_frame(img)
     if found is None:
-        return image
-    W, H = int(page[0]), int(page[1])
+        return _png(img) if img.size != open_image(image).size or abs(angle) >= 0.3 else image
     tx1, ty1, tx2, ty2 = frame[0] * W, frame[1] * H, frame[2] * W, frame[3] * H
     sx1, sy1, sx2, sy2 = found
     if sx2 - sx1 < 10 or sy2 - sy1 < 10:
         return image
-    kx, ky = (tx2 - tx1) / (sx2 - sx1), (ty2 - ty1) / (sy2 - sy1)     # スキャン → 様式 の倍率
+    ky = _pitch_scale(img, format_id, H)                              # 行の間隔から（下端が紙からはみ出していても効く）
+    kx = (tx2 - tx1) / (sx2 - sx1)
+    if ky is None:
+        ky = (ty2 - ty1) / (sy2 - sy1)
+    if abs(kx - ky) > 0.06:                                            # 片方の枠が切れている等: 行の間隔の倍率に揃える
+        kx = ky
     if not (0.85 <= kx <= 1.15 and 0.85 <= ky <= 1.15):
         return image
     # PIL の affine は 出力座標 → 入力座標 の行列: x_in = a*x_out + b*y_out + c
     a, c = 1 / kx, sx1 - tx1 / kx
     e, f = 1 / ky, sy1 - ty1 / ky
     out = img.transform((W, H), Image.AFFINE, (a, 0, c, 0, e, f), resample=Image.BILINEAR, fillcolor=255)
-    buf = io.BytesIO(); out.save(buf, format="PNG")
+    return _png(out)
+
+
+def _png(img: Image.Image) -> bytes:
+    buf = io.BytesIO(); img.save(buf, format="PNG")
     return buf.getvalue()
+
+
+def _load_blocks(format_id: str) -> Optional[list[int]]:
+    path = settings.master_dir / "formats" / f"{format_id}.json"
+    if not path.exists():
+        return None
+    b = json.loads(path.read_text(encoding="utf-8")).get("blocks")
+    return [int(x) for x in b] if b else None
+
+
+def registration_report(image: bytes, format_id: str) -> dict:
+    """評価・診断用: 位置合わせの前後で何が起きたか（向き・傾き・枠）。"""
+    image = to_image_bytes(image)
+    img = open_image(image)
+    if img is None:
+        return {"ok": False, "reason": "画像として開けない"}
+    blocks = _load_blocks(format_id)
+    return {"ok": True, "size": img.size, "landscape": img.width > img.height,
+            "upside_down": _upside_down(img, blocks) if blocks else None, "skew_deg": round(_skew_angle(img), 2),
+            "frame_before": detect_frame(img), "frame_after": detect_frame(open_image(register_to_template(image, format_id)))}
+
+
+def _pitch_scale(img: Image.Image, format_id: str, H: int) -> Optional[float]:
+    """横線の間隔（中央値）と様式の行間隔の比 = スキャン → 様式 の縦倍率。"""
+    import numpy as np
+    path = settings.master_dir / "formats" / f"{format_id}.json"
+    rp = json.loads(path.read_text(encoding="utf-8")).get("row_pitch") if path.exists() else None
+    if not rp:
+        return None
+    a = np.asarray(img, dtype=np.uint8) < 170
+    ys = _dedupe_lines(_long_rows(a))
+    gaps = sorted(b - a_ for a_, b in zip(ys, ys[1:]))
+    if len(gaps) < 3:
+        return None
+    pitch = gaps[len(gaps) // 2]
+    return (rp * H) / pitch if pitch > 0 else None

@@ -59,8 +59,8 @@ async def submit_form(image: UploadFile = File(...), sender_id: str = Form(...),
     data = await image.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(413, f"画像が大きすぎます（上限 {MAX_UPLOAD_BYTES // 1024 // 1024} MB）")
-    if not data[:8].startswith((b"\x89PNG", b"\xff\xd8\xff")):
-        raise HTTPException(415, "PNG または JPEG のみ受け付けます")
+    if not data[:8].startswith((b"\x89PNG", b"\xff\xd8\xff", b"%PDF-")):
+        raise HTTPException(415, "PNG・JPEG・PDF（1 ページ目）のみ受け付けます")
     hint = OrderForm.model_validate(json.loads(hint_json)) if hint_json else None
     if pipeline.extractor.name == "mock" and hint is None:
         raise HTTPException(400, "モック抽出器では hint_json（正解）が必要です。GEMINI_API_KEY を設定すると実画像を読みます。")

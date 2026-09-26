@@ -13,6 +13,7 @@ dependencies = [
     "jinja2>=3.1",
     "pyyaml>=6.0",
     "pillow>=10.3",
+    "pypdfium2>=4.30",   # 複合機のスキャン PDF を画像にする（BSD/Apache）
     "numpy>=1.26",
     "scikit-learn>=1.7,<1.8",   # 同梱の models/router.joblib は 1.7.1 で学習。別の系列では pickle が読めないことがある
     "joblib>=1.4",
