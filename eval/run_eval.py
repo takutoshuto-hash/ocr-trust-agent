@@ -73,7 +73,7 @@ def main():
         if a.rounds > 1:
             print(f"\n=== {rnd} 周目 ===")
             per_ft = defaultdict(lambda: {"n": 0, "correct": 0, "review": 0, "auto_wrong": 0}); tot_rows_before = len(rows)
-        _run_round(pipe, pairs, per_ft, hal, rows, failed, registration_report, confirm=(rnd < a.rounds), tag=(f"r{rnd}" if a.rounds > 1 else ""))
+        _run_round(pipe, pairs, per_ft, hal, rows, failed, registration_report, confirm=(a.rounds > 1), tag=(f"r{rnd}" if a.rounds > 1 else ""))
         if a.rounds > 1:
             _print_table(per_ft)
         if rnd < a.rounds:
