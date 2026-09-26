@@ -30,6 +30,7 @@ button{font-size:16px;padding:10px 18px}.hint{color:#666;font-size:12px}
     <h2>要確認 {{ fd.review_paths|length }} 項目 <span style="font-weight:normal;font-size:13px;color:#666">/ 全 {{ fd.decisions|length }} 項目</span></h2>
     <div class="meta">帳票 {{ fd.form_id }} · 送り主 {{ fd.sender_id }} · 様式 {{ fd.format_id }}</div>
     {% if fd.form_flags %}<div class="explain" style="background:#fff3f3;border-color:#e33;font-weight:600">{% for fl in fd.form_flags %}⚠ {{ fl }}<br>{% endfor %}</div>{% endif %}
+    {% if fd.sender_note %}<div class="explain" style="background:#eefaf0;border-color:#2a7;color:#1a5">{{ fd.sender_note }}</div>{% endif %}
     <div class="explain">{{ explanation }}</div>
     <form method="post" action="/review/{{ fd.form_id }}" id="f">
       <input type="hidden" name="reviewer" value="staff">

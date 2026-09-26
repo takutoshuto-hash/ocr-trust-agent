@@ -155,9 +155,13 @@ class Pipeline:
         form_flags = self.judge.detect_missing_blocks(ex1, image=image, format_id=format_id)
         if form_flags:
             self._audit(form_id, "block_missing", {"flags": form_flags, "extracted_deliveries": len(ex1.form.deliveries)})
+        # 常連の一文: 過去の確定帳票があり、今回いずれかの項目が記録と完全一致したときだけ出す（「マスタ」は使わない）
+        matched = [p for p, v in verdicts.items()
+                   if any(c.name == "history" and c.status.value == "pass" for c in v.checks)]
+        sender_note = f"この依頼主は {len(merged) + 1} 回目で、記録と一致しています" if (matched and merged) else ""
         fd = FormDecision(form_id=form_id, sender_id=sender_id, format_id=format_id,
                           extraction=ex1, verdicts=verdicts, decisions=decisions, form_flags=form_flags,
-                          expires_at=now_utc() + timedelta(days=retention))
+                          sender_note=sender_note, expires_at=now_utc() + timedelta(days=retention))
         if not fd.needs_review:
             fd.explanation = "要確認項目はありません。原本を一瞥して確定してください。"
         elif self.explain:
@@ -202,9 +206,17 @@ class Pipeline:
         judge_ok = not verdict.any_fail
         forced = self.ledger.must_review(ft, sender_id)
 
+        # 記録一致: 検証に全部合格し、読んだ値が同じ送り主または同じ顧客(record_key)の過去の確定値と
+        # 完全一致した項目は、それ自体を独立した根拠として自動確定する（判定ルーター・台帳・初見送り主の
+        # 必須確認・二重読み取り一致を待たない）。近い誤読は check_history が FAIL にするのでここには来ない。
+        record_match = any(c.name == "history" and c.status.value == "pass" for c in verdict.checks)
+
         status = FieldStatus.REVIEW
         if not judge_ok:
             reasons.append("検証に失敗 → 要確認")
+        elif record_match:
+            status = FieldStatus.AUTO
+            reasons.append("記録と完全一致（同じ依頼主／顧客の過去の確定値）→ 自動確定")
         elif forced:
             reasons.append(forced)
         elif router_auto is True:

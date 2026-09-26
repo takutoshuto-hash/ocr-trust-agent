@@ -4,8 +4,14 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app.config import settings
+from app.extract.mock import MockExtractor
 from app.labels import plain_check, plain_decision, plain_verdict
-from app.schemas import CheckResult, CheckStatus, FieldVerdict
+from app.learn import CorrectionRouter
+from app.pipeline import Pipeline
+from app.schemas import CheckResult, CheckStatus, FieldVerdict, OrderForm
+from app.store import MemoryStore
+from app.trust import Policy
 
 
 def test_plain_verdict_wording():
@@ -34,7 +40,6 @@ def test_plain_decision_wording():
 
 def test_review_page_has_no_jargon():
     from app.main import app, pipeline
-    from app.schemas import OrderForm
     truth = OrderForm.model_validate({"applicant": {"name": "田中 太郎", "name_kana": "タナカ タロウ", "zip": "870-0001",
                                                     "address": "大分県大分市王子北町1-2-3", "phone": "097-555-1234"},
                                       "deliveries": [{"name": "鈴木 花子", "name_kana": "スズキ ハナコ", "zip": "150-0001",
@@ -52,3 +57,40 @@ def test_review_page_has_no_jargon():
     queue = c.get("/review").text
     for jargon in ("教師データ", "ルーター", "監査実測"):
         assert jargon not in queue, jargon
+
+
+# ---- 第1段階 1-3: 常連の一文と「マスタ」を出さないこと ----
+
+_BASE = {"applicant.name": "田中 太郎", "applicant.name_kana": "タナカ タロウ", "applicant.zip": "870-0001",
+         "applicant.address": "大分県大分市王子北町1-2-3", "applicant.phone": "097-555-1234", "applicant.organization": "",
+         "deliveries[0].name": "鈴木 花子", "deliveries[0].name_kana": "スズキ ハナコ", "deliveries[0].zip": "150-0001",
+         "deliveries[0].address": "東京都渋谷区神宮前1-1-1", "deliveries[0].phone": "03-3000-1000",
+         "deliveries[0].product_code": "BMN-50", "deliveries[0].qty": 2, "deliveries[0].noshi_name": "御中元"}
+
+
+def _pipe():
+    router = CorrectionRouter(Path(tempfile.mkdtemp()), min_samples=10_000, target_error_rate=0.005)
+    return Pipeline(store=MemoryStore(), extractor=MockExtractor(error_scale=0.0),
+                    policy=Policy.load(settings.policy_path), router=router, seed=1, budget_enabled=False)
+
+
+def test_sender_note_counts_and_says_matches_record():
+    """初回は一文なし。以降は回数を数え、記録と一致していると伝える。文言は手順書の例と同じ。"""
+    pipe = _pipe()
+    truth = OrderForm.from_flat(_BASE)
+    fd1 = pipe.process(b"a", sender_id="S1", hint=truth)
+    assert fd1.sender_note == ""                                  # 履歴なし → 一文を出さない
+    pipe.confirm(fd1.form_id, {p: truth.flatten()[p] for p in fd1.review_paths})
+    for _ in range(2):                                            # 2 回目・3 回目を確定して積む
+        fd = pipe.process(b"x", sender_id="S1", hint=truth)
+        pipe.confirm(fd.form_id, {p: truth.flatten()[p] for p in fd.review_paths})
+    fd4 = pipe.process(b"x", sender_id="S1", hint=truth)          # これで 4 回目
+    assert fd4.sender_note == "この依頼主は 4 回目で、記録と一致しています"
+    assert "マスタ" not in fd4.sender_note
+
+
+def test_field_wording_never_shows_master():
+    """項目の理由に「マスタ」を出さない（現場の言葉では「一覧」）。"""
+    c = CheckResult(name="zip_address", status=CheckStatus.FAIL, detail="郵便番号がマスタに無い")
+    out = plain_check(c)
+    assert "マスタ" not in out and "一覧" in out

@@ -166,6 +166,7 @@ class FormDecision(BaseModel):
     final: Optional[OrderForm] = None
     expires_at: Optional[datetime] = None   # 保持期限（Firestore TTL で自動削除）
     explanation: Optional[str] = None             # ADK 説明エージェントの要確認理由（受付時に生成して保存。確認画面を即時に開くため）
+    sender_note: str = ""                         # 常連の一文（例:「この依頼主は 4 回目で、記録と一致しています」）。確認画面の上部に安心材料として出す
     form_flags: list[str] = Field(default_factory=list)   # 帳票全体の警告（例: お届け先ブロックの読み落とし疑い）
     applicant_phone_key: str = ""                 # 確定した依頼主の電話（数字のみ）。送り主IDをまたぐ顧客照合のキー
     review_opened_at: Optional[datetime] = None   # 人が確認画面を最初に開いた時刻（実測用）

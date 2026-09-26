@@ -93,6 +93,31 @@ def test_customer_history_matches_across_senders():
         assert any(c.name == "history" and c.status == CheckStatus.PASS for c in fd2.verdicts[p].checks), p
 
 
+def test_record_match_auto_confirms_even_for_new_sender():
+    """記録と完全一致した項目は、初見の送り主でも（判定ルーター未学習・台帳実績なしでも）自動確定する。
+    近い誤読は check_history が FAIL にするので自動確定しない（塞いだ穴を守る回帰テスト）。"""
+    from app.schemas import FieldStatus
+
+    store = MemoryStore()
+    router = CorrectionRouter(Path(tempfile.mkdtemp()), min_samples=10_000, target_error_rate=0.005)   # 未学習
+    pipe = Pipeline(store=store, extractor=MockExtractor(error_scale=0.0), policy=Policy.load(settings.policy_path),
+                    router=router, seed=1, budget_enabled=False)
+    truth = OrderForm.from_flat(BASE)
+    fd = pipe.process(b"img-a", sender_id="FAX-A", hint=truth)          # 初回: 履歴なし → 氏名・住所は初見送り主で要確認
+    assert "applicant.name" in fd.review_paths and "applicant.address" in fd.review_paths
+    pipe.confirm(fd.form_id, {p: truth.flatten()[p] for p in fd.review_paths})
+
+    fd2 = pipe.process(b"img-b", sender_id="FAX-B", hint=truth)         # 同じ顧客(電話一致)が別の送り主IDから
+    for p in ("applicant.name", "applicant.address", "applicant.phone", "applicant.zip"):
+        assert fd2.decisions[p].status == FieldStatus.AUTO, p
+        assert any("記録と完全一致" in r for r in fd2.decisions[p].reasons), p
+    assert "applicant.name" not in fd2.review_paths and "applicant.address" not in fd2.review_paths
+
+    near = OrderForm.from_flat(dict(BASE, **{"applicant.address": "大分県大分市王子北町1-2-9"}))   # 1 文字違いの誤読
+    fd3 = pipe.process(b"img-c", sender_id="FAX-C", hint=near)
+    assert fd3.decisions["applicant.address"].status == FieldStatus.REVIEW   # 近い誤読は自動確定しない
+
+
 def test_record_key_declared_by_format(monkeypatch):
     """顧客照合キーは様式ファイルの record_key 宣言から引く（電話番号の決め打ちではない）。
     宣言を別の項目に差し替えれば、その欄で顧客照合する（他業種への移行はこの 1 行）。"""
