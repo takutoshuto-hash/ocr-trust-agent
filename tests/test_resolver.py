@@ -133,3 +133,17 @@ def test_pipeline_restores_variant_kanji_from_confirmed_history():
     fd2 = pipe.process(b"img-2", sender_id="S1", hint=wrong)
     d = fd2.decisions["applicant.name"]
     assert d.value == "髙田 花子" and d.resolved_from == "高田 花子", (d.value, d.reasons)
+
+
+def test_complete_address_refuses_when_the_written_town_differs_from_the_master():
+    """市区町村は合うが町域が違う（千草町 vs 千葉城町）: 一覧の町域を前に足すと「千葉城町千草町」ができて郵便番号照合に
+    合格し自動確定してしまう（実手書き hw_20）。補完せず人に回す。町域が書かれていない（番地から始まる）ときは補完する。"""
+    def ctx(addr):
+        return FieldContext(path="deliveries[0].address", field_type="deliveries.address", value=addr, evidence="",
+                            secondary_value=None, reasons=[], sibling={"zip": "150-0001"}, image=None, format_id="fax_v1")
+    assert act_complete_address_from_zip(ctx("渋谷区神南1-1-1")) is None
+    assert act_complete_address_from_zip(ctx("東京都渋谷区神南町1-1-1")) is None
+    c = act_complete_address_from_zip(ctx("渋谷区1-1-1"))
+    assert c and c.value == "東京都渋谷区神宮前1-1-1"
+    c = act_complete_address_from_zip(ctx("渋谷区神宮前1-1-1"))          # 都道府県の省略は補完する
+    assert c and c.value == "東京都渋谷区神宮前1-1-1"

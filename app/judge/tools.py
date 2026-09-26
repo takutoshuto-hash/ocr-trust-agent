@@ -187,7 +187,9 @@ def check_history(value, past_values: list) -> CheckResult:
     """送り主の過去の確定値との照合（独立した根拠）。
 
     - 過去に同じ値が確定している → PASS（依頼主の氏名・住所・電話は送り主ごとにほぼ固定）
-    - 過去値はあるが一致しない → UNKNOWN（転居・別人の可能性。誤読の疑いとして特徴量に残す）
+    - 過去値と 1〜2 文字だけ違う → FAIL（4-21-20 と 4-2-20 のような読み違い。常連の宛先は同じ住所へ送るのが普通で、
+      本当に近所へ転居した場合は人が確認して確定すれば次回から一致する）
+    - 過去値はあるが大きく違う → UNKNOWN（転居・別人の可能性。誤読の疑いとして特徴量に残す）
     - 過去値なし → UNKNOWN
     """
     if not past_values:
@@ -201,6 +203,10 @@ def check_history(value, past_values: list) -> CheckResult:
     if near:
         # 異体字だけが違う（髙田→高田）: 宛名では別字なので不合格にし、行動するエージェントが確定値から復元する
         return CheckResult(name="history", status=CheckStatus.FAIL, detail=f"過去の確定値と異体字だけが違う（確定値: {near[0]!r}）")
+    close = [p for p in past_values if len(_squash(p)) >= 6 and _lev(_squash(p), v) <= 2]
+    if close:
+        return CheckResult(name="history", status=CheckStatus.FAIL,
+                           detail=f"過去の確定値と 1〜2 文字だけ違う（確定値: {close[0]!r}。読み違いの疑い）")
     return CheckResult(name="history", status=CheckStatus.UNKNOWN, detail=f"過去の確定値と不一致（例: {past_values[0]!r}）")
 
 

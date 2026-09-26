@@ -83,6 +83,9 @@ def act_restore_from_history(ctx: FieldContext) -> Optional[Candidate]:
     return None
 
 
+_DIGITS = "0123456789０１２３４５６７８９一二三四五六七八九〇十"
+
+
 def act_complete_address_from_zip(ctx: FieldContext) -> Optional[Candidate]:
     """郵便番号マスタから都道府県・市区町村を確定し、住所の先頭を補完・訂正する。番地以降は元の値を保つ。"""
     zip_code = ctx.sibling.get("zip", "") if not ctx.field_type.endswith(".zip") else ctx.value
@@ -108,6 +111,11 @@ def act_complete_address_from_zip(ctx: FieldContext) -> Optional[Candidate]:
         if marker and marker in rest:
             rest = rest.split(marker, 1)[1]
     rest = rest.lstrip("県府都道市区町村郡 　")
+    if town and town not in addr and rest and rest[0] not in _DIGITS:
+        # 市区町村は合うが、書かれた町域が一覧の町域と違う（千草町 vs 千葉城町）。郵便番号か町域のどちらかが読み違い。
+        # ここで一覧の町域を前に足すと「千葉城町千草町」のような住所ができ、郵便番号照合に合格して自動確定してしまう
+        # （実手書き hw_20 で起きた）。補完せず人に回す。
+        return None
     new = head + (town or "") + rest if not rest.startswith(town or "\0") else head + rest
     return Candidate(value=new, source="complete_address_from_zip", evidence=f"〒{zip_code} → {head}{town}", independent=True,
                      detail=f"郵便番号 {zip_code} から {head} を確定し先頭を補完")

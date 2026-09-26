@@ -51,7 +51,9 @@ def _history_feature(verdict: FieldVerdict) -> float:
         if c.name == "history":
             if c.status == CheckStatus.PASS:
                 return 1.0
-            return -1.0 if "不一致" in (c.detail or "") else 0.0
+            if c.status == CheckStatus.FAIL or "不一致" in (c.detail or ""):
+                return -1.0                      # 不一致・1〜2 文字違い・異体字違いはすべて「履歴と合わない」
+            return 0.0
     return 0.0
 
 

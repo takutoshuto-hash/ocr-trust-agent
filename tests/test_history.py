@@ -46,7 +46,10 @@ def test_history_check_pass_unknown_and_feature():
     v = Judge().judge(_ex(cur), None, history=past)
     assert any(c.name == "history" and c.status == CheckStatus.PASS for c in v["applicant.name"].checks)
     ph = next(c for c in v["applicant.phone"].checks if c.name == "history")
-    assert ph.status == CheckStatus.UNKNOWN and "不一致" in ph.detail
+    assert ph.status == CheckStatus.FAIL and "読み違い" in ph.detail        # 1 桁違い → 読み違いの疑い
+    v2 = Judge().judge(_ex(dict(BASE, **{"applicant.phone": "03-1234-5678"})), None, history=past)   # 別の番号 → 判定不能
+    ph2 = next(c for c in v2["applicant.phone"].checks if c.name == "history")
+    assert ph2.status == CheckStatus.UNKNOWN and "不一致" in ph2.detail
     # お届け先: 同じ氏名の過去のお届け先と郵便番号が一致
     assert any(c.name == "history" and c.status == CheckStatus.PASS for c in v["deliveries[0].zip"].checks)
     stats = {"sender": LedgerStat(key=""), "format": LedgerStat(key=""), "global": LedgerStat(key="")}
@@ -88,3 +91,15 @@ def test_customer_history_matches_across_senders():
     fd2 = pipe.process(b"img-b", sender_id="FAX-B", hint=truth)     # 別の送り主IDから同じ依頼主
     for p in ("applicant.name", "applicant.address", "applicant.zip"):
         assert any(c.name == "history" and c.status == CheckStatus.PASS for c in fd2.verdicts[p].checks), p
+
+
+def test_history_near_miss_is_a_misread_signal():
+    """常連の宛先の確定値と 1〜2 文字だけ違う値（4-21-20 → 4-2-20）は「不一致」ではなく読み違いの疑いで不合格にする。
+    実手書きの 2 周目で、二重読みが一致した読み違いがこの形で自動確定された。大きく違う値は転居・別人として判定不能のまま。"""
+    past = ["東京都新宿区新宿4-21-20"]
+    r = T.check_history("東京都新宿区新宿4-2-20", past)
+    assert r.status == CheckStatus.FAIL and "読み違い" in r.detail
+    assert T.check_history("東京都新宿区新宿4-21-20", past).status == CheckStatus.PASS
+    assert T.check_history("東京都新宿区新宿4-21-20", ["大分県大分市王子北町1-2-3"]).status == CheckStatus.UNKNOWN
+    assert T.check_history("097-555-1284", ["097-555-1234"]).status == CheckStatus.FAIL
+    assert T.check_history("鈴木 花", ["鈴木 花子"]).status == CheckStatus.UNKNOWN      # 短い値は近似で判断しない
