@@ -1,0 +1,781 @@
+round,file,path,truth,value,status,audit,correct,resolved_from,reason,why
+r1,hw_01.pdf,applicant.name,首藤 大輔,首藤 大輔,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_01.pdf,applicant.name_kana,,,auto,False,1,,,自動で確定
+r1,hw_01.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r1,hw_01.pdf,applicant.address,福岡県福岡市博多区博多駅前2-3-3,福岡県福岡市博多区博多駅前2-3-3,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_01.pdf,applicant.phone,0942-86-9826,0942-86-9826,auto,False,1,,,自動で確定
+r1,hw_01.pdf,applicant.organization,株式会社大分商事,株式会社大分商事,auto,False,1,,,自動で確定
+r1,hw_01.pdf,deliveries[0].name,森 健一,森健一,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_01.pdf,deliveries[0].name_kana,モリ ケンイチ,モリケンイチ,auto,False,1,,,自動で確定
+r1,hw_01.pdf,deliveries[0].zip,874-0000,874-0000,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_01.pdf,deliveries[0].address,大分県別府市5-15-3,大分県別府市 5-15-3,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_01.pdf,deliveries[0].phone,0979-78-2744,0979-78-2744,auto,False,1,,,自動で確定
+r1,hw_01.pdf,deliveries[0].product_code,STK-2,STK-2,auto,False,1,,,自動で確定
+r1,hw_01.pdf,deliveries[0].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r1,hw_01.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_02.pdf,applicant.name,石川 恵子,石川恵子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_02.pdf,applicant.name_kana,,,auto,False,1,,,自動で確定
+r1,hw_02.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r1,hw_02.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡県福岡市博多区博多駅前5-16-13,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_02.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,False,1,,,自動で確定
+r1,hw_02.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_02.pdf,deliveries[0].name,池田 さくら,池田さくら,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_02.pdf,deliveries[0].name_kana,イケダ サクラ,イケダサクラ,auto,False,1,,,自動で確定
+r1,hw_02.pdf,deliveries[0].zip,874-0000,8704-0000,review,False,0,,郵便番号の形が違います（000-0000 の形）。郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_02.pdf,deliveries[0].address,大分県別府市3-17-19,大分県別府市 3-17-19,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_02.pdf,deliveries[0].phone,097-766-8725,097-766-8725,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_02.pdf,deliveries[0].product_code,HAM-30,HAM-30,auto,False,1,,,自動で確定
+r1,hw_02.pdf,deliveries[0].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r1,hw_02.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_03.pdf,applicant.name,鈴木 裕子,鈴木裕子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,applicant.name_kana,スズキ ユウコ,スズキユウコ,auto,False,1,,,自動で確定
+r1,hw_03.pdf,applicant.zip,160-0022,160-0022,auto,False,1,,,自動で確定
+r1,hw_03.pdf,applicant.address,東京都新宿区新宿4-19-1,東京都新宿区新宿4-19-1,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,applicant.phone,03-1437-1134,03-1437-1134,auto,False,1,,,自動で確定
+r1,hw_03.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[0].name,中村 直樹,中村直樹,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,deliveries[0].name_kana,ナカムラ ナオキ,ナカムラナオキ,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[0].zip,060-0001,060-0001,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_03.pdf,deliveries[0].address,北海道札幌市中央区北一条西1-29-5,北海道札幌市中央区北一条西1-29-5,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,deliveries[0].phone,,,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[0].product_code,HAM-50,HAM-50,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[0].noshi_name,御礼,御礼,review,False,1,,2 回読んで結果が違いました,
+r1,hw_03.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[1].name,山下 裕子,山下裕子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,deliveries[1].name_kana,ヤマシタ ユウコ,ヤマシタユウコ,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[1].zip,980-0001,980-0001,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[1].address,宮城県仙台市青葉区中央3-20-4,宮城県仙台市青葉区中央3-20-4,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,deliveries[1].phone,0229-47-9862,0229-47-9862,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[1].product_code,HAM-50,HAM - 50,review,False,1,,商品番号が商品一覧にありません（一覧に無い）,
+r1,hw_03.pdf,deliveries[1].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[2].name,高橋 太郎,高橋 太郎,review,False,1,高橋太郎,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,deliveries[2].name_kana,タカハシ タロウ,タカハシタロウ,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[2].zip,875-0000,875-0000,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[2].address,大分県臼杵市1-3-4,大分県臼杵市1-3-4,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_03.pdf,deliveries[2].phone,0978-20-7965,0978-20-7965,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[2].product_code,YKN-60,YKN-60,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[2].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r1,hw_03.pdf,deliveries[2].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_04.pdf,applicant.name,石川 大輔,石川大輔,review,False,1,,氏名とフリガナの読みが合いません（姓「石川」の読みは イシカワ ですが、フリガナは「イシャクダイスケ」）,
+r1,hw_04.pdf,applicant.name_kana,イシカワ ダイスケ,イシャクダイスケ,review,False,0,,氏名とフリガナの読みが合いません（姓「石川」の読みは イシカワ ですが、フリガナは「イシャクダイスケ」）。2 回読んで結果が違いました,
+r1,hw_04.pdf,applicant.zip,542-0081,542-0081,review,False,1,,2 回読んで結果が違いました,
+r1,hw_04.pdf,applicant.address,大阪府大阪市中央区南船場3-10-3,大阪府大阪市中央区南船場3-10-3,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_04.pdf,applicant.phone,070-5604-7032,070-5604-7032,auto,False,1,,,自動で確定
+r1,hw_04.pdf,applicant.organization,別府温泉組合,別府温泉組合,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[0].name,石川 直樹,石川直樹,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_04.pdf,deliveries[0].name_kana,イシカワ ナオキ,イシカワナオキ,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[0].zip,860-0001,860-0001,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[0].address,熊本県熊本市中央区千葉城町4-24-18,熊本県熊本市中央区千葉城町4-24-18,review,False,1,熊本県熊本市中央区千葉城町4-24-18,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_04.pdf,deliveries[0].phone,0965-20-5493,0965-20-5493,auto,False,1,0965-20-5493,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r1,hw_04.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[0].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[0].qty,1,1,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_04.pdf,deliveries[1].name,田中 太郎,田中太郎,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_04.pdf,deliveries[1].name_kana,タナカ タロウ,タナカタロウ,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[1].zip,220-0001,220-0001,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[1].address,神奈川県横浜市西区北幸1-21-5,神奈川県横浜市西区北幸1-21-5,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_04.pdf,deliveries[1].phone,070-6620-1990,090-6620-1990,review,False,0,,2 回読んで結果が違いました,
+r1,hw_04.pdf,deliveries[1].product_code,HMB-6,HMB-6,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[1].noshi_name,,,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[1].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[2].name,清水 健一,清水儀来,review,False,0,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_04.pdf,deliveries[2].name_kana,シミズ ケンイチ,シミズケンイチ,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[2].zip,160-0022,160-0022,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[2].address,東京都新宿区新宿4-21-20,東京都新宿区新宿4-21-20,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_04.pdf,deliveries[2].phone,03-1772-8370,03-1772-8370,review,False,1,,2 回読んで結果が違いました,
+r1,hw_04.pdf,deliveries[2].product_code,YKN-60,YKN-60,auto,False,1,,,自動で確定
+r1,hw_04.pdf,deliveries[2].noshi_name,,,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_04.pdf,deliveries[2].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_05.pdf,applicant.name,佐藤 美咲,佐藤美咲,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_05.pdf,applicant.name_kana,サトウ ミサキ,サトウ ミサキ,auto,False,1,,,自動で確定
+r1,hw_05.pdf,applicant.zip,870-0021,870-0021,auto,False,1,,,自動で確定
+r1,hw_05.pdf,applicant.address,大分県大分市府内町4-25-5,大分県大分市府内町4-25-5,review,False,1,大分県別府市大分市府内町4-25-5,エージェントが修復（）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_05.pdf,applicant.phone,0978-43-5179,0978-43-5179,auto,False,1,,,自動で確定
+r1,hw_05.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_05.pdf,deliveries[0].name,伊藤 健一,伊藤健一,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_05.pdf,deliveries[0].name_kana,イトウ ケンイチ,イトウ ケンイチ,auto,False,1,,,自動で確定
+r1,hw_05.pdf,deliveries[0].zip,870-0021,890-0021,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_05.pdf,deliveries[0].address,大分県大分市府内町5-24-13,大分県大分市府内町524-13,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_05.pdf,deliveries[0].phone,097-282-8891,097-282-8891,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_05.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,TKN-40,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r1,hw_05.pdf,deliveries[0].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r1,hw_05.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_06.pdf,applicant.name,佐々木 裕子,佐々木裕子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_06.pdf,applicant.name_kana,ササキ ユウコ,ササキ ユウコ,auto,False,1,,,自動で確定
+r1,hw_06.pdf,applicant.zip,220-0001,220-0001,auto,False,1,,,自動で確定
+r1,hw_06.pdf,applicant.address,神奈川県横浜市西区北幸4-19-13,神奈川県横浜市西区北幸4-19-13,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_06.pdf,applicant.phone,045-316-6025,045-316-6025,auto,False,1,,,自動で確定
+r1,hw_06.pdf,applicant.organization,株式会社大分商事,株式会社大松商事,review,False,0,,2 回読んで結果が違いました,
+r1,hw_06.pdf,deliveries[0].name,森 さくら,森さくら,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_06.pdf,deliveries[0].name_kana,モリ サクラ,モリ サクラ,review,False,1,,読み取った文字と最終の値が食い違っています,
+r1,hw_06.pdf,deliveries[0].zip,810-0001,810-0001,auto,False,1,,,自動で確定
+r1,hw_06.pdf,deliveries[0].address,福岡県福岡市中央区天神5-17-12,福岡県福岡市中央区天神5-17-12,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_06.pdf,deliveries[0].phone,093-360-6810,093-360-6810,auto,False,1,,,自動で確定
+r1,hw_06.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r1,hw_06.pdf,deliveries[0].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r1,hw_06.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_06.pdf,deliveries[1].name,石井 愛,石井 愛,review,False,1,石井愛,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_06.pdf,deliveries[1].name_kana,イシイ アイ,イシイアイ,review,False,1,,2 回読んで結果が違いました,
+r1,hw_06.pdf,deliveries[1].zip,100-0001,1000-0001,review,False,0,,郵便番号の形が違います（000-0000 の形）。郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_06.pdf,deliveries[1].address,東京都千代田区千代田4-8-4,東京都千代田区千代田4-8-4,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_06.pdf,deliveries[1].phone,0422-18-5572,0422-18-5572,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_06.pdf,deliveries[1].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r1,hw_06.pdf,deliveries[1].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r1,hw_06.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_07.pdf,applicant.name,佐藤 美咲,佐藤美咲,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_07.pdf,applicant.name_kana,サトウ ミサキ,サトウ ミサキ,auto,False,1,,,自動で確定
+r1,hw_07.pdf,applicant.zip,870-0021,870-0021,auto,False,1,,,自動で確定
+r1,hw_07.pdf,applicant.address,大分県大分市府内町4-25-5,大分県大分市府内町4-25-5,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_07.pdf,applicant.phone,0978-43-5179,0978-43-5179,auto,False,1,,,自動で確定
+r1,hw_07.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[0].name,山本 隆,山本隆,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_07.pdf,deliveries[0].name_kana,ヤマモト タカシ,ヤマモト タカシ,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[0].zip,730-0011,730-0011,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_07.pdf,deliveries[0].address,広島県広島市中区基町3-16-16,広島県広島市中区基町3-16-16,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_07.pdf,deliveries[0].phone,082-495-7361,082-495-7361,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[0].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[0].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[1].name,斎藤 隆,斎藤隆,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_07.pdf,deliveries[1].name_kana,サイトウ タカシ,サイトウ タカシ,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_07.pdf,deliveries[1].zip,980-0001,980-0001,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[1].address,宮城県仙台市青葉区中央4-22-19,宮城県仙台市青葉区中央4-22-19,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_07.pdf,deliveries[1].phone,070-7361-6416,070-7361-6416,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[1].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[1].noshi_name,,,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[2].name,加藤 美咲,加藤 美咲,review,False,1,加藤美咲,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_07.pdf,deliveries[2].name_kana,カトウ ミサキ,カトウ ミサキ,review,False,1,,読み取った文字と最終の値が食い違っています。2 回読んで結果が違いました,
+r1,hw_07.pdf,deliveries[2].zip,460-0002,460-0002,review,False,1,,郵便番号と住所が合いません（郵便番号の町域「丸の内」が住所に無い。同じ市内の別の番号を読み違えたかもしれません）,
+r1,hw_07.pdf,deliveries[2].address,愛知県名古屋市中区丸の内2-6-2,愛知県名古屋市中区錦2-6-2,review,False,0,,郵便番号と住所が合いません（郵便番号の町域「丸の内」が住所に無い。同じ市内の別の番号を読み違えたかもしれません）。2 回読んで結果が違いました,
+r1,hw_07.pdf,deliveries[2].phone,0562-53-6853,0562-53-6853,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[2].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[2].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r1,hw_07.pdf,deliveries[2].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_08.pdf,applicant.name,中島 太郎,中島太郎,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_08.pdf,applicant.name_kana,,,auto,False,1,,,自動で確定
+r1,hw_08.pdf,applicant.zip,060-0001,060-0000,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_08.pdf,applicant.address,北海道札幌市中央区北一条西5-4-17,北海道札幌市中央区北一条西5-4-17,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_08.pdf,applicant.phone,090-1583-8912,090-1583-8912,auto,False,1,,,自動で確定
+r1,hw_08.pdf,applicant.organization,湯布院観光協会,湯布院観光協会,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[0].name,鈴木 健一,鈴木健一,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_08.pdf,deliveries[0].name_kana,,,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[0].zip,870-0001,820-0001,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_08.pdf,deliveries[0].address,大分県大分市王子北町1-24-12,大分県大分市王子北町1-24-12,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_08.pdf,deliveries[0].phone,0973-61-9809,0973-61-9809,review,False,1,,2 回読んで結果が違いました,
+r1,hw_08.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[0].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[1].name,高橋 陽子,高橋陽子,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_08.pdf,deliveries[1].name_kana,タカハシ ヨウコ,タカハシヨウコ,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[1].zip,879-0000,879-0000,review,False,1,,2 回読んで結果が違いました,
+r1,hw_08.pdf,deliveries[1].address,大分県由布市5-26-7,大分県由布市5-26-7,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_08.pdf,deliveries[1].phone,080-1861-9935,080-1861-9935,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[1].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[1].noshi_name,御礼,御礼,review,False,1,,2 回読んで結果が違いました,
+r1,hw_08.pdf,deliveries[1].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[2].name,中村 裕子,中村裕子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_08.pdf,deliveries[2].name_kana,ナカムラ ユウコ,ナカムラユウコ,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[2].zip,460-0002,460-0002,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[2].address,愛知県名古屋市中区丸の内4-24-14,愛知県名古屋市中区丸の内4-24-14,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_08.pdf,deliveries[2].phone,052-478-3752,052-478-3752,review,False,1,,2 回読んで結果が違いました,
+r1,hw_08.pdf,deliveries[2].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r1,hw_08.pdf,deliveries[2].noshi_name,御歳暮,御歳暮,review,False,1,,読み取った文字と最終の値が食い違っています,
+r1,hw_08.pdf,deliveries[2].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_09.pdf,applicant.name,首藤 大輔,首藤大輔,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,applicant.name_kana,シュトウ ダイスケ,シュトウ ダイスケ,review,False,1,,2 回読んで結果が違いました,
+r1,hw_09.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r1,hw_09.pdf,applicant.address,福岡県福岡市博多区博多駅前2-3-3,福岡県福岡市博多区博多駅前2-3-3,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,applicant.phone,0942-86-9826,0942-86-9826,auto,False,1,,,自動で確定
+r1,hw_09.pdf,applicant.organization,株式会社大分商事,株式会社大分商事,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[0].name,山崎 恵子,山崎恵子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,deliveries[0].name_kana,ヤマザキ ケイコ,ヤマザキ ケイコ,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[0].zip,870-0001,870-0001,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[0].address,大分県大分市王子北町1-1-18,大分県大分市王子北町1-1-18,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,deliveries[0].phone,090-1411-7932,090-144-7932,review,False,0,,2 回読んで結果が違いました,
+r1,hw_09.pdf,deliveries[0].product_code,YKN-60,YKN-60,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[0].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[1].name,井上 愛,井上愛,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,deliveries[1].name_kana,イノウエ アイ,イノウエアイ,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[1].zip,150-0001,150-0001,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[1].address,東京都渋谷区神宮前2-30-4,東京都渋谷区神宮前2-30-4,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,deliveries[1].phone,042-708-9139,042-708-8913,review,False,0,042-708-8913,エージェントが修復（2 回読んで結果が違いました）,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_09.pdf,deliveries[1].product_code,YKN-60,YKN-60,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_09.pdf,deliveries[1].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[2].name,森 健一,森健一,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,deliveries[2].name_kana,,,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_09.pdf,deliveries[2].zip,874-0000,874-0000,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[2].address,大分県別府市5-15-3,大分県別府市5-15-3,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_09.pdf,deliveries[2].phone,,,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[2].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r1,hw_09.pdf,deliveries[2].noshi_name,御歳暮,御歳暮,review,False,1,御歳暮,エージェントが修復（読み取った文字と最終の値が食い違っています）,
+r1,hw_09.pdf,deliveries[2].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_10.pdf,applicant.name,石川 大輔,石川大輔,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_10.pdf,applicant.name_kana,イシカワ ダイスケ,イシカワ ダイスケ,auto,False,1,,,自動で確定
+r1,hw_10.pdf,applicant.zip,542-0081,542-0081,auto,False,1,,,自動で確定
+r1,hw_10.pdf,applicant.address,大阪府大阪市中央区南船場3-10-3,大阪府大阪市中央区南船場3-10-3,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_10.pdf,applicant.phone,070-5604-7032,070-5604-7032,auto,False,1,,,自動で確定
+r1,hw_10.pdf,applicant.organization,別府温泉組合,別府温泉到令,review,False,0,,2 回読んで結果が違いました,
+r1,hw_10.pdf,deliveries[0].name,山本 隆,山本隆,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_10.pdf,deliveries[0].name_kana,ヤマモト タカシ,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r1,hw_10.pdf,deliveries[0].zip,870-0021,820-0021,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_10.pdf,deliveries[0].address,大分県大分市府内町2-30-12,大分県大分市府内町2-30-12,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_10.pdf,deliveries[0].phone,0979-33-2719,0979-33-2719,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_10.pdf,deliveries[0].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r1,hw_10.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r1,hw_10.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_10.pdf,deliveries[1].name,橋本 拓也,橋本拓也,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_10.pdf,deliveries[1].name_kana,ハシモト タクヤ,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r1,hw_10.pdf,deliveries[1].zip,870-0001,870-0000,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_10.pdf,deliveries[1].address,大分県大分市王子北町2-10-9,大分市王子上野町2-10-9,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_10.pdf,deliveries[1].phone,,,auto,False,1,,,自動で確定
+r1,hw_10.pdf,deliveries[1].product_code,CUR-10,CUR-10,auto,False,1,,,自動で確定
+r1,hw_10.pdf,deliveries[1].noshi_name,,,auto,False,1,,,自動で確定
+r1,hw_10.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_11.pdf,applicant.name,石川 恵子,石川恵子,review,False,1,,氏名とフリガナの読みが合いません（姓「石川」の読みは イシカワ ですが、フリガナは「インヤクイン」）,
+r1,hw_11.pdf,applicant.name_kana,イシカワ ケイコ,インヤクイン,review,False,0,,氏名とフリガナの読みが合いません（姓「石川」の読みは イシカワ ですが、フリガナは「インヤクイン」）。2 回読んで結果が違いました,
+r1,hw_11.pdf,applicant.zip,812-0011,812-0004,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_11.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡是福岡市博多区博多駅前5-16-13,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_11.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,True,1,,2 回読んで結果が違いました,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_11.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[0].name,山口 直樹,山口直樹,review,False,1,,氏名とフリガナの読みが合いません（姓「山口」の読みは ヤマグチ ですが、フリガナは「アマグチナオキ」）,
+r1,hw_11.pdf,deliveries[0].name_kana,ヤマグチ ナオキ,アマグチナオキ,review,False,0,,氏名とフリガナの読みが合いません（姓「山口」の読みは ヤマグチ ですが、フリガナは「アマグチナオキ」）。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[0].zip,875-0000,875-0000,review,False,1,,郵便番号と住所が合いません（郵便番号は「大分県臼杵市」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[0].address,大分県臼杵市1-30-10,日株市1-30-10,review,False,0,,郵便番号と住所が合いません（郵便番号は「大分県臼杵市」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[0].phone,0979-53-6063,0929-53-6063,review,False,0,,電話の市外局番と住所の都道府県が合いません（市外局番 092（福岡県）が郵便番号の都道府県「大分県」と合わない）,
+r1,hw_11.pdf,deliveries[0].product_code,HAM-50,HAM-50,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[0].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[1].name,山本 翔太,山本翔太,review,False,1,,氏名とフリガナの読みが合いません（姓「山本」の読みは ヤマモト ですが、フリガナは「コソンソコソソ」）,
+r1,hw_11.pdf,deliveries[1].name_kana,ヤマモト ショウタ,コソンソコソソ,review,False,0,,氏名とフリガナの読みが合いません（姓「山本」の読みは ヤマモト ですが、フリガナは「コソンソコソソ」）。読み取った文字と最終の値が食い違っています。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[1].zip,870-0001,840-0001,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[1].address,大分県大分市王子北町1-17-19,大夕市王子北町1-12-19,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[1].phone,080-7892-2797,080-9892-2797,review,False,0,,2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[1].product_code,HAM-50,4AM-50,review,False,0,,商品番号が商品一覧にありません（近い番号: HAM-50）。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[1].noshi_name,御中元,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[2].name,伊藤 誠,伊萨成,review,False,0,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_11.pdf,deliveries[2].name_kana,イトウ マコト,イトウマコト,review,False,1,,2 回読んで結果が違いました,
+r1,hw_11.pdf,deliveries[2].zip,604-0001,604-0001,review,False,1,,郵便番号と住所が合いません（郵便番号は「京都府京都市中京区」ですが、住所に含まれない）,
+r1,hw_11.pdf,deliveries[2].address,京都府京都市中京区5-8-14,京都市中京区5-8-14,review,False,0,,郵便番号と住所が合いません（郵便番号は「京都府京都市中京区」ですが、住所に含まれない）,
+r1,hw_11.pdf,deliveries[2].phone,,,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[2].product_code,HAM-50,HAM-50,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[2].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r1,hw_11.pdf,deliveries[2].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_12.pdf,applicant.name,鈴木 裕子,鈴木裕子,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_12.pdf,applicant.name_kana,,,auto,False,1,,,自動で確定
+r1,hw_12.pdf,applicant.zip,160-0022,160-0022,auto,False,1,,,自動で確定
+r1,hw_12.pdf,applicant.address,東京都新宿区新宿4-19-1,東京都新宿区新宿4-19-1,review,False,1,新宿区新宿4-19-1,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_12.pdf,applicant.phone,03-1437-1134,03-1437-1134,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r1,hw_12.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_12.pdf,deliveries[0].name,池田 翔太,池回翔太,review,False,0,,2 回読んで結果が違いました,
+r1,hw_12.pdf,deliveries[0].name_kana,,,auto,False,1,,,自動で確定
+r1,hw_12.pdf,deliveries[0].zip,879-0000,824-0000,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_12.pdf,deliveries[0].address,大分県由布市3-15-5,由布市3-15-5,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）,
+r1,hw_12.pdf,deliveries[0].phone,0977-18-2174,0977-18-2174,review,False,1,,2 回読んで結果が違いました,
+r1,hw_12.pdf,deliveries[0].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r1,hw_12.pdf,deliveries[0].noshi_name,御歳暮,御藏層,review,False,0,,2 回読んで結果が違いました,
+r1,hw_12.pdf,deliveries[0].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_14.pdf,applicant.name,石川 恵子,石川恵子,review,False,1,,氏名とフリガナの読みが合いません（姓「石川」の読みは イシカワ ですが、フリガナは「イカ?クイコ」）,
+r1,hw_14.pdf,applicant.name_kana,イシカワ ケイコ,イカ?クイコ,review,False,0,,フリガナにカタカナ以外が混ざっています。氏名とフリガナの読みが合いません（姓「石川」の読みは イシカワ ですが、フリガナは「イカ?クイコ」）。2 回読んで結果が違いました,
+r1,hw_14.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r1,hw_14.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡県福岡市博多区博多駅前5-16-13,review,False,1,福岡市博多区博多駅前5-16-13,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_14.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,False,1,,,自動で確定
+r1,hw_14.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_14.pdf,deliveries[0].name,斎藤 愛,斎藤愛,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r1,hw_14.pdf,deliveries[0].name_kana,サイトウ アイ,サイトウ アイ,auto,False,1,,,自動で確定
+r1,hw_14.pdf,deliveries[0].zip,870-0001,870-0001,auto,False,1,,,自動で確定
+r1,hw_14.pdf,deliveries[0].address,大分県大分市王子北町3-23-9,大分県大分市王子北町政北町3-23-9,review,False,0,大分市政北町3-23-9,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_14.pdf,deliveries[0].phone,070-1316-9150,070-1316-9150,review,False,1,,2 回読んで結果が違いました,
+r1,hw_14.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r1,hw_14.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r1,hw_14.pdf,deliveries[0].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_14.pdf,deliveries[1].name,阿部 愛,阿部愛,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r1,hw_14.pdf,deliveries[1].name_kana,,,auto,False,1,,,自動で確定
+r1,hw_14.pdf,deliveries[1].zip,812-0011,812-0011,review,False,1,,郵便番号と住所が合いません（郵便番号は「福岡県福岡市博多区」ですが、住所に含まれない）,
+r1,hw_14.pdf,deliveries[1].address,福岡県福岡市博多区博多駅前5-23-6,福岡市博多区博多駅前5-23-6,review,False,0,,郵便番号と住所が合いません（郵便番号は「福岡県福岡市博多区」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r1,hw_14.pdf,deliveries[1].phone,092-500-8955,092-500-8955,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_14.pdf,deliveries[1].product_code,YKN-60,YKN-60,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r1,hw_14.pdf,deliveries[1].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r1,hw_14.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_15.pdf,applicant.name,首藤 大輔,首藤大輔,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r1,hw_15.pdf,applicant.name_kana,,,auto,False,1,,,自動で確定
+r1,hw_15.pdf,applicant.zip,812-0011,812-0011,review,False,1,,郵便番号と住所が合いません（郵便番号は「福岡県福岡市博多区」ですが、住所に含まれない）,
+r1,hw_15.pdf,applicant.address,福岡県福岡市博多区博多駅前2-3-3,福岡県福岡市狸博多区博多駅前2-3-3,review,False,0,,郵便番号と住所が合いません（郵便番号は「福岡県福岡市博多区」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r1,hw_15.pdf,applicant.phone,0942-86-9826,0942-86-9826,auto,False,1,,,自動で確定
+r1,hw_15.pdf,applicant.organization,株式会社大分商事,株式会社 大分商事,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_15.pdf,deliveries[0].name,松本 直樹,松本直樹,review,False,1,,氏名とフリガナの読みが合いません（姓「松本」の読みは マツモト ですが、フリガナは「マッそんナオキ」）,
+r1,hw_15.pdf,deliveries[0].name_kana,マツモト ナオキ,マッそんナオキ,review,False,0,,フリガナにカタカナ以外が混ざっています。氏名とフリガナの読みが合いません（姓「松本」の読みは マツモト ですが、フリガナは「マッそんナオキ」）。2 回読んで結果が違いました,
+r1,hw_15.pdf,deliveries[0].zip,980-0001,980-0001,auto,False,1,,,自動で確定
+r1,hw_15.pdf,deliveries[0].address,宮城県仙台市青葉区中央3-30-1,宮城県仙台市青葉区中央3-30-1,auto,False,1,仙台市青葉区中央3-30-1,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r1,hw_15.pdf,deliveries[0].phone,080-8541-9433,080-8541-9433,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_15.pdf,deliveries[0].product_code,STK-2,STK-2,auto,False,1,,,自動で確定
+r1,hw_15.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r1,hw_15.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_17.pdf,applicant.name,石川 恵子,石川恵子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_17.pdf,applicant.name_kana,イシカワ ケイコ,イシカワイイコ,review,False,0,,2 回読んで結果が違いました,
+r1,hw_17.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r1,hw_17.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡県福岡市博多区博多駅前5-16-13,review,False,1,福岡市博多区博多駅前5-16-13,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r1,hw_17.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,False,1,,,自動で確定
+r1,hw_17.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[0].name,髙田 裕子,高田裕子,review,False,0,,2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[0].name_kana,,,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[0].zip,874-0000,874-0000,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[0].address,大分県別府市1-19-10,大分県別府市1-19-10,review,False,1,別府市1-19-10,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_17.pdf,deliveries[0].phone,080-1271-1963,080-1271-1963,review,False,1,,2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[0].product_code,HAM-30,HAM-30,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[0].noshi_name,,,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_17.pdf,deliveries[0].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[1].name,伊藤 直樹,伊藤直樹,review,False,1,,氏名とフリガナの読みが合いません（姓「伊藤」の読みは イトウ ですが、フリガナは「イトゥ」）。2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[1].name_kana,イトウ ナオキ,イトゥ ナオキ,review,False,0,,氏名とフリガナの読みが合いません（姓「伊藤」の読みは イトウ ですが、フリガナは「イトゥ」）。2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[1].zip,870-0001,820-0001,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[1].address,大分県大分市王子北町5-20-8,大分市王子北町5-20-8,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[1].phone,070-8851-6780,070-8851-6280,review,False,0,,2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[1].product_code,YKN-60,TKN-60,review,False,0,,商品番号が商品一覧にありません（近い番号: YKN-60）。2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[1].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[1].qty,2,2,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[2].name,中村 隆,中村隆,review,False,1,,氏名とフリガナの読みが合いません（姓「中村」の読みは ナカムラ ですが、フリガナは「カムラ」）,
+r1,hw_17.pdf,deliveries[2].name_kana,ナカムラ タカシ,カムラ タカシ,review,False,0,,氏名とフリガナの読みが合いません（姓「中村」の読みは ナカムラ ですが、フリガナは「カムラ」）。2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[2].zip,460-0002,460-0002,review,False,1,,郵便番号と住所が合いません（郵便番号は「愛知県名古屋市中区」ですが、住所に含まれない）,
+r1,hw_17.pdf,deliveries[2].address,愛知県名古屋市中区丸の内1-5-2,名古屋市中区丸の内5-2,review,False,0,,郵便番号と住所が合いません（郵便番号は「愛知県名古屋市中区」ですが、住所に含まれない）,
+r1,hw_17.pdf,deliveries[2].phone,,,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[2].product_code,CUR-10,CUB-10,review,False,0,,商品番号が商品一覧にありません（近い番号: CUR-10）。2 回読んで結果が違いました,
+r1,hw_17.pdf,deliveries[2].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r1,hw_17.pdf,deliveries[2].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_19.pdf,applicant.name,中島 太郎,中島太郎,review,False,1,,氏名とフリガナの読みが合いません（姓「中島」の読みは ナカシマ/ナカジマ ですが、フリガナは「カジマ」）,
+r1,hw_19.pdf,applicant.name_kana,ナカジマ タロウ,カジマ タロう,review,False,0,,フリガナにカタカナ以外が混ざっています。氏名とフリガナの読みが合いません（姓「中島」の読みは ナカシマ/ナカジマ ですが、フリガナは「カジマ」）。2 回読んで結果が違いました,
+r1,hw_19.pdf,applicant.zip,060-0001,060-0001,auto,False,1,,,自動で確定
+r1,hw_19.pdf,applicant.address,北海道札幌市中央区北一条西5-4-17,北海道札幌市中央区北一条西5-4-17,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 0 件）
+r1,hw_19.pdf,applicant.phone,090-1583-8912,090-1583-8912,auto,False,1,,,自動で確定
+r1,hw_19.pdf,applicant.organization,湯布院観光協会,湯布院観光協会,auto,False,1,,,自動で確定
+r1,hw_19.pdf,deliveries[0].name,鈴木 健一,鈴木健一,auto,False,1,,,自動で確定
+r1,hw_19.pdf,deliveries[0].name_kana,,,auto,False,1,,,自動で確定
+r1,hw_19.pdf,deliveries[0].zip,870-0001,870-0001,review,False,1,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）,
+r1,hw_19.pdf,deliveries[0].address,大分県大分市王子北町1-24-12,大分市北町1-24-12,review,False,0,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r1,hw_19.pdf,deliveries[0].phone,0973-61-9809,0973-61-9809,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r1,hw_19.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,YEN-40,エージェントが修復（）,自動で確定
+r1,hw_19.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r1,hw_19.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_20.pdf,applicant.name,石川 大輔,石川大輔,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r1,hw_20.pdf,applicant.name_kana,イシカワ ダイスケ,イシカワ ダイスケ,review,False,1,,2 回読んで結果が違いました,
+r1,hw_20.pdf,applicant.zip,542-0081,542-0081,auto,False,1,,,自動で確定
+r1,hw_20.pdf,applicant.address,大阪府大阪市中央区南船場3-10-3,大阪府大阪市中央区南船場3-10-3,review,False,1,大阪市中央区南船場3-10-3,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r1,hw_20.pdf,applicant.phone,070-5604-7032,070-5604-7032,auto,False,1,,,自動で確定
+r1,hw_20.pdf,applicant.organization,別府温泉組合,別府温泉組合,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[0].name,吉田 美咲,吉田美咲,review,False,1,,,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r1,hw_20.pdf,deliveries[0].name_kana,ヨシダ ミサキ,ヨシダ ミサキ,review,False,1,,2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[0].zip,860-0001,860-0001,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[0].address,熊本県熊本市中央区千葉城町4-3-9,熊本県熊本市中央区千葉城町千草町4-3-9,auto,True,0,熊本市中央区千草町4-3-9,エージェントが修復（2 回読んで結果が違いました）,自動で確定しましたが、念のための抜き取り確認です
+r1,hw_20.pdf,deliveries[0].phone,0964-96-1622,0964-96-622,review,False,0,,電話番号の形が違います。2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[0].product_code,BMN-80,BMN-80,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[0].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[1].name,山本 隆,山本屋,review,False,0,,2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[1].name_kana,ヤマモト タカシ,ヤマモト タロウ,review,False,0,,2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[1].zip,870-0021,870-0021,review,False,1,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）,
+r1,hw_20.pdf,deliveries[1].address,大分県大分市府内町2-30-12,大分市府内町2-30-12,review,False,0,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[1].phone,0979-33-2719,097-332-719,review,False,0,,電話番号の形が違います。2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[1].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[1].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[2].name,石井 直樹,石井 直桂樹,review,False,0,,2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[2].name_kana,イシイ ナオキ,イシイ ナオキ,review,False,1,,2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[2].zip,060-0001,060-0001,review,False,1,,郵便番号と住所が合いません（郵便番号は「北海道札幌市中央区」ですが、住所に含まれない）,
+r1,hw_20.pdf,deliveries[2].address,北海道札幌市中央区北一条西5-15-18,札幌市中央区北一条西5-15-18,review,False,0,,郵便番号と住所が合いません（郵便番号は「北海道札幌市中央区」ですが、住所に含まれない）,
+r1,hw_20.pdf,deliveries[2].phone,0138-65-7168,0138-65-7168,review,False,1,,2 回読んで結果が違いました,
+r1,hw_20.pdf,deliveries[2].product_code,HAM-30,HAM-30,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[2].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r1,hw_20.pdf,deliveries[2].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_01.pdf,applicant.name,首藤 大輔,首藤 大輔,auto,False,1,,,自動で確定
+r2,hw_01.pdf,applicant.name_kana,,,auto,False,1,,,自動で確定
+r2,hw_01.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r2,hw_01.pdf,applicant.address,福岡県福岡市博多区博多駅前2-3-3,福岡県福岡市博多区博多駅前2-3-3,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_01.pdf,applicant.phone,0942-86-9826,0942-86-9826,auto,False,1,,,自動で確定
+r2,hw_01.pdf,applicant.organization,株式会社大分商事,株式会社大分商事,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].name,森 健一,森健一,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].name_kana,モリ ケンイチ,モリケンイチ,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].zip,874-0000,874-0000,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].address,大分県別府市5-15-3,大分県別府市5-15-3,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].phone,0979-78-2744,0979-78-2744,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].product_code,STK-2,STK-2,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r2,hw_01.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_02.pdf,applicant.name,石川 恵子,石川恵子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_02.pdf,applicant.name_kana,,,auto,False,1,,,自動で確定
+r2,hw_02.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r2,hw_02.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡県福岡市博多区博多駅前5-16-13,auto,False,1,,,自動で確定
+r2,hw_02.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,False,1,,,自動で確定
+r2,hw_02.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_02.pdf,deliveries[0].name,池田 さくら,池田さくら,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_02.pdf,deliveries[0].name_kana,イケダ サクラ,イケダ サクラ,auto,False,1,,,自動で確定
+r2,hw_02.pdf,deliveries[0].zip,874-0000,870-0000,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）,
+r2,hw_02.pdf,deliveries[0].address,大分県別府市3-17-19,大分県別府市 3-17-19,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_02.pdf,deliveries[0].phone,097-766-8725,097-766-8725,auto,False,1,,,自動で確定
+r2,hw_02.pdf,deliveries[0].product_code,HAM-30,HAM-30,auto,False,1,,,自動で確定
+r2,hw_02.pdf,deliveries[0].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r2,hw_02.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_03.pdf,applicant.name,鈴木 裕子,鈴木 裕子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_03.pdf,applicant.name_kana,スズキ ユウコ,スズキ ユウコ,auto,False,1,,,自動で確定
+r2,hw_03.pdf,applicant.zip,160-0022,160-0022,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_03.pdf,applicant.address,東京都新宿区新宿4-19-1,東京都新宿区新宿4-19-1,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_03.pdf,applicant.phone,03-1437-1134,03-1437-1134,auto,False,1,,,自動で確定
+r2,hw_03.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].name,中村 直樹,中村 直樹,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].name_kana,ナカムラ ナオキ,ナカムラ ナオキ,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].zip,060-0001,060-0001,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].address,北海道札幌市中央区北一条西1-29-5,北海道札幌市中央区北一条西1-29-5,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].phone,,,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].product_code,HAM-50,HAM-50,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[1].name,山下 裕子,山下 裕子,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_03.pdf,deliveries[1].name_kana,ヤマシタ ユウコ,ヤマシタ ユウコ,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[1].zip,980-0001,980-0001,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[1].address,宮城県仙台市青葉区中央3-20-4,宮城県仙台市青葉区中央3-20-4,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[1].phone,0229-47-9862,0229-47-9862,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[1].product_code,HAM-50,HAM-50,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[1].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[2].name,高橋 太郎,高橋 太郎,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_03.pdf,deliveries[2].name_kana,タカハシ タロウ,タカハシ タロウ,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[2].zip,875-0000,875-0000,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[2].address,大分県臼杵市1-3-4,大分県臼杵市 1-3-4,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[2].phone,0978-20-7965,0978-20-7965,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[2].product_code,YKN-60,YKN-60,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[2].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r2,hw_03.pdf,deliveries[2].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_04.pdf,applicant.name,石川 大輔,石川大輔,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_04.pdf,applicant.name_kana,イシカワ ダイスケ,イシカワダイスケ,auto,False,1,,,自動で確定
+r2,hw_04.pdf,applicant.zip,542-0081,542-0081,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_04.pdf,applicant.address,大阪府大阪市中央区南船場3-10-3,大阪府大阪市中央区南船場3-10-3,auto,False,1,,,自動で確定
+r2,hw_04.pdf,applicant.phone,070-5604-7032,070-5604-7032,auto,False,1,,,自動で確定
+r2,hw_04.pdf,applicant.organization,別府温泉組合,別府温泉組合,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[0].name,石川 直樹,石川直樹,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[0].name_kana,イシカワ ナオキ,イシカワナオキ,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[0].zip,860-0001,860-0001,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_04.pdf,deliveries[0].address,熊本県熊本市中央区千葉城町4-24-18,熊本県熊本市中央区千葉城町4-24-18,auto,False,1,熊本県熊本市中央区千葉城町4-24-18,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r2,hw_04.pdf,deliveries[0].phone,0965-20-5493,0965-20-5493,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_04.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[0].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[1].name,田中 太郎,田中太郎,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[1].name_kana,タナカ タロウ,タナカタロウ,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[1].zip,220-0001,220-0001,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[1].address,神奈川県横浜市西区北幸1-21-5,神奈川県横浜市西区北幸1-21-5,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[1].phone,070-6620-1990,090-6620-1990,review,False,0,,2 回読んで結果が違いました,
+r2,hw_04.pdf,deliveries[1].product_code,HMB-6,HMB-6,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[1].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[1].qty,2,2,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[2].name,清水 健一,清水儀来,review,False,0,,2 回読んで結果が違いました,
+r2,hw_04.pdf,deliveries[2].name_kana,シミズ ケンイチ,シミズケンイチ,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[2].zip,160-0022,160-0022,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_04.pdf,deliveries[2].address,東京都新宿区新宿4-21-20,東京都新宿区新宿4-2-20,auto,False,0,,,自動で確定
+r2,hw_04.pdf,deliveries[2].phone,03-1772-8370,03-1772-8370,review,False,1,,2 回読んで結果が違いました,
+r2,hw_04.pdf,deliveries[2].product_code,YKN-60,YKN-60,auto,True,1,TKN-60,エージェントが修復（）,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_04.pdf,deliveries[2].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_04.pdf,deliveries[2].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_05.pdf,applicant.name,佐藤 美咲,佐藤美咲,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_05.pdf,applicant.name_kana,サトウ ミサキ,サトウ ミサキ,auto,False,1,,,自動で確定
+r2,hw_05.pdf,applicant.zip,870-0021,870-0021,auto,False,1,,,自動で確定
+r2,hw_05.pdf,applicant.address,大分県大分市府内町4-25-5,大分県大分市府内町4-25-5,review,False,1,大分県別府市大分市府内町4-25-5,エージェントが修復（）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_05.pdf,applicant.phone,0978-43-5179,0978-43-5179,auto,False,1,,,自動で確定
+r2,hw_05.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_05.pdf,deliveries[0].name,伊藤 健一,伊藤健一,auto,False,1,,,自動で確定
+r2,hw_05.pdf,deliveries[0].name_kana,イトウ ケンイチ,イトウ ケンイチ,auto,False,1,,,自動で確定
+r2,hw_05.pdf,deliveries[0].zip,870-0021,870-0021,auto,False,1,,,自動で確定
+r2,hw_05.pdf,deliveries[0].address,大分県大分市府内町5-24-13,大分県大分市府内町524-13,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_05.pdf,deliveries[0].phone,097-282-8891,097-282-8891,auto,False,1,,,自動で確定
+r2,hw_05.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,TKN-40,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r2,hw_05.pdf,deliveries[0].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r2,hw_05.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_06.pdf,applicant.name,佐々木 裕子,佐々木裕子,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r2,hw_06.pdf,applicant.name_kana,ササキ ユウコ,ササキ ユウコ,auto,False,1,,,自動で確定
+r2,hw_06.pdf,applicant.zip,220-0001,220-0001,auto,False,1,,,自動で確定
+r2,hw_06.pdf,applicant.address,神奈川県横浜市西区北幸4-19-13,神奈川県横浜市西区北幸4-19-13,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r2,hw_06.pdf,applicant.phone,045-316-6025,045-316-6025,auto,False,1,,,自動で確定
+r2,hw_06.pdf,applicant.organization,株式会社大分商事,株式会社大松商事,review,False,0,,2 回読んで結果が違いました,
+r2,hw_06.pdf,deliveries[0].name,森 さくら,森さくら,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_06.pdf,deliveries[0].name_kana,モリ サクラ,モリ サクラ,review,False,1,,読み取った文字と最終の値が食い違っています,
+r2,hw_06.pdf,deliveries[0].zip,810-0001,810-0001,review,False,1,,読み取った文字と最終の値が食い違っています,
+r2,hw_06.pdf,deliveries[0].address,福岡県福岡市中央区天神5-17-12,福岡県福岡市中央区天神5-17-12,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r2,hw_06.pdf,deliveries[0].phone,093-360-6810,093-360-6810,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[0].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[1].name,石井 愛,石井 愛,review,False,1,石井愛,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_06.pdf,deliveries[1].name_kana,イシイ アイ,イシイ アイ,review,False,1,,2 回読んで結果が違いました,
+r2,hw_06.pdf,deliveries[1].zip,100-0001,100-0001,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[1].address,東京都千代田区千代田4-8-4,東京都千代田区千代田4-8-4,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r2,hw_06.pdf,deliveries[1].phone,0422-18-5572,0422-18-5572,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[1].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[1].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r2,hw_06.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_07.pdf,applicant.name,佐藤 美咲,佐藤 美咲,auto,False,1,,,自動で確定
+r2,hw_07.pdf,applicant.name_kana,サトウ ミサキ,サトウ ミサキ,auto,False,1,,,自動で確定
+r2,hw_07.pdf,applicant.zip,870-0021,870-0021,auto,False,1,,,自動で確定
+r2,hw_07.pdf,applicant.address,大分県大分市府内町4-25-5,大分県大分市府内町4-25-5,auto,False,1,,,自動で確定
+r2,hw_07.pdf,applicant.phone,0978-43-5179,0978-43-5179,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_07.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[0].name,山本 隆,山本 隆,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[0].name_kana,ヤマモト タカシ,ヤマモト タカシ,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[0].zip,730-0011,730-0011,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[0].address,広島県広島市中区基町3-16-16,広島県広島市中区基町3-16-16,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[0].phone,082-495-7361,082-495-7361,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[0].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[0].noshi_name,内祝,内祝,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_07.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[1].name,斎藤 隆,斎藤 隆,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_07.pdf,deliveries[1].name_kana,サイトウ タカシ,サイトウ タカシ,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[1].zip,980-0001,980-0001,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[1].address,宮城県仙台市青葉区中央4-22-19,宮城県仙台市青葉区中央4-22-19,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[1].phone,070-7361-6416,070-7361-6416,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_07.pdf,deliveries[1].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[1].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[2].name,加藤 美咲,加藤 美咲,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_07.pdf,deliveries[2].name_kana,カトウ ミサキ,カトウ ミサキ,review,False,1,,読み取った文字と最終の値が食い違っています。2 回読んで結果が違いました,
+r2,hw_07.pdf,deliveries[2].zip,460-0002,460-0002,review,False,1,,郵便番号と住所が合いません（郵便番号の町域「丸の内」が住所に無い。同じ市内の別の番号を読み違えたかもしれません）,
+r2,hw_07.pdf,deliveries[2].address,愛知県名古屋市中区丸の内2-6-2,愛知県名古屋市中区錦2-6-2,review,False,0,,郵便番号と住所が合いません（郵便番号の町域「丸の内」が住所に無い。同じ市内の別の番号を読み違えたかもしれません）。2 回読んで結果が違いました,
+r2,hw_07.pdf,deliveries[2].phone,0562-53-6853,0562-53-6853,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[2].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[2].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r2,hw_07.pdf,deliveries[2].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_08.pdf,applicant.name,中島 太郎,中島太郎,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r2,hw_08.pdf,applicant.name_kana,,,review,False,1,,2 回読んで結果が違いました,
+r2,hw_08.pdf,applicant.zip,060-0001,060-0000,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）,
+r2,hw_08.pdf,applicant.address,北海道札幌市中央区北一条西5-4-17,北海道札幌市中央区北一条西5-4-17,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r2,hw_08.pdf,applicant.phone,090-1583-8912,090-1583-8912,auto,False,1,,,自動で確定
+r2,hw_08.pdf,applicant.organization,湯布院観光協会,湯布院観光協会,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_08.pdf,deliveries[0].name,鈴木 健一,鈴木健一,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_08.pdf,deliveries[0].name_kana,,,review,False,1,,2 回読んで結果が違いました,
+r2,hw_08.pdf,deliveries[0].zip,870-0001,820-0001,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_08.pdf,deliveries[0].address,大分県大分市王子北町1-24-12,大分県大分市王子北町1-24-12,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r2,hw_08.pdf,deliveries[0].phone,0973-61-9809,0973-61-9809,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_08.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[0].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[1].name,高橋 陽子,高橋陽子,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[1].name_kana,タカハシ ヨウコ,タカハシ ヨウコ,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[1].zip,879-0000,879-0000,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_08.pdf,deliveries[1].address,大分県由布市5-26-7,大分県由布市5-26-7,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_08.pdf,deliveries[1].phone,080-1861-9935,080-1861-9935,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[1].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[1].noshi_name,御礼,御礼,review,False,1,,2 回読んで結果が違いました,
+r2,hw_08.pdf,deliveries[1].qty,2,2,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[2].name,中村 裕子,中村裕子,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[2].name_kana,ナカムラ ユウコ,ナカムラユウコ,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[2].zip,460-0002,460-0002,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[2].address,愛知県名古屋市中区丸の内4-24-14,愛知県名古屋市中区丸の内4-24-14,review,False,1,,,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_08.pdf,deliveries[2].phone,052-478-3752,052-478-3752,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_08.pdf,deliveries[2].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r2,hw_08.pdf,deliveries[2].noshi_name,御歳暮,御歳暮,review,False,1,,読み取った文字と最終の値が食い違っています,
+r2,hw_08.pdf,deliveries[2].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_09.pdf,applicant.name,首藤 大輔,首藤大輔,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_09.pdf,applicant.name_kana,シュトウ ダイスケ,シュトウ ダイスケ,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_09.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r2,hw_09.pdf,applicant.address,福岡県福岡市博多区博多駅前2-3-3,福岡県福岡市博多区博多駅前2-3-3,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_09.pdf,applicant.phone,0942-86-9826,0942-86-9826,auto,False,1,,,自動で確定
+r2,hw_09.pdf,applicant.organization,株式会社大分商事,株式会社大分商事,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[0].name,山崎 恵子,山崎恵子,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[0].name_kana,ヤマザキ ケイコ,ヤマザキ ケイコ,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[0].zip,870-0001,870-0001,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[0].address,大分県大分市王子北町1-1-18,大分県大分市王子北町1-1-18,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[0].phone,090-1411-7932,090-144-7932,review,False,0,,2 回読んで結果が違いました,
+r2,hw_09.pdf,deliveries[0].product_code,YKN-60,YKN-60,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[0].noshi_name,内祝,内祝,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_09.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[1].name,井上 愛,井上愛,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[1].name_kana,イノウエ アイ,イノウエ アイ,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[1].zip,150-0001,150-0001,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[1].address,東京都渋谷区神宮前2-30-4,東京都渋谷区神宮前2-30-4,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[1].phone,042-708-9139,042-708-8913,review,False,0,042-708-8913,エージェントが修復（2 回読んで結果が違いました）,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r2,hw_09.pdf,deliveries[1].product_code,YKN-60,YKN-60,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[1].noshi_name,御中元,御中元,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[2].name,森 健一,森健一,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[2].name_kana,,,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[2].zip,874-0000,874-0000,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[2].address,大分県別府市5-15-3,大分県別府市5-15-3,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[2].phone,,,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[2].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r2,hw_09.pdf,deliveries[2].noshi_name,御歳暮,御歳暮,review,False,1,御歳暮,エージェントが修復（読み取った文字と最終の値が食い違っています）,
+r2,hw_09.pdf,deliveries[2].qty,2,2,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_10.pdf,applicant.name,石川 大輔,石川大輔,auto,False,1,,,自動で確定
+r2,hw_10.pdf,applicant.name_kana,イシカワ ダイスケ,イシカワ ダイスケ,auto,False,1,,,自動で確定
+r2,hw_10.pdf,applicant.zip,542-0081,542-0081,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_10.pdf,applicant.address,大阪府大阪市中央区南船場3-10-3,大阪府大阪市中央区南船場3-10-3,auto,False,1,,,自動で確定
+r2,hw_10.pdf,applicant.phone,070-5604-7032,070-5604-7032,auto,False,1,,,自動で確定
+r2,hw_10.pdf,applicant.organization,別府温泉組合,別府温泉到令,review,False,0,,2 回読んで結果が違いました,
+r2,hw_10.pdf,deliveries[0].name,山本 隆,山本隆,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[0].name_kana,ヤマモト タカシ,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r2,hw_10.pdf,deliveries[0].zip,870-0021,820-0021,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_10.pdf,deliveries[0].address,大分県大分市府内町2-30-12,大分県大分市府内町2-30-12,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）,
+r2,hw_10.pdf,deliveries[0].phone,0979-33-2719,0979-33-2719,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[0].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[1].name,橋本 拓也,橋本拓也,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[1].name_kana,ハシモト タクヤ,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r2,hw_10.pdf,deliveries[1].zip,870-0001,870-0000,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_10.pdf,deliveries[1].address,大分県大分市王子北町2-10-9,大分市王子工上の町2-10-9,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_10.pdf,deliveries[1].phone,,,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[1].product_code,CUR-10,CUR-10,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[1].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_10.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_11.pdf,applicant.name,石川 恵子,石川恵子,auto,False,1,,,自動で確定
+r2,hw_11.pdf,applicant.name_kana,イシカワ ケイコ,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r2,hw_11.pdf,applicant.zip,812-0011,812-0041,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_11.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡県福岡市博多区博多駅前5-16-13,review,False,1,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_11.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,False,1,,,自動で確定
+r2,hw_11.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[0].name,山口 直樹,山口直樹,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[0].name_kana,ヤマグチ ナオキ,ヤマグチ ナオキ,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[0].zip,875-0000,875-0000,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_11.pdf,deliveries[0].address,大分県臼杵市1-30-10,大分県臼杵市1-30-10,review,False,1,臼杵市1-30-10,エージェントが修復（2 回読んで結果が違いました）,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 2 件）
+r2,hw_11.pdf,deliveries[0].phone,0979-53-6063,0929-53-6063,review,False,0,,電話の市外局番と住所の都道府県が合いません（市外局番 092（福岡県）が郵便番号の都道府県「大分県」と合わない）,
+r2,hw_11.pdf,deliveries[0].product_code,HAM-50,HAM-50,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[0].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[1].name,山本 翔太,山本翔太,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[1].name_kana,ヤマモト ショウタ,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r2,hw_11.pdf,deliveries[1].zip,870-0001,870-0001,review,False,1,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）,
+r2,hw_11.pdf,deliveries[1].address,大分県大分市王子北町1-17-19,大分市王子北町1-12-19,review,False,0,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r2,hw_11.pdf,deliveries[1].phone,080-7892-2797,080-9892-2797,review,False,0,,2 回読んで結果が違いました,
+r2,hw_11.pdf,deliveries[1].product_code,HAM-50,HAM-50,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[1].noshi_name,御中元,,review,False,0,,欄に記入があるのに値が空です（読み落としの疑い）。2 回読んで結果が違いました,
+r2,hw_11.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[2].name,伊藤 誠,伊佐成,review,False,0,,2 回読んで結果が違いました,
+r2,hw_11.pdf,deliveries[2].name_kana,イトウ マコト,イトウ マコト,review,False,1,,2 回読んで結果が違いました,
+r2,hw_11.pdf,deliveries[2].zip,604-0001,604-0001,review,False,1,,郵便番号と住所が合いません（郵便番号は「京都府京都市中京区」ですが、住所に含まれない）,
+r2,hw_11.pdf,deliveries[2].address,京都府京都市中京区5-8-14,京都市中京区5-8-14,review,False,0,,郵便番号と住所が合いません（郵便番号は「京都府京都市中京区」ですが、住所に含まれない）,
+r2,hw_11.pdf,deliveries[2].phone,,,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[2].product_code,HAM-50,HAM-50,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_11.pdf,deliveries[2].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r2,hw_11.pdf,deliveries[2].qty,2,2,auto,False,1,,,自動で確定
+r2,hw_12.pdf,applicant.name,鈴木 裕子,鈴木裕子,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_12.pdf,applicant.name_kana,,,review,False,1,,2 回読んで結果が違いました,
+r2,hw_12.pdf,applicant.zip,160-0022,160-0022,auto,False,1,,,自動で確定
+r2,hw_12.pdf,applicant.address,東京都新宿区新宿4-19-1,東京都新宿区新宿4-19-1,auto,True,1,新宿区新宿4-19-1,エージェントが修復（2 回読んで結果が違いました）,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_12.pdf,applicant.phone,03-1437-1134,03-1437-1134,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_12.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_12.pdf,deliveries[0].name,池田 翔太,池回翔太,review,False,0,,2 回読んで結果が違いました,
+r2,hw_12.pdf,deliveries[0].name_kana,,,auto,False,1,,,自動で確定
+r2,hw_12.pdf,deliveries[0].zip,879-0000,824-0000,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_12.pdf,deliveries[0].address,大分県由布市3-15-5,由布市3-15-5,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）,
+r2,hw_12.pdf,deliveries[0].phone,0977-18-2174,0977-18-2174,review,False,1,,2 回読んで結果が違いました,
+r2,hw_12.pdf,deliveries[0].product_code,SAU-20,SAU-20,auto,False,1,,,自動で確定
+r2,hw_12.pdf,deliveries[0].noshi_name,御歳暮,御藏層,review,False,0,,2 回読んで結果が違いました,
+r2,hw_12.pdf,deliveries[0].qty,2,2,auto,False,1,,,自動で確定
+r2,hw_14.pdf,applicant.name,石川 恵子,石川恵子,auto,False,1,,,自動で確定
+r2,hw_14.pdf,applicant.name_kana,イシカワ ケイコ,イシカワ ケイコ,auto,False,1,,,自動で確定
+r2,hw_14.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r2,hw_14.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡県福岡市博多区博多駅前5-16-13,auto,False,1,福岡市博多区博多駅前5-16-13,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r2,hw_14.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_14.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[0].name,斎藤 愛,斎藤愛,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_14.pdf,deliveries[0].name_kana,サイトウ アイ,サイトウ アイ,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_14.pdf,deliveries[0].zip,870-0001,870-0001,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[0].address,大分県大分市王子北町3-23-9,大分県大分市王子北町3-23-9,auto,False,1,大分市王子北町3-23-9,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r2,hw_14.pdf,deliveries[0].phone,070-1316-9150,070-1316-9150,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_14.pdf,deliveries[0].product_code,YKN-40,YKN-40,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_14.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[0].qty,2,2,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[1].name,阿部 愛,阿部愛,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[1].name_kana,,,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[1].zip,812-0011,812-0011,review,False,1,,郵便番号と住所が合いません（郵便番号は「福岡県福岡市博多区」ですが、住所に含まれない）,
+r2,hw_14.pdf,deliveries[1].address,福岡県福岡市博多区博多駅前5-23-6,福岡市博多区博多駅前5-2-6,review,False,0,,郵便番号と住所が合いません（郵便番号は「福岡県福岡市博多区」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r2,hw_14.pdf,deliveries[1].phone,092-500-8955,092-500-8955,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[1].product_code,YKN-60,YKN-60,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_14.pdf,deliveries[1].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r2,hw_14.pdf,deliveries[1].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_15.pdf,applicant.name,首藤 大輔,首藤大輔,auto,False,1,,,自動で確定
+r2,hw_15.pdf,applicant.name_kana,,シュトウダイスケ,review,False,0,,欄は空欄に見えるのに値が読み取られています（読み取りの作り話の疑い）。2 回読んで結果が違いました,
+r2,hw_15.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r2,hw_15.pdf,applicant.address,福岡県福岡市博多区博多駅前2-3-3,福岡県福岡市博多区博多駅前2-3-3,auto,False,1,,,自動で確定
+r2,hw_15.pdf,applicant.phone,0942-86-9826,0942-86-9826,auto,False,1,,,自動で確定
+r2,hw_15.pdf,applicant.organization,株式会社大分商事,株式会社 大分商事,auto,False,1,,,自動で確定
+r2,hw_15.pdf,deliveries[0].name,松本 直樹,松本直樹,auto,False,1,,,自動で確定
+r2,hw_15.pdf,deliveries[0].name_kana,マツモト ナオキ,マツモトナオキ,auto,False,1,,,自動で確定
+r2,hw_15.pdf,deliveries[0].zip,980-0001,980-0001,auto,False,1,,,自動で確定
+r2,hw_15.pdf,deliveries[0].address,宮城県仙台市青葉区中央3-30-1,宮城県仙台市青葉区中央3-30-1,auto,True,1,仙台市青葉区中央3-30-1,エージェントが修復（2 回読んで結果が違いました）,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_15.pdf,deliveries[0].phone,080-8541-9433,080-8541-9433,auto,False,1,,,自動で確定
+r2,hw_15.pdf,deliveries[0].product_code,STK-2,STK-2,auto,False,1,,,自動で確定
+r2,hw_15.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_15.pdf,deliveries[0].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_17.pdf,applicant.name,石川 恵子,石川恵子,auto,False,1,,,自動で確定
+r2,hw_17.pdf,applicant.name_kana,イシカワ ケイコ,イシカワイイコ,review,False,0,,2 回読んで結果が違いました,
+r2,hw_17.pdf,applicant.zip,812-0011,812-0011,auto,False,1,,,自動で確定
+r2,hw_17.pdf,applicant.address,福岡県福岡市博多区博多駅前5-16-13,福岡県福岡市博多区博多駅前5-16-13,auto,False,1,福岡市博多区博多駅前5-16-13,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r2,hw_17.pdf,applicant.phone,0942-11-1575,0942-11-1575,auto,False,1,,,自動で確定
+r2,hw_17.pdf,applicant.organization,,,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[0].name,髙田 裕子,高田裕子,review,False,0,,2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[0].name_kana,,,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[0].zip,874-0000,874-0000,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[0].address,大分県別府市1-19-10,大分県別府市1-19-10,auto,False,1,別府市1-19-10,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r2,hw_17.pdf,deliveries[0].phone,080-1271-1963,080-1271-1963,review,False,1,,2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[0].product_code,HAM-30,HAM-30,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_17.pdf,deliveries[0].noshi_name,,,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[0].qty,2,2,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[1].name,伊藤 直樹,伊藤直樹,review,False,1,,氏名とフリガナの読みが合いません（姓「伊藤」の読みは イトウ ですが、フリガナは「イトゥ」）,
+r2,hw_17.pdf,deliveries[1].name_kana,イトウ ナオキ,イトゥ ナオキ,review,False,0,,氏名とフリガナの読みが合いません（姓「伊藤」の読みは イトウ ですが、フリガナは「イトゥ」）。2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[1].zip,870-0001,820-0001,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[1].address,大分県大分市王子北町5-20-8,大分市まる北の町5-20-8,review,False,0,,郵便番号が一覧にありません（読み違いの疑い）。2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[1].phone,070-8851-6780,070-8851-6280,review,False,0,,2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[1].product_code,YKN-60,TKN-60,review,False,0,,商品番号が商品一覧にありません（近い番号: YKN-60）。2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[1].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[1].qty,2,2,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[2].name,中村 隆,中村隆,review,False,1,,氏名とフリガナの読みが合いません（姓「中村」の読みは ナカムラ ですが、フリガナは「カムラ」）,
+r2,hw_17.pdf,deliveries[2].name_kana,ナカムラ タカシ,カムラ タカシ,review,False,0,,氏名とフリガナの読みが合いません（姓「中村」の読みは ナカムラ ですが、フリガナは「カムラ」）。2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[2].zip,460-0002,460-0002,review,False,1,,郵便番号と住所が合いません（郵便番号は「愛知県名古屋市中区」ですが、住所に含まれない）,
+r2,hw_17.pdf,deliveries[2].address,愛知県名古屋市中区丸の内1-5-2,各古屋市中区丸の内汚-2,review,False,0,,郵便番号と住所が合いません（郵便番号は「愛知県名古屋市中区」ですが、住所に含まれない）。2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[2].phone,,,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[2].product_code,CUR-10,CUR-0,review,False,0,,商品番号が商品一覧にありません（近い番号: CUR-10）。2 回読んで結果が違いました,
+r2,hw_17.pdf,deliveries[2].noshi_name,内祝,内祝,auto,False,1,,,自動で確定
+r2,hw_17.pdf,deliveries[2].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_19.pdf,applicant.name,中島 太郎,中島太郎,review,False,1,,氏名とフリガナの読みが合いません（姓「中島」の読みは ナカシマ/ナカジマ ですが、フリガナは「カジマタロう」）,
+r2,hw_19.pdf,applicant.name_kana,ナカジマ タロウ,カジマタロう,review,False,0,,フリガナにカタカナ以外が混ざっています。氏名とフリガナの読みが合いません（姓「中島」の読みは ナカシマ/ナカジマ ですが、フリガナは「カジマタロう」）。2 回読んで結果が違いました,
+r2,hw_19.pdf,applicant.zip,060-0001,060-0001,auto,False,1,,,自動で確定
+r2,hw_19.pdf,applicant.address,北海道札幌市中央区北一条西5-4-17,北海道札幌市中央区北一条西5-4-17,review,False,1,,2 回読んで結果が違いました,初めての送り主なので、氏名と住所は人が確認する決まりです（この送り主の実績 1 件）
+r2,hw_19.pdf,applicant.phone,090-1583-8912,090-1583-8912,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_19.pdf,applicant.organization,湯布院観光協会,湯布院観光協会,auto,False,1,,,自動で確定
+r2,hw_19.pdf,deliveries[0].name,鈴木 健一,鈴木健一,auto,False,1,,,自動で確定
+r2,hw_19.pdf,deliveries[0].name_kana,,,auto,False,1,,,自動で確定
+r2,hw_19.pdf,deliveries[0].zip,870-0001,870-0001,auto,False,1,,,自動で確定
+r2,hw_19.pdf,deliveries[0].address,大分県大分市王子北町1-24-12,大分県大分市王子北町北町1-24-12,review,False,0,大分市北町1-24-12,エージェントが修復（2 回読んで結果が違いました）,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r2,hw_19.pdf,deliveries[0].phone,0973-61-9809,0973-61-9809,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_19.pdf,deliveries[0].product_code,YKN-40,YEN-40,review,False,0,,商品番号が商品一覧にありません（近い番号: YKN-40）。2 回読んで結果が違いました,
+r2,hw_19.pdf,deliveries[0].noshi_name,,,auto,True,1,,,自動で確定しましたが、念のための抜き取り確認です
+r2,hw_19.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_20.pdf,applicant.name,石川 大輔,石川大輔,auto,False,1,,,自動で確定
+r2,hw_20.pdf,applicant.name_kana,イシカワ ダイスケ,イシカワ ダイスケ,auto,False,1,,,自動で確定
+r2,hw_20.pdf,applicant.zip,542-0081,542-0081,auto,False,1,,,自動で確定
+r2,hw_20.pdf,applicant.address,大阪府大阪市中央区南船場3-10-3,大阪府大阪市中央区南船場3-10-3,auto,False,1,大阪市中央及南船場3-10-3,エージェントが修復（2 回読んで結果が違いました）,自動で確定
+r2,hw_20.pdf,applicant.phone,070-5604-7032,070-5604-7032,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_20.pdf,applicant.organization,別府温泉組合,別府溫泉組合,review,False,0,,2 回読んで結果が違いました,
+r2,hw_20.pdf,deliveries[0].name,吉田 美咲,吉田美咲,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[0].name_kana,ヨシダ ミサキ,ヨシダ ミサキ,auto,False,1,,2 回読んで結果が違いました,自動で確定
+r2,hw_20.pdf,deliveries[0].zip,860-0001,860-0001,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[0].address,熊本県熊本市中央区千葉城町4-3-9,熊本県熊本市中央区千葉城町千草地工成町4-3-9,review,False,0,熊本市中央区千草地工成町4-3-9,エージェントが修復（2 回読んで結果が違いました）,自動で確定できるほどの確信がまだありません（似た項目で人の直しが続いているため、慎重にしています）
+r2,hw_20.pdf,deliveries[0].phone,0964-96-1622,0964-96-622,review,False,0,,電話番号の形が違います。2 回読んで結果が違いました,
+r2,hw_20.pdf,deliveries[0].product_code,BMN-80,BMN-80,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[0].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[0].qty,1,1,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[1].name,山本 隆,山本屋,review,False,0,,2 回読んで結果が違いました,
+r2,hw_20.pdf,deliveries[1].name_kana,ヤマモト タカシ,ヤマモトヤ,review,False,0,,2 回読んで結果が違いました,
+r2,hw_20.pdf,deliveries[1].zip,870-0021,870-0021,review,False,1,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）,
+r2,hw_20.pdf,deliveries[1].address,大分県大分市府内町2-30-12,大分市府内町2-30-12,review,False,0,,郵便番号と住所が合いません（郵便番号は「大分県大分市」ですが、住所に含まれない）,
+r2,hw_20.pdf,deliveries[1].phone,0979-33-2719,09733-2719,review,False,0,,電話番号の形が違います,
+r2,hw_20.pdf,deliveries[1].product_code,YKN-40,YKN-40,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[1].noshi_name,御歳暮,御歳暮,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[1].qty,3,3,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[2].name,石井 直樹,石井 直桂樹,review,False,0,,2 回読んで結果が違いました,
+r2,hw_20.pdf,deliveries[2].name_kana,イシイ ナオキ,イシイ ナオキ,review,False,1,,2 回読んで結果が違いました,
+r2,hw_20.pdf,deliveries[2].zip,060-0001,060-0001,review,False,1,,郵便番号と住所が合いません（郵便番号は「北海道札幌市中央区」ですが、住所に含まれない）,
+r2,hw_20.pdf,deliveries[2].address,北海道札幌市中央区北一条西5-15-18,札幌市中央区北一条西5-15-18,review,False,0,,郵便番号と住所が合いません（郵便番号は「北海道札幌市中央区」ですが、住所に含まれない）,
+r2,hw_20.pdf,deliveries[2].phone,0138-65-7168,0138-65-7168,review,False,1,,2 回読んで結果が違いました,
+r2,hw_20.pdf,deliveries[2].product_code,HAM-30,HAM-30,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[2].noshi_name,御礼,御礼,auto,False,1,,,自動で確定
+r2,hw_20.pdf,deliveries[2].qty,3,3,auto,False,1,,,自動で確定
