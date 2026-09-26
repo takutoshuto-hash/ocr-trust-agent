@@ -50,6 +50,7 @@ def main():
     per_ft = defaultdict(lambda: {"n": 0, "correct": 0, "review": 0, "auto_wrong": 0})
     hal = {"blank_truth": 0, "invented": 0, "invented_caught": 0}   # 空欄の正解数 / 創作された数 / うち検知された数
     rows: list[dict] = []
+    failed: list[str] = []
     d = Path(a.dir)
     pairs = find_inputs(d, Path(a.truth_dir) if a.truth_dir else None)[: a.limit]
     if not pairs:
@@ -60,7 +61,12 @@ def main():
         truth = OrderForm.model_validate(meta["truth"])
         image = img_path.read_bytes()
         reg = registration_report(image, meta.get("format_id", "fax_v1"))
-        fd = pipe.process(image, sender_id=meta["sender_id"], format_id=meta.get("format_id", "fax_v1"), hint=truth)
+        try:
+            fd = pipe.process(image, sender_id=meta["sender_id"], format_id=meta.get("format_id", "fax_v1"), hint=truth)
+        except Exception as ex:           # 混雑（429）などで 1 枚が読めなくても残りを続ける
+            print(f"  {img_path.name}: 失敗 {type(ex).__name__}: {str(ex)[:160]}", flush=True)
+            failed.append(img_path.name)
+            continue
         tflat = truth.flatten()
         wrong = [p for p, dcs in fd.decisions.items() if _norm(dcs.value) != _norm(tflat.get(p))]
         print(f"  {img_path.name}: review {len(fd.review_paths)}/{len(fd.decisions)}  wrong {len(wrong)}  "
@@ -99,7 +105,9 @@ def main():
         print(f"\nハルシネーション: 空欄 {hal['blank_truth']} 件中、値を創作 {hal['invented']} 件"
               f"（創作率 {hal['invented']/hal['blank_truth']:.3f}）、うち空欄検知で捕捉 {hal['invented_caught']} 件"
               f"（検知率 {(hal['invented_caught']/hal['invented'] if hal['invented'] else 1):.3f}）")
-    if a.report:
+    if failed:
+        print(f"\n読めなかった帳票 {len(failed)} 枚: {', '.join(failed)}（混雑なら時間をおいて再実行）")
+    if a.report and rows:
         Path(a.report).parent.mkdir(parents=True, exist_ok=True)
         with open(a.report, "w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)

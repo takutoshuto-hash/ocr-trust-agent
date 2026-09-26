@@ -96,7 +96,12 @@ class Pipeline:
 
         rules = [r.text for r in self.store.list_rules(scope=f"format:{format_id}")]   # 承認済みルール（global + 様式）
         ex1 = self.extractor.extract(to_send, examples=examples, variant=0, hint=hint, rules=rules, format_id=format_id)
-        ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint, rules=rules, format_id=format_id) if double_read else None
+        ex2 = None
+        if double_read:
+            try:
+                ex2 = self.extractor.extract(to_send, examples=examples, variant=1, hint=hint, rules=rules, format_id=format_id)
+            except Exception as e:          # 混雑（429）など: 2 回目なしで続ける。一致の根拠が無いので自動確定は狭まる（安全側）
+                self._audit(form_id, "second_read_failed", {"error": f"{type(e).__name__}: {str(e)[:160]}"}, actor="system")
         self._audit(form_id, "extracted", {"model": ex1.model, "double_read": double_read, "second_read": ex2.model if ex2 else None,
                                            "few_shot": len(examples), "rules": len(rules)})
 

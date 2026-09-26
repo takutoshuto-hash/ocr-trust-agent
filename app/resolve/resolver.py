@@ -78,8 +78,14 @@ class Resolver:
                         continue
                     rereads += 1
                 budget -= 1
-                cand = self._execute(action, ctx, hint_value)
+                try:
+                    cand = self._execute(action, ctx, hint_value)
+                    err = None
+                except Exception as e:          # 混雑（429）など。修復は諦めて人に回す（受付そのものは止めない）
+                    cand, err = None, f"{type(e).__name__}: {str(e)[:160]}"
                 entry = {"path": path, "action": action, "candidate": (cand.value if cand else None), "detail": (cand.detail if cand else "候補なし")}
+                if err:
+                    entry["error"] = err
                 if cand is not None:
                     ok, why = self._accept(ctx, cand, flat)
                     entry["accepted"], entry["why"] = ok, why

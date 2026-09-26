@@ -169,13 +169,31 @@ class GeminiExtractor:
         self.second_read = second_read
         self.second_model = second_model or model
 
+    def _generate(self, **kwargs):
+        """generate_content を混雑（429）・一時障害（500/503）のときだけ指数バックオフで再試行する。
+        待ち時間 2,4,8,16,30 秒（GEMINI_MAX_RETRIES 回、既定 5）。それでも駄目なら例外をそのまま上げる（呼び出し側が退避する）。"""
+        import os
+        import time as _t
+        from google.genai import errors
+        tries = int(os.getenv("GEMINI_MAX_RETRIES", "5"))
+        delay = 2.0
+        for i in range(tries + 1):
+            try:
+                return self.client.models.generate_content(**kwargs)
+            except errors.APIError as e:
+                code = getattr(e, "code", None) or getattr(e, "status_code", None)
+                if code not in (429, 500, 502, 503, 504) or i >= tries:
+                    raise
+                _t.sleep(delay)
+                delay = min(delay * 2, 30.0)
+
     def extract_field(self, crop: bytes, field_type: str, *, premium: bool = False, hint=None):
         """欄の切り出し画像を1項目だけ読む（行動するエージェントの再読み取り）。戻り値 (value, evidence) or None。"""
         key = field_type.rsplit(".", 1)[-1]
         prompt = FIELD_PROMPT.get(key, "この画像は注文書の1つの欄だけを切り出したものです。手書きの記入内容を読んでください。")
         prompt += (" 空欄なら value を空文字にし、推測で創作しないこと。evidence には読んだ文字列そのものを入れること。"
                    "漢字は書かれたとおりに保ち、異体字（髙・﨑・邊・齋 など）を常用漢字に置き換えないこと。")
-        resp = self.client.models.generate_content(
+        resp = self._generate(
             model=self.premium_model if premium else self.model,
             contents=[types.Part.from_bytes(data=crop, mime_type="image/png"), prompt],
             config=types.GenerateContentConfig(temperature=0, response_mime_type="application/json", response_schema=FIELD_SCHEMA,
@@ -216,7 +234,7 @@ class GeminiExtractor:
             contents = [types.Part.from_bytes(data=image, mime_type=mime_type),
                         PROMPTS[variant % len(PROMPTS)] + self._rules(rules) + self._few_shot(examples)]
         t0 = time.perf_counter()
-        resp = self.client.models.generate_content(
+        resp = self._generate(
             model=model,
             contents=contents,
             config=types.GenerateContentConfig(
